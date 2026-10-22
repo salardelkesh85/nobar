@@ -1,0 +1,33 @@
+# dependencies & build output
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# local runtime data (embedded databases, uploads)
+.data/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# logs & OS/editor noise
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Office lock files
+~$*

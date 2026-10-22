@@ -1,0 +1,12 @@
+{
+  "name": "nobar",
+  "private": true,
+  "description": "Nobar (نوبر) — multi-vendor fruit & vegetable marketplace with an AI shopping assistant",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "deck": "pnpm --filter @nobar/seminar-deck build"
+  }
+}
