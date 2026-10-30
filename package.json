@@ -7,6 +7,11 @@
     "node": ">=22"
   },
   "scripts": {
-    "deck": "pnpm --filter @nobar/seminar-deck build"
+    "deck": "pnpm --filter @nobar/seminar-deck build",
+    "dev:web": "pnpm --filter @nobar/web dev",
+    "dev:seller": "pnpm --filter @nobar/seller dev",
+    "dev:admin": "pnpm --filter @nobar/admin dev",
+    "typecheck:frontends": "pnpm --filter @nobar/web --filter @nobar/seller --filter @nobar/admin typecheck",
+    "lint:rtl": "node tools/check-rtl/check-rtl.mjs"
   }
 }

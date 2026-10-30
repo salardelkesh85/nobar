@@ -1,0 +1,8 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "web", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@nobar/web", "dev"], "port": 3000 },
+    { "name": "seller", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@nobar/seller", "dev"], "port": 3001 },
+    { "name": "admin", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@nobar/admin", "dev"], "port": 3002 }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@nobar/check-rtl",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fails when frontends use physical-direction Tailwind classes instead of logical ones"
+}

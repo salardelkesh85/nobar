@@ -3,3 +3,11 @@ packages:
   - services/*
   - packages/*
   - tools/*
+
+# pnpm 10 blocks dependency install scripts by default; allow only the native toolchains we need.
+onlyBuiltDependencies:
+  - "@swc/core"
+  - esbuild
+  - sharp
+  - "@tailwindcss/oxide"
+  - unrs-resolver
