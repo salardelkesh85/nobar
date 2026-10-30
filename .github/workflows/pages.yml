@@ -40,6 +40,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Test and check
+        run: |
+          pnpm --filter @nobar/fa --filter @nobar/demo test
+          pnpm lint:rtl
+          pnpm typecheck:frontends
+
       - name: Build store
         run: pnpm --filter @nobar/web build
         env:

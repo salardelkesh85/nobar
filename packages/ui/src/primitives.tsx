@@ -147,9 +147,9 @@ export function Select({ className, ...rest }: ComponentProps<"select">) {
 export function Stat({ label, value, hint, tone = "neutral" }: { label: string; value: ReactNode; hint?: ReactNode; tone?: "neutral" | "brand" | "nobar" | "warn" }) {
   const ring = tone === "brand" ? "border-brand/40" : tone === "nobar" ? "border-nobar/40" : tone === "warn" ? "border-saffron/50" : "border-line";
   return (
-    <div className={cn("rounded-card border bg-surface p-4 shadow-soft", ring)}>
+    <div className={cn("min-w-0 rounded-card border bg-surface p-4 shadow-soft", ring)}>
       <p className="text-sm text-ink-soft">{label}</p>
-      <p className="mt-1 text-2xl font-extrabold text-ink">{value}</p>
+      <p className="mt-1 text-lg font-extrabold text-ink sm:text-2xl [&_span]:whitespace-normal">{value}</p>
       {hint ? <p className="mt-1 text-xs text-ink-soft">{hint}</p> : null}
     </div>
   );
