@@ -1,0 +1,81 @@
+# Builds the three frontends as a static demo and publishes it to GitHub Pages:
+#   store  → https://<user>.github.io/nobar/
+#   seller → https://<user>.github.io/nobar/seller/
+#   admin  → https://<user>.github.io/nobar/admin/
+# Demo dates are relative to the build time, so the site is also rebuilt every night.
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "30 0 * * *" # 04:00 Tehran
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_EXPORT: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+      REPO_BASE: /${{ github.event.repository.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build store
+        run: pnpm --filter @nobar/web build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ env.REPO_BASE }}
+          NEXT_PUBLIC_SELLER_URL: ${{ env.REPO_BASE }}/seller/
+
+      - name: Build seller panel
+        run: pnpm --filter @nobar/seller build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ env.REPO_BASE }}/seller
+          NEXT_PUBLIC_STORE_URL: ${{ env.REPO_BASE }}/
+
+      - name: Build admin panel
+        run: pnpm --filter @nobar/admin build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ env.REPO_BASE }}/admin
+
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -r apps/web/out/. site/
+          cp -r apps/seller/out site/seller
+          cp -r apps/admin/out site/admin
+          node tools/static-export/flatten-segments.mjs site
+          touch site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

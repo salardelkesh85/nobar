@@ -31,7 +31,7 @@ export default function CategoriesPage() {
                 const count = LISTINGS.filter((l) => l.produceTypeId === pt.id).length;
                 return (
                   <li key={pt.id}>
-                    <Link href={`/p/${pt.slug}`} className="group flex flex-col items-center gap-2 text-center">
+                    <Link href={`/p/${pt.id}`} className="group flex flex-col items-center gap-2 text-center">
                       <Photo kind={pt.id} alt="" sizes="96px" fallback={{ emoji: pt.emoji, hue: pt.hue }} className="aspect-square w-full max-w-24 rounded-full ring-1 ring-line transition-shadow group-hover:ring-2 group-hover:ring-brand" />
                       <span className="text-sm font-semibold">{pt.name}</span>
                       <span className="-mt-1.5 text-[0.7rem] text-ink-soft">{count.toLocaleString("fa-IR")} غرفه</span>

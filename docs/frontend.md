@@ -60,3 +60,14 @@ Home (نوبر شد!, نوبرهای این هفته, فصلشه, categories, or
 ## Open decision
 
 The «nobar-claude-kit» (modular monolith, `apps/web|seller|admin`, `packages/ui|persian`) and the existing `docs/architecture.md` + ADRs (microservices) disagree. The frontend follows the kit and the nationwide marketplace model chosen by the owner on 2026-10-30; `CLAUDE.md` still says "same city" and needs updating once the architecture choice is confirmed.
+
+## Public demo on GitHub Pages
+
+`.github/workflows/pages.yml` builds all three apps as a static export on every push to `main` (and nightly, so demo dates stay fresh) and publishes them to `https://<user>.github.io/nobar/` (store), `/nobar/seller/` and `/nobar/admin/`.
+
+- Static export is enabled with `NEXT_EXPORT=1`; `NEXT_PUBLIC_BASE_PATH` sets the sub-path. Normal `pnpm dev:*` is unaffected.
+- Because there is no server, the destination city is read from its cookie in the browser (`StoreProvider`), and pages that depend on it render through a client `view.tsx` next to a static `page.tsx` that only does `generateStaticParams` and metadata.
+- Routes use ASCII ids (`/l/l501`, `/p/pomegranate`, `/shop/s5`); the order page is `/order?code=…`.
+- `tools/static-export/flatten-segments.mjs` copies Next's nested prefetch files to the dotted names the client requests (static hosts cannot rewrite).
+- One-time setup: the repository must be public (free plan) and **Settings → Pages → Source = GitHub Actions**.
+- Local check: build with the env vars above, copy `apps/web/out` to `<dir>/nobar`, run the flatten script, serve `<dir>` with any static server. In Git Bash set `MSYS_NO_PATHCONV=1` or the base path gets rewritten to a Windows path.

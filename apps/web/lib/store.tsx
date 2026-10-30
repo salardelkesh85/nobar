@@ -1,7 +1,6 @@
 "use client";
 
-import { DEFAULT_DESTINATION } from "@nobar/demo";
-import { useRouter } from "next/navigation";
+import { cityById, DEFAULT_DESTINATION } from "@nobar/demo";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DEST_COOKIE } from "./constants";
 
@@ -59,10 +58,20 @@ function write(key: string, value: unknown) {
   }
 }
 
-export function StoreProvider({ initialDest, children }: { initialDest: string; children: ReactNode }) {
-  const router = useRouter();
+/** Destination city from the cookie set by the city picker (static hosting: read in the browser). */
+function readDestCookie(): string | null {
+  try {
+    const m = document.cookie.match(new RegExp(`(?:^|; )${DEST_COOKIE}=([^;]+)`));
+    const v = m ? decodeURIComponent(m[1]!) : null;
+    return v && cityById(v)?.destination ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function StoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [dest, setDestState] = useState(initialDest || DEFAULT_DESTINATION);
+  const [dest, setDestState] = useState(DEFAULT_DESTINATION);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [compare, setCompare] = useState<string[]>([]);
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
@@ -76,17 +85,15 @@ export function StoreProvider({ initialDest, children }: { initialDest: string; 
     setOrders(read("nobar_orders", []));
     setThemeState(read("nobar_theme", "system"));
     setSimpleState(read("nobar_simple", false));
+    const saved = readDestCookie();
+    if (saved) setDestState(saved);
     setReady(true);
   }, []);
 
-  const setDest = useCallback(
-    (cityId: string) => {
-      setDestState(cityId);
-      document.cookie = `${DEST_COOKIE}=${cityId}; path=/; max-age=31536000; samesite=lax`;
-      router.refresh();
-    },
-    [router],
-  );
+  const setDest = useCallback((cityId: string) => {
+    setDestState(cityId);
+    document.cookie = `${DEST_COOKIE}=${cityId}; path=/; max-age=31536000; samesite=lax`;
+  }, []);
 
   const updateCart = useCallback((fn: (c: CartItem[]) => CartItem[]) => {
     setCart((prev) => {

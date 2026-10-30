@@ -34,7 +34,7 @@ export default function SeasonPage() {
               PRODUCE_TYPES.filter((p) => p.categoryId === c.id).map((pt) => (
                 <tr key={pt.id} className="border-t border-line">
                   <th scope="row" className="sticky start-0 bg-surface p-2 text-start font-medium">
-                    <Link href={`/p/${pt.slug}`} className="flex items-center gap-2 hover:text-brand">
+                    <Link href={`/p/${pt.id}`} className="flex items-center gap-2 hover:text-brand">
                       <Photo kind={pt.id} alt="" className="size-8 shrink-0 rounded-full text-base [&_span]:text-xl" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
                       {pt.name}
                     </Link>

@@ -43,7 +43,7 @@ export default function CartPage() {
           return (
             <Card key={g.shop.id} className="overflow-hidden">
               <div className="flex items-center justify-between gap-2 border-b border-line bg-surface-2 px-4 py-3">
-                <Link href={`/shop/${g.shop.slug}`} className="flex items-center gap-2 font-bold hover:text-brand">
+                <Link href={`/shop/${g.shop.id}`} className="flex items-center gap-2 font-bold hover:text-brand">
                   <Store className="size-5 text-brand" aria-hidden />
                   {g.shop.name}
                   <span className="text-xs font-normal text-ink-soft">· {cityName(g.shop.cityId)}</span>
@@ -63,7 +63,7 @@ export default function CartPage() {
                     <li key={line.pkg.id} className="flex gap-3 p-4">
                       <Photo kind={pt.id} alt="" className="size-20 shrink-0 rounded-control" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
                       <div className="flex flex-1 flex-col gap-1">
-                        <Link href={`/l/${line.listing.slug}`} className="font-bold leading-7 hover:text-brand">
+                        <Link href={`/l/${line.listing.id}`} className="font-bold leading-7 hover:text-brand">
                           {line.listing.title}
                         </Link>
                         <p className="text-sm text-ink-soft">{line.pkg.label}</p>

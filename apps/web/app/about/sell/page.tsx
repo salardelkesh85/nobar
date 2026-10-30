@@ -1,4 +1,4 @@
-import { ButtonLink, Card } from "@nobar/ui";
+import { buttonClass, Card } from "@nobar/ui";
 import { Camera, Mic, ShieldCheck, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -28,7 +28,9 @@ export default function SellPage() {
         <h2 className="font-extrabold">مدارک لازم</h2>
         <p className="mt-1 leading-7 text-ink-soft">کارت ملی، شماره‌ی شبا به نام خودتان و چند عکس از باغ یا مغازه. کارشناس نوبر معمولاً ظرف یک روز کاری بررسی می‌کند.</p>
       </Card>
-      <ButtonLink href="http://localhost:3001" size="lg">دیدن پنل غرفه‌دار (نمایشی)</ButtonLink>
+      <a href={process.env.NEXT_PUBLIC_SELLER_URL ?? "http://localhost:3001"} className={buttonClass("primary", "lg")}>
+        دیدن پنل غرفه‌دار (نمایشی)
+      </a>
     </div>
   );
 }

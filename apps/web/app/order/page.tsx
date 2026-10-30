@@ -4,8 +4,8 @@ import { cityName, listingById, METHOD_FA, produceTypeById, SHOP_ORDER_STATUS_FA
 import { formatToman, toFaDigits } from "@nobar/fa";
 import { Badge, Button, ButtonLink, Card, cn, EmptyState, JalaliDate, Skeleton, Toman } from "@nobar/ui";
 import { CircleCheck, PartyPopper, ShieldCheck } from "lucide-react";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import { Photo } from "@/components/photo";
 
@@ -19,9 +19,10 @@ const STEP_FA: Record<string, string> = {
 };
 const KEY = "nobar_order_status";
 
-export default function OrderPage() {
-  const { code } = useParams<{ code: string }>();
-  const paid = useSearchParams().get("paid") === "1";
+function OrderView() {
+  const params = useSearchParams();
+  const code = params.get("code") ?? "";
+  const paid = params.get("paid") === "1";
   const { ready, orders, showToast } = useStore();
   const [status, setStatus] = useState<Record<string, ShopOrderStatus>>({});
   useEffect(() => {
@@ -142,5 +143,13 @@ export default function OrderPage() {
         );
       })}
     </div>
+  );
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense>
+      <OrderView />
+    </Suspense>
   );
 }

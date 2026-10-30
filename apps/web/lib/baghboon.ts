@@ -116,7 +116,7 @@ export function answer(input: string, dest: string): BotReply {
     ];
     if (cheap && cheap !== best) lines.push(`ارزان‌ترین تا درِ خانه ${cheap.shop.name} است با هر کیلو ${formatToman(cheap.landedPerKgRial)}؛ ولی در امتیاز یا تازگی عقب‌تر است.`);
     lines.push("رتبه‌بندی را فرمول ثابت مقایسه‌گر حساب کرده، نه من؛ من فقط توضیحش می‌دهم.");
-    return { text: lines, compareHref: `/compare?type=${pt.slug}` };
+    return { text: lines, compareHref: `/compare?type=${pt.id}` };
   }
 
   // 3) budget basket

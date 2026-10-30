@@ -27,7 +27,7 @@ export default function ShopSettingsPage() {
             </Badge>
           </p>
         </div>
-        <a href={`http://localhost:3000/shop/${shop.slug}`} className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline">
+        <a href={`${process.env.NEXT_PUBLIC_STORE_URL ?? "http://localhost:3000/"}shop/${shop.id}/`} className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline">
           دیدن غرفه در فروشگاه <ExternalLink className="size-4" aria-hidden />
         </a>
       </div>

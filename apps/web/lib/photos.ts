@@ -9,5 +9,8 @@ const PRODUCE_PHOTOS = new Set([
 
 export type BannerPhoto = "banner-orchard" | "banner-market" | "banner-pomegranate" | "banner-harvest";
 
-export const photoSrc = (kind: string): string | null => (PRODUCE_PHOTOS.has(kind) ? `/photos/${kind}.webp` : null);
-export const bannerSrc = (name: BannerPhoto): string => `/photos/${name}.webp`;
+// next/image does not add basePath to string sources, so prefix it here (static hosting under /nobar).
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+export const photoSrc = (kind: string): string | null => (PRODUCE_PHOTOS.has(kind) ? `${BASE}/photos/${kind}.webp` : null);
+export const bannerSrc = (name: BannerPhoto): string => `${BASE}/photos/${name}.webp`;

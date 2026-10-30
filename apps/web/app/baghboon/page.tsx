@@ -99,7 +99,7 @@ function Chat() {
                   <ul className="grid gap-2 sm:grid-cols-2">
                     {m.reply!.hits.map((h) => (
                       <li key={h.listing.id}>
-                        <Link href={`/l/${h.listing.slug}`} className="flex gap-3 rounded-control border border-line p-2 hover:border-brand">
+                        <Link href={`/l/${h.listing.id}`} className="flex gap-3 rounded-control border border-line p-2 hover:border-brand">
                           <Photo kind={h.type.id} alt="" className="size-16 shrink-0 rounded-control" fallback={{ emoji: h.type.emoji, hue: h.type.hue }} />
                           <div className="min-w-0 text-sm">
                             <p className="line-clamp-1 font-bold">{h.listing.title}</p>

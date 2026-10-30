@@ -177,6 +177,6 @@ export const SHOPS: readonly Shop[] = [
 ];
 
 export const shopById = (id: string): Shop | undefined => SHOPS.find((s) => s.id === id);
-export const shopBySlug = (slug: string): Shop | undefined => SHOPS.find((s) => s.slug === slug);
+export const shopBySlug = (slug: string): Shop | undefined => SHOPS.find((s) => s.slug === slug || s.id === slug);
 
 export const SHOP_TYPE_FA: Record<Shop["type"], string> = { GROWER: "باغدار", SHOP: "میوه‌فروشی", COOPERATIVE: "تعاونی" };

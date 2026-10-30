@@ -40,7 +40,7 @@ export function ListingCard({ hit, variant = "grid" }: { hit: SearchHit; variant
       </div>
 
       <h3 className="mt-2.5 line-clamp-2 min-h-[2.8rem] text-[0.84rem] font-semibold leading-[1.4rem] text-ink">
-        <Link href={`/l/${l.slug}`} className="after:absolute after:inset-0">
+        <Link href={`/l/${l.id}`} className="after:absolute after:inset-0">
           {l.title}
         </Link>
       </h3>

@@ -1,3 +1,5 @@
+"use client";
+
 import { CATEGORIES, cityName, currentMonth, inSeason, isNobar, LISTINGS, PRODUCE_TYPES, ratingBayes, search, SHOPS, SHOP_TYPE_FA, type SearchHit } from "@nobar/demo";
 import { ChevronLeft, Star } from "lucide-react";
 import Image from "next/image";
@@ -7,7 +9,7 @@ import { BannerCarousel, type Slide } from "@/components/banner-carousel";
 import { ListingRail } from "@/components/listing-card";
 import { Photo } from "@/components/photo";
 import { bannerSrc } from "@/lib/photos";
-import { getDestination } from "@/lib/server";
+import { useStore } from "@/lib/store";
 
 function Rail({ title, subtitle, href, hits }: { title: string; subtitle?: string; href: string; hits: SearchHit[] }) {
   if (!hits.length) return null;
@@ -41,8 +43,8 @@ function PromoBanner({ href, src, title, body }: { href: string; src: string; ti
   );
 }
 
-export default async function HomePage() {
-  const dest = await getDestination();
+export default function HomePage() {
+  const { dest } = useStore();
   const month = currentMonth();
   const all = search({ dest, sort: "newest" }).hits;
   const nobar = all.filter((h) => isNobar(h.listing));
@@ -63,7 +65,7 @@ export default async function HomePage() {
       tone: "green",
     },
     {
-      href: "/p/انار",
+      href: "/p/pomegranate",
       src: bannerSrc("banner-pomegranate"),
       eyebrow: "فصل انار",
       title: "انار ملس ساوه و نقده",
@@ -114,7 +116,7 @@ export default async function HomePage() {
         <ul className="flex gap-1 overflow-x-auto px-2 scrollbar-none sm:justify-between">
           {quick.map((pt) => (
             <li key={pt.id} className="shrink-0">
-              <Link href={`/p/${pt.slug}`} className="group flex w-20 flex-col items-center gap-2 text-center">
+              <Link href={`/p/${pt.id}`} className="group flex w-20 flex-col items-center gap-2 text-center">
                 <Photo kind={pt.id} alt="" sizes="72px" fallback={{ emoji: pt.emoji, hue: pt.hue }} className="size-16 rounded-full ring-1 ring-line transition-shadow group-hover:ring-2 group-hover:ring-brand sm:size-[4.5rem]" />
                 <span className="text-xs font-semibold text-ink">{pt.name}</span>
               </Link>
@@ -187,7 +189,7 @@ export default async function HomePage() {
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {topShops.map((s) => (
             <li key={s.id}>
-              <Link href={`/shop/${s.slug}`} className="group flex flex-col items-center gap-2 rounded-control border border-line p-3 text-center hover:border-brand">
+              <Link href={`/shop/${s.id}`} className="group flex flex-col items-center gap-2 rounded-control border border-line p-3 text-center hover:border-brand">
                 <Photo kind={s.art} alt="" sizes="64px" className="size-16 rounded-full" />
                 <span className="line-clamp-1 text-sm font-bold">{s.name}</span>
                 <span className="text-xs text-ink-soft">

@@ -54,7 +54,7 @@ export const PRODUCE_TYPES: readonly ProduceType[] = SEED.map((s) => ({
 }));
 
 export const produceTypeById = (id: string): ProduceType | undefined => PRODUCE_TYPES.find((p) => p.id === id);
-export const produceTypeBySlug = (slug: string): ProduceType | undefined => PRODUCE_TYPES.find((p) => p.slug === slug);
+export const produceTypeBySlug = (slug: string): ProduceType | undefined => PRODUCE_TYPES.find((p) => p.slug === slug || p.id === slug);
 export const categoryById = (id: string): Category | undefined => CATEGORIES.find((c) => c.id === id);
 export const categoryBySlug = (slug: string): Category | undefined => CATEGORIES.find((c) => c.slug === slug);
 

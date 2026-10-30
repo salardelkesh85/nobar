@@ -70,7 +70,7 @@ export default function CheckoutPage() {
         }),
         payableRial: payable,
       });
-      router.push(`/orders/${c}?paid=1`);
+      router.push(`/order?code=${c}&paid=1`);
       window.setTimeout(clearCart, 400);
     }, 1400);
   };

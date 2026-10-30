@@ -9,9 +9,6 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-// Demo data is relative to "now"; render per request so deadlines and dates stay current.
-export const dynamic = "force-dynamic";
-
 export const viewport: Viewport = { themeColor: "#14532d", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -60,7 +60,7 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
                 onClick={() => {
                   setQ(pt.name);
                   setFocused(false);
-                  router.push(`/p/${pt.slug}`);
+                  router.push(`/p/${pt.id}`);
                 }}
                 className="flex min-h-11 w-full items-center gap-2 rounded-control px-3 text-start hover:bg-surface-2"
               >

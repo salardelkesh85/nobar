@@ -52,7 +52,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-        <a href="http://localhost:3000" className="mt-auto text-sm text-ink-soft hover:text-brand">
+        <a href={process.env.NEXT_PUBLIC_STORE_URL ?? "http://localhost:3000/"} className="mt-auto text-sm text-ink-soft hover:text-brand">
           دیدن فروشگاه نوبر ←
         </a>
       </aside>

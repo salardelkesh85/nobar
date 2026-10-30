@@ -9,7 +9,6 @@ import { BottomNav, CompareTray, HeaderActions, SimpleVoiceFab, Toast } from "@/
 import { CityPicker } from "@/components/city-picker";
 import { SearchBox } from "@/components/search-box";
 import { PREFS_BOOT_SCRIPT } from "@/lib/constants";
-import { getDestination } from "@/lib/server";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
@@ -36,8 +35,7 @@ const SERVICES = [
   { icon: Undo2, title: "بازپرداخت اگر خراب رسید" },
 ];
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  const dest = await getDestination();
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <body className="min-h-dvh">
@@ -45,7 +43,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           {PREFS_BOOT_SCRIPT}
         </Script>
         <ProduceDefs />
-        <StoreProvider initialDest={dest}>
+        <StoreProvider>
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:p-3">
             رفتن به محتوای اصلی
           </a>

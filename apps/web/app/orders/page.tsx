@@ -18,7 +18,7 @@ export default function OrdersPage() {
         <ul className="space-y-3">
           {orders.map((o) => (
             <li key={o.code}>
-              <Link href={`/orders/${o.code}`}>
+              <Link href={`/order?code=${o.code}`}>
                 <Card className="flex items-center gap-4 p-4 hover:border-brand shadow-none">
                   <div className="flex-1">
                     <p className="font-bold" dir="ltr">
