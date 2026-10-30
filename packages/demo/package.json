@@ -1,0 +1,19 @@
+{
+  "name": "@nobar/demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo data and the deterministic rules (freshness, delivery, comparison, search) used by the frontends until the API exists",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nobar/fa": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
