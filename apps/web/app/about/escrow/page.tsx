@@ -14,12 +14,12 @@ const STEPS = [
 export default function EscrowPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-3xl font-black">پرداخت امن و حساب امانی</h1>
+      <h1 className="text-xl font-extrabold sm:text-2xl">پرداخت امن و حساب امانی</h1>
       <p className="leading-8 text-ink-soft">میوه و سبزی زود خراب می‌شود؛ برای همین در نوبر پول شما تا وقتی محصول سالم به دستتان نرسیده، نزد نوبر می‌ماند.</p>
       <ol className="space-y-3">
         {STEPS.map(([t, b], i) => (
           <li key={t}>
-            <Card className="flex gap-4 p-4">
+            <Card className="flex gap-4 p-4 shadow-none">
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand font-black text-on-brand">{(i + 1).toLocaleString("fa-IR")}</span>
               <div>
                 <h2 className="font-extrabold">{t}</h2>

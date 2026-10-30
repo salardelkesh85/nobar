@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCartGroups } from "@/lib/cart";
 import { useStore } from "@/lib/store";
+import { CheckoutSteps } from "@/components/checkout-steps";
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const code = () => {
@@ -77,11 +78,13 @@ export default function CheckoutPage() {
   const upd = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   return (
+    <>
+    <CheckoutSteps current={1} />
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="space-y-5">
-        <h1 className="text-2xl font-black">تکمیل خرید</h1>
+        <h1 className="text-xl font-extrabold">تکمیل خرید</h1>
 
-        <Card className="space-y-4 p-5">
+        <Card className="space-y-4 p-5 shadow-none">
           <h2 className="text-lg font-extrabold">۱. آدرس تحویل در {cityName(dest)}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="نام تحویل‌گیرنده" htmlFor="name" error={errors.name}>
@@ -99,7 +102,7 @@ export default function CheckoutPage() {
           </Field>
         </Card>
 
-        <Card className="space-y-4 p-5">
+        <Card className="space-y-4 p-5 shadow-none">
           <h2 className="text-lg font-extrabold">۲. روش ارسال هر غرفه</h2>
           {groups.map((g) => (
             <fieldset key={g.shop.id} className="space-y-2">
@@ -127,7 +130,7 @@ export default function CheckoutPage() {
           ))}
         </Card>
 
-        <Card className="space-y-3 p-5">
+        <Card className="space-y-3 p-5 shadow-none">
           <h2 className="text-lg font-extrabold">۳. پرداخت</h2>
           <div className="flex items-center gap-3 rounded-control border border-brand bg-brand-soft p-3">
             <CreditCard className="size-6 text-brand" aria-hidden />
@@ -147,8 +150,8 @@ export default function CheckoutPage() {
         </Card>
       </div>
 
-      <aside className="lg:sticky lg:top-24 lg:self-start">
-        <Card className="space-y-3 p-5">
+      <aside className="lg:sticky lg:top-36 lg:self-start">
+        <Card className="space-y-3 p-5 shadow-none">
           <h2 className="text-lg font-extrabold">مبلغ قابل پرداخت</h2>
           <div className="flex justify-between text-sm">
             <span className="text-ink-soft">کالاها</span>
@@ -170,5 +173,6 @@ export default function CheckoutPage() {
         </Card>
       </aside>
     </div>
+    </>
   );
 }

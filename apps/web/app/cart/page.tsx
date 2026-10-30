@@ -8,6 +8,7 @@ import { Stepper } from "@/components/actions";
 import { useCartGroups } from "@/lib/cart";
 import { useStore } from "@/lib/store";
 import { Photo } from "@/components/photo";
+import { CheckoutSteps } from "@/components/checkout-steps";
 
 export default function CartPage() {
   const { ready, dest, setQty } = useStore();
@@ -29,9 +30,11 @@ export default function CartPage() {
   const blocked = groups.some((g) => g.blocked.length > 0 || g.options.length === 0);
 
   return (
+    <>
+    <CheckoutSteps current={0} />
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="space-y-4">
-        <h1 className="text-2xl font-black">سبد خرید</h1>
+        <h1 className="text-xl font-extrabold">سبد خرید</h1>
         <p className="text-sm text-ink-soft">
           سفارش هر غرفه جدا آماده و ارسال می‌شود. ارسال به <span className="font-bold text-ink">{cityName(dest)}</span>.
         </p>
@@ -95,8 +98,8 @@ export default function CartPage() {
         })}
       </div>
 
-      <aside className="lg:sticky lg:top-24 lg:self-start">
-        <Card className="space-y-3 p-5">
+      <aside className="lg:sticky lg:top-36 lg:self-start">
+        <Card className="space-y-3 p-5 shadow-none">
           <h2 className="text-lg font-extrabold">خلاصه‌ی سفارش</h2>
           <div className="flex justify-between text-sm">
             <span className="text-ink-soft">کالاها</span>
@@ -121,5 +124,6 @@ export default function CartPage() {
         </Card>
       </aside>
     </div>
+    </>
   );
 }

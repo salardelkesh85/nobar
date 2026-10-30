@@ -119,7 +119,7 @@ export default async function ListingPage({ params }: { params: Params }) {
         <div className="lg:col-span-4">
           <div className="relative">
             <Photo kind={pt.id} alt={l.title} priority sizes="(max-width: 1024px) 100vw, 420px" fallback={{ emoji: pt.emoji, hue: pt.hue }} className="aspect-square w-full rounded-card" />
-            {isNobar(l) ? <span className="absolute start-3 top-3 rounded-md bg-nobar px-2 py-1 text-xs font-extrabold text-white">نوبر شد!</span> : null}
+            {isNobar(l) ? <span className="absolute start-3 top-3 rounded-md bg-nobar-solid px-2 py-1 text-xs font-extrabold text-white">نوبر شد!</span> : null}
           </div>
           <p className="mt-2 flex items-start gap-1 text-[0.7rem] leading-5 text-ink-soft">
             <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />

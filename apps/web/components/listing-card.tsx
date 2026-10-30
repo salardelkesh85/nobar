@@ -30,11 +30,11 @@ export function ListingCard({ hit, variant = "grid" }: { hit: SearchHit; variant
   const perKg = minPricePerKg(l);
   const firstPkg = l.packages[0]!;
   return (
-    <article className={cn("group relative flex h-full flex-col bg-surface p-3", variant === "row" && "w-44 shrink-0 sm:w-48")}>
+    <article className={cn("group relative flex h-full flex-col bg-surface p-3", variant === "row" ? "w-44 shrink-0 sm:w-48" : "border-b border-e border-line")}>
       <div className="relative">
         <Photo kind={type.id} alt={l.title} fallback={{ emoji: type.emoji, hue: type.hue }} className="aspect-square w-full rounded-tile" />
         {isNobar(l) ? (
-          <span className="absolute start-1.5 top-1.5 rounded-md bg-nobar px-1.5 py-0.5 text-[0.68rem] font-extrabold text-white">نوبر شد!</span>
+          <span className="absolute start-1.5 top-1.5 rounded-md bg-nobar-solid px-1.5 py-0.5 text-[0.68rem] font-extrabold text-white">نوبر شد!</span>
         ) : null}
         <QuickAdd listingId={l.id} packageId={firstPkg.id} label={firstPkg.label} className="absolute bottom-1.5 end-1.5 z-10" />
       </div>
@@ -79,7 +79,7 @@ export function ListingCard({ hit, variant = "grid" }: { hit: SearchHit; variant
 /** Uniform product grid with hairline separators (search, produce type, shop pages). */
 export function ListingGrid({ hits, className }: { hits: SearchHit[]; className?: string }) {
   return (
-    <div className={cn("grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line simple:grid-cols-1 sm:grid-cols-3 sm:simple:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5", className)}>
+    <div className={cn("grid grid-cols-2 overflow-hidden rounded-card border-s border-t border-line bg-surface simple:grid-cols-1 sm:grid-cols-3 sm:simple:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5", className)}>
       {hits.map((h) => (
         <ListingCard key={h.listing.id} hit={h} />
       ))}

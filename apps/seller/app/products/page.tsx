@@ -2,9 +2,10 @@
 
 import { freshnessOf, harvestPhrase, packageGrams, PRICE_POSITION_FA, pricePerKg, pricePosition, produceTypeById } from "@nobar/demo";
 import { formatFaNumber, formatToman, formatWeight, toEnDigits } from "@nobar/fa";
-import { Badge, Button, ButtonLink, Card, cn, FreshnessBadge, Input, ProduceArt, Skeleton } from "@nobar/ui";
+import { Badge, Button, ButtonLink, Card, cn, FreshnessBadge, Input, Skeleton } from "@nobar/ui";
 import { Plus, Save } from "lucide-react";
 import { useState } from "react";
+import { Photo } from "@/components/photo";
 import { useSeller } from "@/lib/state";
 
 export default function ProductsPage() {
@@ -58,7 +59,7 @@ function ProductRow({ id }: { id: string }) {
   return (
     <Card className={cn("p-4", l.paused && "opacity-70")}>
       <div className="flex gap-3">
-        <ProduceArt emoji={pt.emoji} kind={pt.id} hue={pt.hue} size="sm" className="size-16 shrink-0 rounded-control" />
+        <Photo kind={pt.id} alt="" className="size-16 shrink-0 rounded-control" />
         <div className="flex-1">
           <p className="font-bold">{l.title}</p>
           <div className="mt-1 flex flex-wrap gap-1">

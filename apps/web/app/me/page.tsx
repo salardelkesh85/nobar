@@ -10,7 +10,7 @@ export default function MePage() {
   const { simple, setSimple, theme, setTheme, orders } = useStore();
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <Card className="flex items-center gap-4 p-5">
+      <Card className="flex items-center gap-4 p-5 shadow-none">
         <div className="grid size-14 place-items-center rounded-full bg-brand-soft text-2xl" aria-hidden>
           👤
         </div>
@@ -20,7 +20,7 @@ export default function MePage() {
         </div>
       </Card>
 
-      <Card className="divide-y divide-line">
+      <Card className="divide-y divide-line shadow-none">
         {[
           { href: "/orders", icon: Receipt, label: "سفارش‌های من", extra: orders.length ? `${orders.length.toLocaleString("fa-IR")} سفارش` : undefined },
           { href: "/season", icon: Bell, label: "خبرهای «نوبر شد!»", extra: "از تقویم نوبر انتخاب کنید" },
@@ -40,7 +40,7 @@ export default function MePage() {
         </div>
       </Card>
 
-      <Card className="space-y-5 p-5">
+      <Card className="space-y-5 p-5 shadow-none">
         <h2 className="text-lg font-extrabold">تنظیمات</h2>
         <div className="flex items-center justify-between gap-3">
           <div>

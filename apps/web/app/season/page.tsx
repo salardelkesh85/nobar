@@ -12,7 +12,7 @@ export default function SeasonPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-black">تقویم نوبر</h1>
+        <h1 className="text-xl font-extrabold sm:text-2xl">تقویم نوبر</h1>
         <p className="mt-1 text-ink-soft">هر محصول در کدام ماه‌ها فصل دارد. خانه‌های پررنگ اوج فصل است. ماه جاری: {JALALI_MONTHS[month - 1]}.</p>
       </header>
       <div className="overflow-x-auto rounded-card border border-line bg-surface">

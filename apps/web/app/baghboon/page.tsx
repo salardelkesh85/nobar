@@ -60,7 +60,7 @@ function Chat() {
           <LogoMark className="size-9" />
         </span>
         <div>
-          <h1 className="text-2xl font-black">باغبون</h1>
+          <h1 className="text-xl font-extrabold">باغبون</h1>
           <p className="text-sm text-ink-soft">دستیار خرید نوبر · ارسال به {cityName(dest)}</p>
         </div>
       </header>
@@ -124,7 +124,7 @@ function Chat() {
                   </ButtonLink>
                 ) : null}
                 {m.reply!.proposal ? (
-                  <Card className="border-2 border-brand/40 p-3">
+                  <Card className="border-2 border-brand/40 p-3 shadow-none">
                     <p className="mb-2 font-extrabold">پیشنهاد: {m.reply!.proposal.summary}</p>
                     <ul className="space-y-1 text-sm">
                       {m.reply!.proposal.items.map((it) => (

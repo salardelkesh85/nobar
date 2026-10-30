@@ -121,7 +121,7 @@ export function FreshnessMeter({ ratio, label }: { ratio: number; label: string 
 
 export function NobarBadge({ className, children = "نوبر شد!" }: { className?: string; children?: ReactNode }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full bg-nobar px-2.5 py-0.5 text-xs font-extrabold text-white dark:text-bg", className)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full bg-nobar-solid px-2.5 py-0.5 text-xs font-extrabold text-white", className)}>
       <span aria-hidden>●</span>
       {children}
     </span>

@@ -58,7 +58,7 @@ export default function OrderPage() {
       ) : null}
       <header className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-black">
+          <h1 className="text-xl font-extrabold">
             سفارش <span dir="ltr">{order.code}</span>
           </h1>
           <p className="text-sm text-ink-soft">

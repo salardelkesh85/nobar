@@ -34,7 +34,8 @@ Owner feedback: illustrations looked cartoonish, the dark-green look was heavy a
 - Home: photo banner carousel + side banners, produce photo circles, red «نوبر شد!» deals-style rail, promo banners, per-category rails, top shops.
 - Product card: photo, two-line title, freshness dot, rating, shop/city, price per kg, landed price; quick «+» add.
 - Search: filter sidebar, sort tabs, hairline grid. Listing page: gallery · specs · sticky buy box, similar products, reviews, farm story.
-- Illustrations (`ProduceArt`) remain as fallback for produce without a photo and in the seller/admin panels.
+- Illustrations (`ProduceArt`) remain only as fallback for produce without a photo (season calendar).
+- Follow-up pass: shop page with cover photo and avatar, origin pages with photo headers, compare/cart/checkout restyled (checkout step bar), categories page with photo tiles, seller panel uses the same photos (`apps/seller/public/photos`), solid `bg-nobar-solid` / `bg-brand-solid` tokens for white-text surfaces in dark mode, and `cn()` now uses `tailwind-merge` (configured with the Nobar tokens) so passed classes override component defaults.
 
 ## Storefront pages
 

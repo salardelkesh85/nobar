@@ -27,7 +27,7 @@ export default async function ProduceTypePage({ params }: { params: Params }) {
         <Photo kind={pt.id} alt="" className="size-28 shrink-0 rounded-card" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
         <div className="flex-1">
           <p className="text-sm text-ink-soft">{categoryById(pt.categoryId)?.name}</p>
-          <h1 className="text-3xl font-black">{pt.name}</h1>
+          <h1 className="text-xl font-extrabold sm:text-2xl">{pt.name}</h1>
           <div className="mt-2 flex flex-wrap gap-2">
             {inSeason(pt, month) ? <Badge tone="brand">{isPeak(pt, month) ? "اوج فصل" : "در فصل"}</Badge> : <Badge tone="neutral">خارج از فصل</Badge>}
             <Badge tone="neutral">فصل: {pt.months.map((m) => JALALI_MONTHS[m - 1]).join("، ")}</Badge>

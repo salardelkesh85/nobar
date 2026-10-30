@@ -13,7 +13,7 @@ export default function SellPage() {
   ];
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-3xl font-black">باغ دارید؟ در نوبر غرفه باز کنید</h1>
+      <h1 className="text-xl font-extrabold sm:text-2xl">باغ دارید؟ در نوبر غرفه باز کنید</h1>
       <p className="leading-8 text-ink-soft">باغدارها، تعاونی‌ها و میوه‌فروشی‌های هر شهر محصول منطقه‌ی خودشان را مستقیم به خریدارهای همه‌ی ایران می‌فروشند.</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {items.map(({ icon: Icon, title, body }) => (
@@ -24,7 +24,7 @@ export default function SellPage() {
           </Card>
         ))}
       </div>
-      <Card className="p-5">
+      <Card className="p-5 shadow-none">
         <h2 className="font-extrabold">مدارک لازم</h2>
         <p className="mt-1 leading-7 text-ink-soft">کارت ملی، شماره‌ی شبا به نام خودتان و چند عکس از باغ یا مغازه. کارشناس نوبر معمولاً ظرف یک روز کاری بررسی می‌کند.</p>
       </Card>

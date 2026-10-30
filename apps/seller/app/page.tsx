@@ -62,7 +62,7 @@ export default function Dashboard() {
         <Stat label="آماده‌ی تسویه" value={<Toman rial={ready2pay} />} hint="در تسویه‌ی بعدی واریز می‌شود" tone="brand" />
       </div>
 
-      <Link href="/products/new" className="flex items-center gap-4 rounded-card bg-brand-strong p-5 text-white hover:opacity-95 dark:bg-brand-soft dark:text-ink">
+      <Link href="/products/new" className="flex items-center gap-4 rounded-card bg-brand-solid p-5 text-white hover:opacity-95">
         <span className="grid size-14 shrink-0 place-items-center rounded-full bg-white/15">
           <Camera className="size-7" aria-hidden />
         </span>

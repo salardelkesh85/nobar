@@ -7,7 +7,7 @@ export default function CreditsPage() {
   const rows = Object.entries(credits as Record<string, { title: string; artist: string; license: string; source: string }>);
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <h1 className="text-2xl font-black">منابع عکس‌ها</h1>
+      <h1 className="text-xl font-extrabold">منابع عکس‌ها</h1>
       <p className="leading-8 text-ink-soft">
         عکس‌های این نسخه‌ی نمایشی از ویکی‌مدیا کامنز با مجوز آزاد برداشته شده‌اند و فقط جای عکس‌های واقعی غرفه‌دارها را نگه می‌دارند. در نسخه‌ی واقعی، هر محصول با عکس خود غرفه‌دار نمایش داده می‌شود.
       </p>

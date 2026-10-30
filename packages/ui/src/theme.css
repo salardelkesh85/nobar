@@ -41,6 +41,8 @@
   --on-brand: #ffffff;
   --nobar: #c62828;         /* قرمز اناری */
   --nobar-soft: #fdecea;
+  --nobar-solid: #c62828;   /* solid backgrounds under white text */
+  --brand-solid: #14532d;
   --saffron: #f5a623;
   --saffron-soft: #fff4de;
   --warn: #8a5a00;
@@ -70,6 +72,8 @@
     --on-brand: #0a130e;
     --nobar: #f28b82;
     --nobar-soft: #3a1a18;
+    --nobar-solid: #9e221c;
+    --brand-solid: #17432a;
     --saffron: #f2bf4c;
     --saffron-soft: #33290f;
     --warn: #f2bf4c;
@@ -99,6 +103,8 @@
   --on-brand: #0a130e;
   --nobar: #f28b82;
   --nobar-soft: #3a1a18;
+  --nobar-solid: #9e221c;
+  --brand-solid: #17432a;
   --saffron: #f2bf4c;
   --saffron-soft: #33290f;
   --warn: #f2bf4c;
@@ -128,6 +134,8 @@
   --color-on-brand: var(--on-brand);
   --color-nobar: var(--nobar);
   --color-nobar-soft: var(--nobar-soft);
+  --color-nobar-solid: var(--nobar-solid);
+  --color-brand-solid: var(--brand-solid);
   --color-saffron: var(--saffron);
   --color-saffron-soft: var(--saffron-soft);
   --color-warn: var(--warn);

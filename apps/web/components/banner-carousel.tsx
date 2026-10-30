@@ -62,7 +62,7 @@ export function BannerCarousel({ slides }: { slides: Slide[] }) {
               <span className="text-xs font-bold text-white/80 sm:text-sm">{s.eyebrow}</span>
               <span className="mt-2 text-2xl font-black leading-snug sm:text-4xl">{s.title}</span>
               <span className="mt-2 text-sm leading-7 text-white/85 sm:text-base">{s.body}</span>
-              <span className="mt-5 inline-flex w-fit items-center gap-1 rounded-control bg-white px-4 py-2 text-sm font-bold text-ink">
+              <span className="mt-5 inline-flex w-fit items-center gap-1 rounded-control bg-white px-4 py-2 text-sm font-bold text-[#1d2620]">
                 {s.cta}
                 <ChevronLeft className="size-4" aria-hidden />
               </span>
@@ -83,10 +83,10 @@ export function BannerCarousel({ slides }: { slides: Slide[] }) {
         ))}
       </div>
       <div className="absolute bottom-3 end-3 hidden gap-1 sm:flex">
-        <button type="button" onClick={() => go(index - 1)} className="grid size-9 place-items-center rounded-full bg-white/90 text-ink shadow-soft" aria-label="اسلاید قبلی">
+        <button type="button" onClick={() => go(index - 1)} className="grid size-9 place-items-center rounded-full bg-white/90 text-[#1d2620] shadow-soft" aria-label="اسلاید قبلی">
           <ChevronRight className="size-5" />
         </button>
-        <button type="button" onClick={() => go(index + 1)} className="grid size-9 place-items-center rounded-full bg-white/90 text-ink shadow-soft" aria-label="اسلاید بعدی">
+        <button type="button" onClick={() => go(index + 1)} className="grid size-9 place-items-center rounded-full bg-white/90 text-[#1d2620] shadow-soft" aria-label="اسلاید بعدی">
           <ChevronLeft className="size-5" />
         </button>
       </div>

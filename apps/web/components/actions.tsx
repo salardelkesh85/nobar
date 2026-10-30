@@ -34,14 +34,14 @@ export function CompareToggle({ listingId, className, label = true }: { listingI
 
 export function Stepper({ value, onChange, min = 0, max = 99, label }: { value: number; onChange: (v: number) => void; min?: number; max?: number; label: string }) {
   return (
-    <div className="inline-flex items-center rounded-full border border-line bg-surface" role="group" aria-label={label}>
-      <button type="button" className="grid size-11 place-items-center rounded-full hover:bg-surface-2 disabled:opacity-40" onClick={() => onChange(value + 1)} disabled={value >= max} aria-label="یکی بیشتر">
+    <div className="inline-flex items-center rounded-control border border-line-strong bg-surface" role="group" aria-label={label}>
+      <button type="button" className="grid size-10 place-items-center rounded-control text-brand hover:bg-surface-2 disabled:text-ink-soft disabled:opacity-40" onClick={() => onChange(value + 1)} disabled={value >= max} aria-label="یکی بیشتر">
         <Plus className="size-4" />
       </button>
       <span className="min-w-8 text-center font-bold" aria-live="polite">
         {toFaDigits(value)}
       </span>
-      <button type="button" className="grid size-11 place-items-center rounded-full hover:bg-surface-2 disabled:opacity-40" onClick={() => onChange(value - 1)} disabled={value <= min} aria-label="یکی کمتر">
+      <button type="button" className="grid size-10 place-items-center rounded-control text-brand hover:bg-surface-2 disabled:text-ink-soft disabled:opacity-40" onClick={() => onChange(value - 1)} disabled={value <= min} aria-label="یکی کمتر">
         <Minus className="size-4" />
       </button>
     </div>

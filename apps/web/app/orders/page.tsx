@@ -11,7 +11,7 @@ export default function OrdersPage() {
   if (!ready) return <Skeleton className="h-48 w-full" />;
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-black">سفارش‌های من</h1>
+      <h1 className="text-xl font-extrabold">سفارش‌های من</h1>
       {orders.length === 0 ? (
         <EmptyState icon={<Receipt className="size-10" />} title="هنوز سفارشی ثبت نکرده‌اید" action={<ButtonLink href="/">شروع خرید</ButtonLink>} />
       ) : (
@@ -19,7 +19,7 @@ export default function OrdersPage() {
           {orders.map((o) => (
             <li key={o.code}>
               <Link href={`/orders/${o.code}`}>
-                <Card className="flex items-center gap-4 p-4 hover:border-brand">
+                <Card className="flex items-center gap-4 p-4 hover:border-brand shadow-none">
                   <div className="flex-1">
                     <p className="font-bold" dir="ltr">
                       {o.code}

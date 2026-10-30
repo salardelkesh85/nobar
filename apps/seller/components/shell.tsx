@@ -2,7 +2,8 @@
 
 import { shopById } from "@nobar/demo";
 import { toFaDigits } from "@nobar/fa";
-import { cn, Logo, ProduceIllustration } from "@nobar/ui";
+import { cn, Logo } from "@nobar/ui";
+import { Photo } from "./photo";
 import { ClipboardList, LayoutDashboard, MessageCircle, Package, Plus, Store, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -31,7 +32,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <aside className="sticky top-0 hidden h-dvh flex-col border-e border-line bg-surface p-4 md:flex">
         <Logo subtitle="پنل غرفه‌دار" />
         <div className="mt-6 flex items-center gap-3 rounded-card bg-surface-2 p-3">
-          <ProduceIllustration kind={shop.art} className="size-10 shrink-0" />
+          <Photo kind={shop.art} alt="" sizes="40px" className="size-10 shrink-0 rounded-full" />
           <div>
           <p className="text-xs text-ink-soft">غرفه</p>
           <p className="font-bold">{shop.name}</p>

@@ -1,7 +1,23 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { extendTailwindMerge } from "tailwind-merge";
 
-export const cn = (...parts: Array<string | false | null | undefined>): string => parts.filter(Boolean).join(" ");
+/** Class merger that knows the Nobar tokens, so a passed `bg-brand-soft` replaces a default `bg-surface`. */
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      color: [
+        "bg", "surface", "surface-2", "surface-3", "ink", "ink-soft", "line", "line-strong",
+        "brand", "brand-strong", "brand-soft", "brand-solid", "on-brand", "nobar", "nobar-soft", "nobar-solid",
+        "saffron", "saffron-soft", "warn", "warn-soft", "danger", "danger-soft", "cream",
+      ],
+      radius: ["card", "control", "tile"],
+      shadow: ["soft", "lift", "float"],
+    },
+  },
+});
+
+export const cn = (...parts: Array<string | false | null | undefined>): string => twMerge(parts.filter(Boolean).join(" "));
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "nobar" | "onDark" | "outlineOnDark";
 type Size = "sm" | "md" | "lg";
@@ -25,7 +41,7 @@ const SIZE: Record<Size, string> = {
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string): string {
   return cn(
-    "inline-flex items-center justify-center rounded-full font-bold transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none select-none",
+    "inline-flex items-center justify-center rounded-control font-bold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none select-none",
     VARIANT[variant],
     SIZE[size],
     extra,

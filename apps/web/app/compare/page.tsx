@@ -47,27 +47,27 @@ export default async function ComparePage({ searchParams }: { searchParams: SP }
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="flex items-center gap-2 text-2xl font-black">
-          <Scale className="size-7 text-brand" aria-hidden />
+      <header className="rounded-card border border-line bg-surface p-4 sm:p-5">
+        <h1 className="flex items-center gap-2 text-xl font-extrabold">
+          <Scale className="size-6 text-brand" aria-hidden />
           مقایسه‌گر {type ? type.name : ""}
         </h1>
-        <p className="mt-1 text-ink-soft">
+        <p className="mt-1 text-sm leading-7 text-ink-soft">
           مقایسه‌ی منصفانه برای {formatFaNumber(kg)} کیلو تا {cityName(dest)}: قیمت تمام‌شده با ارسال، تازگی هنگام رسیدن، امتیاز و زمان رسیدن.
         </p>
       </header>
 
-      <div className="flex flex-wrap items-center gap-4">
-        <div role="group" aria-label="مقدار خرید" className="flex items-center gap-1 rounded-full border border-line bg-surface p-1">
+      <div className="flex flex-wrap items-center gap-3">
+        <div role="group" aria-label="مقدار خرید" className="flex items-center gap-1 rounded-control border border-line bg-surface p-1">
           {KGS.map((k) => (
-            <Link key={k} href={base({ kg: String(k) })} aria-current={k === kg ? "true" : undefined} className={cn("min-h-9 rounded-full px-3 py-1.5 text-sm", k === kg ? "bg-brand font-bold text-on-brand" : "hover:bg-surface-2")}>
+            <Link key={k} href={base({ kg: String(k) })} aria-current={k === kg ? "true" : undefined} className={cn("min-h-9 rounded-md px-3 py-1.5 text-sm", k === kg ? "bg-brand font-bold text-on-brand" : "hover:bg-surface-2")}>
               {formatFaNumber(k)} کیلو
             </Link>
           ))}
         </div>
-        <div role="group" aria-label="اولویت شما" className="flex flex-wrap items-center gap-1 rounded-full border border-line bg-surface p-1">
+        <div role="group" aria-label="اولویت شما" className="flex flex-wrap items-center gap-1 rounded-control border border-line bg-surface p-1">
           {PRESETS.map((p) => (
-            <Link key={p} href={base({ preset: p })} aria-current={p === preset ? "true" : undefined} className={cn("min-h-9 rounded-full px-3 py-1.5 text-sm", p === preset ? "bg-brand font-bold text-on-brand" : "hover:bg-surface-2")}>
+            <Link key={p} href={base({ preset: p })} aria-current={p === preset ? "true" : undefined} className={cn("min-h-9 rounded-md px-3 py-1.5 text-sm", p === preset ? "bg-brand font-bold text-on-brand" : "hover:bg-surface-2")}>
               {PRESET_FA[p]}
             </Link>
           ))}
@@ -77,15 +77,16 @@ export default async function ComparePage({ searchParams }: { searchParams: SP }
       {result.offers.length < 2 && !result.excluded.length ? (
         <EmptyState icon={<Scale className="size-10" />} title="برای مقایسه حداقل دو محصول لازم است" body="روی کارت محصولات «مقایسه» را بزنید، یا از صفحه‌ی یک محصول «مقایسه با غرفه‌های دیگر» را انتخاب کنید." />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {result.offers.map((o, i) => {
             const pt = produceTypeById(o.listing.produceTypeId)!;
             const best = o.badges.includes("BEST_OVERALL");
             return (
-              <Card key={o.listing.id} className={cn("flex flex-col overflow-hidden", best && "border-2 border-brand")}>
-                <div className="relative">
-                  <Photo kind={pt.id} alt="" className="h-28 w-full" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
-                  <span className="absolute start-2 top-2 grid size-8 place-items-center rounded-full bg-surface font-black">{formatFaNumber(i + 1)}</span>
+              <Card key={o.listing.id} className={cn("relative flex flex-col overflow-hidden shadow-none", best && "border-brand ring-1 ring-brand")}>
+                {best ? <span className="bg-brand py-1 text-center text-xs font-bold text-on-brand">انتخاب باغبون</span> : null}
+                <div className="relative p-4 pb-0">
+                  <Photo kind={pt.id} alt="" sizes="160px" className="mx-auto aspect-square w-36 rounded-tile" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
+                  <span className="absolute start-3 top-3 grid size-7 place-items-center rounded-full border border-line bg-surface text-sm font-black">{formatFaNumber(i + 1)}</span>
                 </div>
                 <div className="flex flex-1 flex-col gap-3 p-4">
                   <div className="flex flex-wrap gap-1">
@@ -143,7 +144,7 @@ export default async function ComparePage({ searchParams }: { searchParams: SP }
       )}
 
       {result.excluded.length ? (
-        <Card className="p-4">
+        <Card className="p-4 shadow-none">
           <h2 className="mb-2 font-bold">از مقایسه کنار گذاشته شد</h2>
           <ul className="space-y-1 text-sm">
             {result.excluded.map((x) => (
@@ -155,7 +156,7 @@ export default async function ComparePage({ searchParams }: { searchParams: SP }
         </Card>
       ) : null}
 
-      <Card className="flex gap-3 p-4 text-sm leading-7 text-ink-soft">
+      <Card className="flex gap-3 p-4 text-sm leading-7 text-ink-soft shadow-none">
         <Info className="size-5 shrink-0 text-brand" aria-hidden />
         <p>
           این مقایسه با فرمول ثابت و شفاف حساب می‌شود، نه با هوش مصنوعی. در حالت «{PRESET_FA[preset]}» وزن‌ها:

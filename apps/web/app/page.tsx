@@ -98,7 +98,7 @@ export default async function HomePage() {
               <span className="block text-lg font-black">باغ‌های ساوه</span>
             </span>
           </Link>
-          <Link href="/baghboon" className="relative flex min-h-32 flex-col justify-center overflow-hidden rounded-card bg-brand-strong p-4 text-white sm:p-5">
+          <Link href="/baghboon" className="relative flex min-h-32 flex-col justify-center overflow-hidden rounded-card bg-brand-solid p-4 text-white sm:p-5">
             <span className="text-xs text-white/75">باغبون، دستیار خرید</span>
             <span className="mt-1 text-lg font-black leading-snug">«سیب ترش برای کمپوت که تا کرج تازه برسه»</span>
             <span className="mt-2 inline-flex items-center gap-0.5 text-sm font-bold text-[#b9e6bb]">
@@ -124,7 +124,7 @@ export default async function HomePage() {
       </section>
 
       {/* Nobar strip — like a deals rail */}
-      <section className="overflow-hidden rounded-card bg-nobar p-2 sm:p-3">
+      <section className="overflow-hidden rounded-card bg-nobar-solid p-2 sm:p-3">
         <div className="flex gap-2 sm:gap-3">
           <div className="hidden w-40 shrink-0 flex-col items-center justify-center gap-2 text-center text-white sm:flex">
             <span className="text-3xl font-black leading-none">نوبر شد!</span>
