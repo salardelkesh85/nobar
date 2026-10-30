@@ -27,30 +27,30 @@
 @custom-variant simple (&:where([data-simple-mode], [data-simple-mode] *));
 
 :root {
-  --bg: #f5f8f3;            /* سفید نعنایی گرم */
+  --bg: #f4f5f4;            /* خاکستری روشن فروشگاهی */
   --surface: #ffffff;
-  --surface-2: #eef4ec;
-  --surface-3: #e3ece1;
-  --ink: #0f2418;
-  --ink-soft: #5b6b60;
-  --line: #e2eae0;
-  --line-strong: #cfdccd;
+  --surface-2: #f2f4f2;
+  --surface-3: #e9ece9;
+  --ink: #1d2620;
+  --ink-soft: #6a746d;
+  --line: #e7eae7;
+  --line-strong: #d6dbd6;
   --brand: #2e7d32;         /* سبز برگ */
   --brand-strong: #14532d;  /* سبز جنگلی */
-  --brand-soft: #e3f1e1;
+  --brand-soft: #e8f4e8;
   --on-brand: #ffffff;
-  --nobar: #b3261e;         /* قرمز اناری */
-  --nobar-soft: #fde8e6;
-  --saffron: #e8a317;
-  --saffron-soft: #fdf3dc;
+  --nobar: #c62828;         /* قرمز اناری */
+  --nobar-soft: #fdecea;
+  --saffron: #f5a623;
+  --saffron-soft: #fff4de;
   --warn: #8a5a00;
   --warn-soft: #fdf1d6;
-  --danger: #b3261e;
-  --danger-soft: #fde8e6;
-  --cream: #fff6e9;
+  --danger: #c62828;
+  --danger-soft: #fdecea;
+  --cream: #fff7ec;
   --hero-from: #14532d;
-  --hero-to: #1f6b35;
-  --shadow-color: 20 83 45;
+  --hero-to: #2e7d32;
+  --shadow-color: 16 24 20;
   color-scheme: light;
 }
 
@@ -135,11 +135,11 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-cream: var(--cream);
-  --radius-card: 1.25rem;
-  --radius-control: 0.875rem;
-  --radius-tile: 1rem;
-  --shadow-soft: 0 1px 2px rgb(var(--shadow-color) / 0.04), 0 4px 16px -8px rgb(var(--shadow-color) / 0.12);
-  --shadow-lift: 0 2px 4px rgb(var(--shadow-color) / 0.05), 0 18px 40px -18px rgb(var(--shadow-color) / 0.3);
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+  --radius-tile: 0.5rem;
+  --shadow-soft: 0 1px 2px rgb(var(--shadow-color) / 0.05);
+  --shadow-lift: 0 4px 18px -6px rgb(var(--shadow-color) / 0.18);
   --shadow-float: 0 10px 40px -10px rgb(var(--shadow-color) / 0.35);
   --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-float: float 6s ease-in-out infinite;
@@ -162,7 +162,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  line-height: 1.75;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }

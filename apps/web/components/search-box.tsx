@@ -1,7 +1,8 @@
 "use client";
 
 import { suggest } from "@nobar/demo";
-import { cn, inputClass, ProduceIllustration } from "@nobar/ui";
+import { cn, inputClass } from "@nobar/ui";
+import { Photo } from "./photo";
 import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
@@ -41,8 +42,8 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
         onChange={(e) => setQ(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => window.setTimeout(() => setFocused(false), 150)}
-        placeholder="سیب، انار ساوه، سبزی خوردن…"
-        className={cn(inputClass, "min-h-12 rounded-full border-transparent bg-surface-2 ps-11 shadow-none hover:bg-surface-3 focus:bg-surface")}
+        placeholder="جستجو در نوبر؛ مثلاً انار ساوه"
+        className={cn(inputClass, "min-h-11 border-transparent bg-surface-2 ps-11 shadow-none focus:bg-surface")}
         role="combobox"
         aria-expanded={items.length > 0}
         aria-controls={listId}
@@ -63,7 +64,7 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
                 }}
                 className="flex min-h-11 w-full items-center gap-2 rounded-control px-3 text-start hover:bg-surface-2"
               >
-                <ProduceIllustration kind={pt.id} className="size-8" />
+                <Photo kind={pt.id} alt="" sizes="32px" className="size-8 shrink-0 rounded-md" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
                 <span className="font-bold">{pt.name}</span>
                 <span className="text-xs text-ink-soft">همه‌ی پیشنهادها</span>
               </button>

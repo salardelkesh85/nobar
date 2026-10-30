@@ -24,6 +24,18 @@ Shared packages:
 - Self-hosted vector produce illustrations (`packages/ui/src/illustrations.tsx`, 30 kinds) replace emoji until real seller photos exist; gradients are rendered once per page by `<ProduceDefs/>`.
 - Storefront: announcement strip, frosted sticky header with category bar, bento home hero, cards with quick-add and landed-price chip, floating mobile bottom bar with a raised Baghboon button. Panels share the same tokens and shells.
 
+## Storefront v3 — photo-based, Digikala/Snapp Market style (2026-10-30)
+
+Owner feedback: illustrations looked cartoonish, the dark-green look was heavy and the pages did not feel like a real store. Changes:
+
+- Neutral white/light-grey surfaces; green only for brand actions; pomegranate red only for the «نوبر شد!» rail. Smaller radii (12px cards, 8px controls), hairline borders, light shadows.
+- Real photos for 22 produce types and 4 banners from Wikimedia Commons (free licences), resized to WebP (~2 MB total) in `apps/web/public/photos/`, served by `next/image`, credits at `/about/credits` (`apps/web/lib/photo-credits.json`). They are placeholders until sellers upload their own photos (kit rule: no stock photos in production); listing pages say so.
+- Header with wide search, sign-in and cart; category menu row; flat mobile bottom bar.
+- Home: photo banner carousel + side banners, produce photo circles, red «نوبر شد!» deals-style rail, promo banners, per-category rails, top shops.
+- Product card: photo, two-line title, freshness dot, rating, shop/city, price per kg, landed price; quick «+» add.
+- Search: filter sidebar, sort tabs, hairline grid. Listing page: gallery · specs · sticky buy box, similar products, reviews, farm story.
+- Illustrations (`ProduceArt`) remain as fallback for produce without a photo and in the seller/admin panels.
+
 ## Storefront pages
 
 Home (نوبر شد!, نوبرهای این هفته, فصلشه, categories, origins) · `/search` with filters and sorts · `/p/[slug]` all offers of a produce type · `/l/[slug]` listing (freshness meter, harvest date, delivery checker for the destination city, landed price, market price, farm-story card, reviews, JSON-LD) · `/compare` · `/shop/[slug]` باغ‌نامه · `/origin/[city]` · `/season` تقویم نوبر with «نوبر شد» subscriptions · `/cart` grouped by shop · `/checkout` (address, shipping per shop, simulated payment, escrow explanation) · `/orders` tracking with a demo simulator · `/me` (simple mode, theme, destination) · `/baghboon` scripted assistant.

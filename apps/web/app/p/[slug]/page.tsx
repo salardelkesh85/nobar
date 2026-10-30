@@ -1,10 +1,11 @@
 import { categoryById, cityName, currentMonth, inSeason, isPeak, JALALI_MONTHS, produceTypeBySlug, search } from "@nobar/demo";
-import { Badge, ButtonLink, EmptyState, ProduceArt } from "@nobar/ui";
+import { Badge, ButtonLink, EmptyState } from "@nobar/ui";
 import { Scale } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ListingGrid } from "@/components/listing-card";
 import { decodeSlug, getDestination } from "@/lib/server";
+import { Photo } from "@/components/photo";
 
 type Params = Promise<{ slug: string }>;
 
@@ -23,7 +24,7 @@ export default async function ProduceTypePage({ params }: { params: Params }) {
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 rounded-card border border-line bg-surface p-5 sm:flex-row sm:items-center">
-        <ProduceArt emoji={pt.emoji} kind={pt.id} hue={pt.hue} size="lg" className="size-28 shrink-0 rounded-card" />
+        <Photo kind={pt.id} alt="" className="size-28 shrink-0 rounded-card" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
         <div className="flex-1">
           <p className="text-sm text-ink-soft">{categoryById(pt.categoryId)?.name}</p>
           <h1 className="text-3xl font-black">{pt.name}</h1>

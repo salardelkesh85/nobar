@@ -1,8 +1,9 @@
 import { CATEGORIES, currentMonth, JALALI_MONTHS, PRODUCE_TYPES } from "@nobar/demo";
-import { cn, ProduceArt } from "@nobar/ui";
+import { cn } from "@nobar/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NobarSubscribe } from "@/components/nobar-subscribe";
+import { Photo } from "@/components/photo";
 
 export const metadata: Metadata = { title: "تقویم نوبر", description: "هر میوه و سبزی در کدام ماه در فصل خودش است." };
 
@@ -34,7 +35,7 @@ export default function SeasonPage() {
                 <tr key={pt.id} className="border-t border-line">
                   <th scope="row" className="sticky start-0 bg-surface p-2 text-start font-medium">
                     <Link href={`/p/${pt.slug}`} className="flex items-center gap-2 hover:text-brand">
-                      <ProduceArt emoji={pt.emoji} kind={pt.id} hue={pt.hue} size="sm" className="size-8 shrink-0 rounded-full text-base [&_span]:text-xl" />
+                      <Photo kind={pt.id} alt="" className="size-8 shrink-0 rounded-full text-base [&_span]:text-xl" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
                       {pt.name}
                     </Link>
                   </th>

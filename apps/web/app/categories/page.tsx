@@ -1,7 +1,8 @@
 import { CATEGORIES, cityName, LISTINGS, PRODUCE_TYPES, SHOPS } from "@nobar/demo";
-import { Card, ProduceArt, SectionHeader } from "@nobar/ui";
+import { Card, SectionHeader } from "@nobar/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Photo } from "@/components/photo";
 
 export const metadata: Metadata = { title: "دسته‌ها" };
 
@@ -27,7 +28,7 @@ export default function CategoriesPage() {
               {types.map((pt) => (
                 <li key={pt.id}>
                   <Link href={`/p/${pt.slug}`} className="flex flex-col items-center gap-2 rounded-card border border-line bg-surface p-3 text-center hover:border-brand">
-                    <ProduceArt emoji={pt.emoji} kind={pt.id} hue={pt.hue} size="sm" className="size-14 rounded-full" />
+                    <Photo kind={pt.id} alt="" className="size-14 rounded-full" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
                     <span className="text-sm font-bold">{pt.name}</span>
                   </Link>
                 </li>

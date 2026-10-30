@@ -2,13 +2,14 @@
 
 import { cityName, etaPhrase, isNobar } from "@nobar/demo";
 import { toFaDigits } from "@nobar/fa";
-import { Button, ButtonLink, Card, cn, FreshnessBadge, LogoMark, NobarBadge, ProduceArt, Toman } from "@nobar/ui";
+import { Button, ButtonLink, Card, cn, FreshnessBadge, LogoMark, NobarBadge, Toman } from "@nobar/ui";
 import { Check, Info, Mic, Scale, Send, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { answer, type BotReply } from "@/lib/baghboon";
 import { useStore } from "@/lib/store";
+import { Photo } from "@/components/photo";
 
 type Msg = { id: number; from: "user" | "bot"; text?: string; reply?: BotReply; proposalState?: "pending" | "confirmed" | "declined" };
 
@@ -99,7 +100,7 @@ function Chat() {
                     {m.reply!.hits.map((h) => (
                       <li key={h.listing.id}>
                         <Link href={`/l/${h.listing.slug}`} className="flex gap-3 rounded-control border border-line p-2 hover:border-brand">
-                          <ProduceArt emoji={h.type.emoji} kind={h.type.id} hue={h.type.hue} size="sm" className="size-16 shrink-0 rounded-control" />
+                          <Photo kind={h.type.id} alt="" className="size-16 shrink-0 rounded-control" fallback={{ emoji: h.type.emoji, hue: h.type.hue }} />
                           <div className="min-w-0 text-sm">
                             <p className="line-clamp-1 font-bold">{h.listing.title}</p>
                             <p className="text-xs text-ink-soft">{h.shop.name}</p>

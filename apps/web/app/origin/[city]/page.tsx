@@ -1,10 +1,11 @@
 import { cityById, cityName, LISTINGS, provinceOfCity, search, SHOPS, SHOP_TYPE_FA } from "@nobar/demo";
-import { Card, EmptyState, ProduceArt, RatingStars } from "@nobar/ui";
+import { Card, EmptyState, RatingStars } from "@nobar/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ListingGrid } from "@/components/listing-card";
 import { decodeSlug, getDestination } from "@/lib/server";
+import { Photo } from "@/components/photo";
 
 type Params = Promise<{ city: string }>;
 
@@ -37,7 +38,7 @@ export default async function OriginPage({ params }: { params: Params }) {
             <li key={s.id}>
               <Link href={`/shop/${s.slug}`}>
                 <Card className="flex items-center gap-3 p-3 hover:border-brand">
-                  <ProduceArt emoji={s.emoji} kind={s.art} hue={s.hue} size="sm" className="size-14 shrink-0 rounded-control" />
+                  <Photo kind={s.art} alt="" className="size-14 shrink-0 rounded-control" fallback={{ emoji: s.emoji, hue: s.hue }} />
                   <div>
                     <p className="font-bold">{s.name}</p>
                     <p className="text-xs text-ink-soft">{SHOP_TYPE_FA[s.type]}</p>

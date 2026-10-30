@@ -20,7 +20,8 @@ export function CompareToggle({ listingId, className, label = true }: { listingI
       }}
       aria-pressed={on}
       className={cn(
-        "inline-flex min-h-9 items-center gap-1 rounded-full border px-2.5 text-xs font-bold transition-colors simple:hidden",
+        "items-center rounded-full border text-xs font-bold transition-colors simple:hidden",
+        label ? "inline-flex min-h-9 gap-1 px-2.5" : "grid size-8 place-items-center",
         on ? "border-brand bg-brand-soft text-brand-strong" : "border-line bg-surface text-ink-soft hover:border-brand",
         className,
       )}
@@ -114,8 +115,8 @@ export function QuickAdd({ listingId, packageId, label, className }: { listingId
         window.setTimeout(() => setDone(false), 1400);
       }}
       className={cn(
-        "grid size-11 place-items-center rounded-full shadow-lift transition-all duration-200 active:scale-90",
-        done ? "bg-brand-strong text-on-brand" : "bg-brand text-on-brand hover:bg-brand-strong",
+        "grid size-9 place-items-center rounded-full border shadow-soft transition-all duration-200 active:scale-90",
+        done ? "border-brand bg-brand text-on-brand" : "border-line bg-surface text-brand hover:border-brand hover:bg-brand hover:text-on-brand",
         className,
       )}
       aria-label={`افزودن ${label} به سبد`}

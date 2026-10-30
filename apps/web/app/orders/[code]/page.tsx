@@ -2,11 +2,12 @@
 
 import { cityName, listingById, METHOD_FA, produceTypeById, SHOP_ORDER_STATUS_FA, shopById, type ShopOrderStatus } from "@nobar/demo";
 import { formatToman, toFaDigits } from "@nobar/fa";
-import { Badge, Button, ButtonLink, Card, cn, EmptyState, JalaliDate, ProduceArt, Skeleton, Toman } from "@nobar/ui";
+import { Badge, Button, ButtonLink, Card, cn, EmptyState, JalaliDate, Skeleton, Toman } from "@nobar/ui";
 import { CircleCheck, PartyPopper, ShieldCheck } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
+import { Photo } from "@/components/photo";
 
 const FLOW: ShopOrderStatus[] = ["AWAITING_ACCEPTANCE", "ACCEPTED", "SHIPPED", "DELIVERED", "COMPLETED"];
 const STEP_FA: Record<string, string> = {
@@ -98,7 +99,7 @@ export default function OrderPage() {
                 const pkg = l?.packages.find((p) => p.id === it.packageId);
                 return (
                   <li key={it.packageId} className="flex items-center gap-3 px-4 py-3">
-                    {pt ? <ProduceArt emoji={pt.emoji} kind={pt.id} hue={pt.hue} size="sm" className="size-12 shrink-0 rounded-control" /> : null}
+                    {pt ? <Photo kind={pt.id} alt="" className="size-12 shrink-0 rounded-control" fallback={{ emoji: pt.emoji, hue: pt.hue }} /> : null}
                     <div className="flex-1 text-sm">
                       <p className="font-bold">{l?.title}</p>
                       <p className="text-ink-soft">

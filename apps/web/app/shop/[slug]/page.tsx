@@ -1,10 +1,11 @@
 import { cityName, provinceOfCity, reviewsForShop, search, SHOP_TYPE_FA, shopBySlug, METHOD_FA } from "@nobar/demo";
-import { Badge, Card, EmptyState, ProduceArt, RatingStars, RelativeDay, Stat } from "@nobar/ui";
+import { Badge, Card, EmptyState, RatingStars, RelativeDay, Stat } from "@nobar/ui";
 import { BadgeCheck, Check, Clock } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ListingGrid } from "@/components/listing-card";
 import { decodeSlug, getDestination } from "@/lib/server";
+import { Photo } from "@/components/photo";
 
 type Params = Promise<{ slug: string }>;
 
@@ -24,7 +25,7 @@ export default async function ShopPage({ params }: { params: Params }) {
   return (
     <div className="space-y-8">
       <header className="overflow-hidden rounded-card border border-line bg-surface">
-        <ProduceArt emoji={shop.emoji} kind={shop.art} hue={shop.hue} size="xl" className="h-40 w-full sm:h-56" />
+        <Photo kind={shop.art} alt="" className="h-40 w-full sm:h-56" fallback={{ emoji: shop.emoji, hue: shop.hue }} />
         <div className="p-5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="brand">{SHOP_TYPE_FA[shop.type]}</Badge>
@@ -58,7 +59,7 @@ export default async function ShopPage({ params }: { params: Params }) {
           </div>
           <div className="mt-5 grid grid-cols-3 gap-2">
             {[0, 1, 2].map((i) => (
-              <ProduceArt key={i} emoji={shop.emoji} kind={shop.art} hue={shop.hue + i * 18} size="md" className="aspect-[4/3] rounded-control" />
+              <Photo kind={shop.art} alt="" className="aspect-[4/3] rounded-control" fallback={{ emoji: shop.emoji, hue: shop.hue + i * 18 }} />
             ))}
           </div>
           <p className="mt-2 text-xs text-ink-soft">عکس‌های واقعی باغ و غرفه‌دار در نسخه‌ی واقعی اینجا نمایش داده می‌شود.</p>

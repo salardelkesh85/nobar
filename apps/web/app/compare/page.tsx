@@ -11,12 +11,13 @@ import {
   type Preset,
 } from "@nobar/demo";
 import { formatFaNumber } from "@nobar/fa";
-import { Badge, Card, cn, EmptyState, FreshnessBadge, ProduceArt, RatingStars, Toman, Weight } from "@nobar/ui";
+import { Badge, Card, cn, EmptyState, FreshnessBadge, RatingStars, Toman, Weight } from "@nobar/ui";
 import { Info, Scale, Sprout } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AddOfferButton } from "@/components/add-offer";
 import { getDestination } from "@/lib/server";
+import { Photo } from "@/components/photo";
 
 export const metadata: Metadata = { title: "مقایسه‌گر" };
 
@@ -83,7 +84,7 @@ export default async function ComparePage({ searchParams }: { searchParams: SP }
             return (
               <Card key={o.listing.id} className={cn("flex flex-col overflow-hidden", best && "border-2 border-brand")}>
                 <div className="relative">
-                  <ProduceArt emoji={pt.emoji} kind={pt.id} hue={pt.hue} size="md" className="h-28 w-full" />
+                  <Photo kind={pt.id} alt="" className="h-28 w-full" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
                   <span className="absolute start-2 top-2 grid size-8 place-items-center rounded-full bg-surface font-black">{formatFaNumber(i + 1)}</span>
                 </div>
                 <div className="flex flex-1 flex-col gap-3 p-4">

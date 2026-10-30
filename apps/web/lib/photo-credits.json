@@ -1,0 +1,158 @@
+{
+ "apple-red": {
+  "title": "Red Delicious Apple 2021.jpg",
+  "artist": "Commonists",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Red_Delicious_Apple_2021.jpg"
+ },
+ "apple-yellow": {
+  "title": "Golden Delicious apple 2021 (2).jpg",
+  "artist": "Commonists",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Golden_Delicious_apple_2021_(2).jpg"
+ },
+ "pomegranate": {
+  "title": "Pomegranate (fruit).jpg",
+  "artist": "Augustus Binu : flickr",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Pomegranate_(fruit).jpg"
+ },
+ "grape-white": {
+  "title": "Green Grape 2.jpg",
+  "artist": "Martin Kozák",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:Green_Grape_2.jpg"
+ },
+ "grape-black": {
+  "title": "Pinot Grigio-20201027-RM-114053.jpg",
+  "artist": "Ermell",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Pinot_Grigio-20201027-RM-114053.jpg"
+ },
+ "quince": {
+  "title": "Quince (10889s).jpg",
+  "artist": "Rhododendrites",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Quince_(10889s).jpg"
+ },
+ "persimmon": {
+  "title": "Fuyu Persimmon (Diospyros Kaki).jpg",
+  "artist": "Joe Ravi",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Fuyu_Persimmon_(Diospyros_Kaki).jpg"
+ },
+ "kiwi": {
+  "title": "Kiwi aka.jpg",
+  "artist": "André Karwath aka Aka",
+  "license": "CC BY-SA 2.5",
+  "source": "https://commons.wikimedia.org/wiki/File:Kiwi_aka.jpg"
+ },
+ "tangerine": {
+  "title": "2023 Mandarynki.jpg",
+  "artist": "Jacek Halicki",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:2023_Mandarynki.jpg"
+ },
+ "orange": {
+  "title": "Orange-Fruit-Pieces.jpg",
+  "artist": "Evan-Amos",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Orange-Fruit-Pieces.jpg"
+ },
+ "sweet-lime": {
+  "title": "Two limes.jpg",
+  "artist": "Rhododendrites",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Two_limes.jpg"
+ },
+ "dates-mazafati": {
+  "title": "Date Seed sprouting.jpg",
+  "artist": "Amada44",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:Date_Seed_sprouting.jpg"
+ },
+ "walnut": {
+  "title": "Juglans regia Echte Walnussfrucht 3.jpg",
+  "artist": "Böhringer Friedrich",
+  "license": "CC BY-SA 2.5",
+  "source": "https://commons.wikimedia.org/wiki/File:Juglans_regia_Echte_Walnussfrucht_3.jpg"
+ },
+ "barberry": {
+  "title": "Berberis vulgaris 2 RF.jpg",
+  "artist": "Robert Flogaus-Faust",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Berberis_vulgaris_2_RF.jpg"
+ },
+ "tomato": {
+  "title": "Tomatoes 2026 G1.jpg",
+  "artist": "George Chernilevsky",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Tomatoes_2026_G1.jpg"
+ },
+ "cucumber": {
+  "title": "Ryerson Market cucumbers on sale.jpg",
+  "artist": "Jason Zhang",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Ryerson_Market_cucumbers_on_sale.jpg"
+ },
+ "eggplant": {
+  "title": "Solanum melongena 24 08 2012 (1).JPG",
+  "artist": "Joydeep",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Solanum_melongena_24_08_2012_(1).JPG"
+ },
+ "potato": {
+  "title": "Russet potato cultivar with sprouts.jpg",
+  "artist": "ZooFari",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:Russet_potato_cultivar_with_sprouts.jpg"
+ },
+ "onion": {
+  "title": "Zwiebeln auf Antigua.jpg",
+  "artist": "CHK46",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Zwiebeln_auf_Antigua.jpg"
+ },
+ "pumpkin": {
+  "title": "Cucurbita 2011 G1.jpg",
+  "artist": "George Chernilevsky",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:Cucurbita_2011_G1.jpg"
+ },
+ "herbs": {
+  "title": "Fresh Herbs (Unsplash).jpg",
+  "artist": "Thomas Rehehäuser trehehaeuser",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Fresh_Herbs_(Unsplash).jpg"
+ },
+ "spinach": {
+  "title": "Fresh Spinach leaves.jpg",
+  "artist": "Charipearl",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Fresh_Spinach_leaves.jpg"
+ },
+ "banner-orchard": {
+  "title": "Moscow - 2026 - Apple orchard in Kolomenskoe2.jpg",
+  "artist": "Юрий Д.К.",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Moscow_-_2026_-_Apple_orchard_in_Kolomenskoe2.jpg"
+ },
+ "banner-market": {
+  "title": "Gesundes Leben 002 2014 03 19.jpg",
+  "artist": "Friedrich Haag",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Gesundes_Leben_002_2014_03_19.jpg"
+ },
+ "banner-pomegranate": {
+  "title": "Pomegranate harvest in Qaleh Tal - Khuzestan 16 (2025) Tasnim.jpg",
+  "artist": "Morteza Yaghouti",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Pomegranate_harvest_in_Qaleh_Tal_-_Khuzestan_16_(2025)_Tasnim.jpg"
+ },
+ "banner-harvest": {
+  "title": "Pomegranate harvest in Qaleh Tal - Khuzestan 11 (2025) Tasnim.jpg",
+  "artist": "Morteza Yaghouti",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Pomegranate_harvest_in_Qaleh_Tal_-_Khuzestan_11_(2025)_Tasnim.jpg"
+ }
+}

@@ -1,12 +1,13 @@
 "use client";
 
 import { cityName, etaPhrase, produceTypeById, REASON_FA } from "@nobar/demo";
-import { Badge, ButtonLink, Card, EmptyState, ProduceArt, Skeleton, Toman, Weight } from "@nobar/ui";
+import { Badge, ButtonLink, Card, EmptyState, Skeleton, Toman, Weight } from "@nobar/ui";
 import { ShieldCheck, ShoppingBasket, Store, Trash2, Truck } from "lucide-react";
 import Link from "next/link";
 import { Stepper } from "@/components/actions";
 import { useCartGroups } from "@/lib/cart";
 import { useStore } from "@/lib/store";
+import { Photo } from "@/components/photo";
 
 export default function CartPage() {
   const { ready, dest, setQty } = useStore();
@@ -57,7 +58,7 @@ export default function CartPage() {
                   const b = g.blocked.find((x) => x.line === line);
                   return (
                     <li key={line.pkg.id} className="flex gap-3 p-4">
-                      <ProduceArt emoji={pt.emoji} kind={pt.id} hue={pt.hue} size="sm" className="size-20 shrink-0 rounded-control" />
+                      <Photo kind={pt.id} alt="" className="size-20 shrink-0 rounded-control" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
                       <div className="flex flex-1 flex-col gap-1">
                         <Link href={`/l/${line.listing.slug}`} className="font-bold leading-7 hover:text-brand">
                           {line.listing.title}
