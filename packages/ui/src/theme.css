@@ -1,0 +1,222 @@
+/*
+ * Nobar design system v2 — tokens, elevation and surfaces (docs: product vision §7.2).
+ * Import after `@import "tailwindcss";`. Semantic tokens in the shadcn style: every colour has a
+ * paired foreground, one radius scale, light/dark/simple mode share the same utilities.
+ */
+
+@font-face { font-family: "Vazirmatn Nobar"; src: url("../fonts/VazirmatnNobar-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Vazirmatn Nobar"; src: url("../fonts/VazirmatnNobar-Medium.ttf") format("truetype"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Vazirmatn Nobar"; src: url("../fonts/VazirmatnNobar-SemiBold.ttf") format("truetype"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Vazirmatn Nobar"; src: url("../fonts/VazirmatnNobar-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Vazirmatn Nobar"; src: url("../fonts/VazirmatnNobar-ExtraBold.ttf") format("truetype"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Vazirmatn Nobar"; src: url("../fonts/VazirmatnNobar-Black.ttf") format("truetype"); font-weight: 900; font-display: swap; }
+
+@source "./";
+
+/* dark: explicit choice in «من», or the system setting when the user kept "مثل گوشی" */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
+@custom-variant simple (&:where([data-simple-mode], [data-simple-mode] *));
+
+:root {
+  --bg: #f5f8f3;            /* سفید نعنایی گرم */
+  --surface: #ffffff;
+  --surface-2: #eef4ec;
+  --surface-3: #e3ece1;
+  --ink: #0f2418;
+  --ink-soft: #5b6b60;
+  --line: #e2eae0;
+  --line-strong: #cfdccd;
+  --brand: #2e7d32;         /* سبز برگ */
+  --brand-strong: #14532d;  /* سبز جنگلی */
+  --brand-soft: #e3f1e1;
+  --on-brand: #ffffff;
+  --nobar: #b3261e;         /* قرمز اناری */
+  --nobar-soft: #fde8e6;
+  --saffron: #e8a317;
+  --saffron-soft: #fdf3dc;
+  --warn: #8a5a00;
+  --warn-soft: #fdf1d6;
+  --danger: #b3261e;
+  --danger-soft: #fde8e6;
+  --cream: #fff6e9;
+  --hero-from: #14532d;
+  --hero-to: #1f6b35;
+  --shadow-color: 20 83 45;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a130e;
+    --surface: #101c15;
+    --surface-2: #16261d;
+    --surface-3: #1d3125;
+    --ink: #e8f2ea;
+    --ink-soft: #9fb5a6;
+    --line: #1f3227;
+    --line-strong: #2b4535;
+    --brand: #7bcb80;
+    --brand-strong: #b9e6bb;
+    --brand-soft: #173322;
+    --on-brand: #0a130e;
+    --nobar: #f28b82;
+    --nobar-soft: #3a1a18;
+    --saffron: #f2bf4c;
+    --saffron-soft: #33290f;
+    --warn: #f2bf4c;
+    --warn-soft: #33290f;
+    --danger: #f28b82;
+    --danger-soft: #3a1a18;
+    --cream: #1a2419;
+    --hero-from: #10301e;
+    --hero-to: #17432a;
+    --shadow-color: 0 0 0;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0a130e;
+  --surface: #101c15;
+  --surface-2: #16261d;
+  --surface-3: #1d3125;
+  --ink: #e8f2ea;
+  --ink-soft: #9fb5a6;
+  --line: #1f3227;
+  --line-strong: #2b4535;
+  --brand: #7bcb80;
+  --brand-strong: #b9e6bb;
+  --brand-soft: #173322;
+  --on-brand: #0a130e;
+  --nobar: #f28b82;
+  --nobar-soft: #3a1a18;
+  --saffron: #f2bf4c;
+  --saffron-soft: #33290f;
+  --warn: #f2bf4c;
+  --warn-soft: #33290f;
+  --danger: #f28b82;
+  --danger-soft: #3a1a18;
+  --cream: #1a2419;
+  --hero-from: #10301e;
+  --hero-to: #17432a;
+  --shadow-color: 0 0 0;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: "Vazirmatn Nobar", Tahoma, system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-nobar: var(--nobar);
+  --color-nobar-soft: var(--nobar-soft);
+  --color-saffron: var(--saffron);
+  --color-saffron-soft: var(--saffron-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-cream: var(--cream);
+  --radius-card: 1.25rem;
+  --radius-control: 0.875rem;
+  --radius-tile: 1rem;
+  --shadow-soft: 0 1px 2px rgb(var(--shadow-color) / 0.04), 0 4px 16px -8px rgb(var(--shadow-color) / 0.12);
+  --shadow-lift: 0 2px 4px rgb(var(--shadow-color) / 0.05), 0 18px 40px -18px rgb(var(--shadow-color) / 0.3);
+  --shadow-float: 0 10px 40px -10px rgb(var(--shadow-color) / 0.35);
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-8px) rotate(var(--r, 0deg)); }
+}
+
+/* حالت ساده: type ×1.25 (everything is rem-based) */
+html[data-simple-mode] { font-size: 125%; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3 { line-height: 1.35; text-wrap: balance; }
+p { text-wrap: pretty; }
+::selection { background: var(--brand-soft); color: var(--brand-strong); }
+
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; border-radius: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* Frosted bars (header, bottom nav) */
+.glass {
+  background: color-mix(in oklab, var(--surface) 78%, transparent);
+  backdrop-filter: saturate(1.6) blur(16px);
+  -webkit-backdrop-filter: saturate(1.6) blur(16px);
+}
+
+/* Hero surface: forest gradient with soft light blobs */
+.hero-surface {
+  background:
+    radial-gradient(60% 80% at 15% 110%, rgb(123 203 128 / 0.35) 0, transparent 60%),
+    radial-gradient(50% 70% at 95% -10%, rgb(232 163 23 / 0.28) 0, transparent 60%),
+    linear-gradient(135deg, var(--hero-from), var(--hero-to));
+}
+
+/* Page background accent */
+.page-glow {
+  background:
+    radial-gradient(40rem 20rem at 85% -5rem, color-mix(in oklab, var(--brand) 10%, transparent), transparent 70%),
+    radial-gradient(30rem 18rem at 0% 0%, color-mix(in oklab, var(--saffron) 8%, transparent), transparent 70%);
+}
+
+/* Produce artwork tile: soft tint from the produce hue (real seller photos replace it later) */
+.produce-art {
+  background:
+    radial-gradient(70% 60% at 50% 35%, hsl(var(--h, 120) 90% 98%) 0, transparent 70%),
+    linear-gradient(160deg, hsl(var(--h, 120) 60% 94%), hsl(calc(var(--h, 120) + 20) 45% 86%));
+}
+[data-theme="dark"] .produce-art {
+  background:
+    radial-gradient(70% 60% at 50% 35%, hsl(var(--h, 120) 30% 26%) 0, transparent 70%),
+    linear-gradient(160deg, hsl(var(--h, 120) 25% 18%), hsl(calc(var(--h, 120) + 20) 22% 13%));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .produce-art {
+    background:
+      radial-gradient(70% 60% at 50% 35%, hsl(var(--h, 120) 30% 26%) 0, transparent 70%),
+      linear-gradient(160deg, hsl(var(--h, 120) 25% 18%), hsl(calc(var(--h, 120) + 20) 22% 13%));
+  }
+}
+.produce-shadow { filter: drop-shadow(0 10px 12px rgb(var(--shadow-color) / 0.18)); }
