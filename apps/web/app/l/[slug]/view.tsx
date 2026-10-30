@@ -29,10 +29,15 @@ import { BadgeCheck, ChevronLeft, Info, Leaf, Scale, ShieldCheck, Snowflake, Sta
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { BuyBox, CompareToggle } from "@/components/actions";
+import { BuyBox, CompareToggle, FavoriteToggle } from "@/components/actions";
+import { Gallery, QandA, RatingSummary, ReviewForm, SectionTabs, ShareButton, StickyBuyBar } from "@/components/product-extras";
+import type { BannerPhoto } from "@/lib/photos";
 import { ListingRail } from "@/components/listing-card";
 import { Photo } from "@/components/photo";
 import { useStore } from "@/lib/store";
+
+const coverFor = (art: string): BannerPhoto =>
+  ["pomegranate", "quince", "barberry"].includes(art) ? "banner-pomegranate" : ["apple-red", "apple-yellow", "grape-white", "walnut"].includes(art) ? "banner-orchard" : "banner-market";
 
 const GRADE_FA = { PREMIUM: "ممتاز", GRADE_1: "درجه‌یک", GRADE_2: "درجه‌دو", PROCESSING: "آبمیوه‌ای / صنعتی" } as const;
 
@@ -88,18 +93,21 @@ export function ListingView({ id }: { id: string }) {
         {/* Gallery */}
         <div className="lg:col-span-4">
           <div className="relative">
-            <Photo kind={pt.id} alt={l.title} priority sizes="(max-width: 1024px) 100vw, 420px" fallback={{ emoji: pt.emoji, hue: pt.hue }} className="aspect-square w-full rounded-card" />
-            {isNobar(l) ? <span className="absolute start-3 top-3 rounded-md bg-nobar-solid px-2 py-1 text-xs font-extrabold text-white">نوبر شد!</span> : null}
+            <Gallery kind={pt.id} title={l.title} cover={coverFor(shop.art)} />
+            {isNobar(l) ? <span className="pointer-events-none absolute start-3 top-3 rounded-md bg-nobar-solid px-2 py-1 text-xs font-extrabold text-white">نوبر شد!</span> : null}
           </div>
-          <p className="mt-2 flex items-start gap-1 text-[0.7rem] leading-5 text-ink-soft">
-            <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            عکس نمونه است؛ در نسخه‌ی واقعی عکس خود غرفه‌دار از همین محصول نمایش داده می‌شود.
-          </p>
         </div>
 
         {/* Details */}
         <div className="space-y-4 lg:col-span-4 xl:col-span-5">
           <div>
+            <div className="mb-2 flex items-center justify-between gap-2 text-xs">
+              <Link href={`/shop/${shop.id}`} className="font-bold text-brand hover:underline">{shop.name}</Link>
+              <span className="flex gap-1.5">
+                <FavoriteToggle listingId={l.id} withLabel />
+                <ShareButton title={l.title} />
+              </span>
+            </div>
             <h1 className="text-xl font-extrabold leading-9 sm:text-2xl">{l.title}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               <span className="inline-flex items-center gap-1">
@@ -206,17 +214,25 @@ export function ListingView({ id }: { id: string }) {
         </aside>
       </div>
 
+      <SectionTabs items={[["reviews", "دیدگاه‌ها"], ["questions", "پرسش و پاسخ"], ["story", "باغ‌نامه"], ["similar", "پیشنهادهای مشابه"]]} />
+
       {similar.length ? (
-        <section className="overflow-hidden rounded-card border border-line bg-surface">
+        <section id="similar" className="scroll-mt-48 overflow-hidden rounded-card border border-line bg-surface">
           <h2 className="px-4 pt-4 text-lg font-extrabold">{pt.name} از غرفه‌های دیگر</h2>
           <ListingRail hits={similar} />
         </section>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <section id="reviews" className="rounded-card border border-line bg-surface p-5 lg:col-span-2">
-          <h2 className="mb-1 text-lg font-extrabold">دیدگاه خریدارها</h2>
-          <p className="mb-4 text-sm text-ink-soft">فقط خریدارهایی که این محصول را تحویل گرفته‌اند می‌توانند نظر بدهند.</p>
+        <div className="space-y-4 lg:col-span-2">
+        <section id="reviews" className="scroll-mt-48 rounded-card border border-line bg-surface p-5">
+          <h2 className="mb-4 text-lg font-extrabold">دیدگاه خریدارها</h2>
+          <div className="mb-5 border-b border-line pb-5">
+            <RatingSummary reviews={reviews} fallback={shop.ratingAvg} />
+          </div>
+          <div className="mb-5">
+            <ReviewForm listingId={l.id} />
+          </div>
           {reviews.length ? (
             <ul className="divide-y divide-line">
               {reviews.map((r) => (
@@ -242,9 +258,14 @@ export function ListingView({ id }: { id: string }) {
             <p className="text-ink-soft">هنوز دیدگاهی ثبت نشده است.</p>
           )}
         </section>
+        <section id="questions" className="scroll-mt-48 rounded-card border border-line bg-surface p-5">
+          <h2 className="mb-2 text-lg font-extrabold">پرسش و پاسخ</h2>
+          <QandA listing={l} shopName={shop.name} />
+        </section>
+        </div>
 
         <aside className="space-y-4">
-          <section className="rounded-card border border-line bg-surface p-5">
+          <section id="story" className="scroll-mt-48 rounded-card border border-line bg-surface p-5">
             <p className="text-xs font-bold text-brand">باغ‌نامه</p>
             <h2 className="mt-1 font-extrabold">{shop.story.title}</h2>
             <p className="mt-2 line-clamp-4 text-sm leading-7 text-ink-soft">{shop.story.body[0]}</p>
@@ -279,6 +300,7 @@ export function ListingView({ id }: { id: string }) {
           </section>
         </aside>
       </div>
+      <StickyBuyBar listing={l} disabled={!quote.deliverable} />
     </div>
   );
 }

@@ -3,7 +3,8 @@
 import { suggest } from "@nobar/demo";
 import { cn, inputClass } from "@nobar/ui";
 import { Photo } from "./photo";
-import { Search } from "lucide-react";
+import { Clock, Search, TrendingUp, X } from "lucide-react";
+import { useStore } from "@/lib/store";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
 
@@ -13,11 +14,14 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
   const [q, setQ] = useState(params.get("q") ?? "");
   const [focused, setFocused] = useState(false);
   const listId = useId();
+  const { recentSearches, addRecentSearch, clearRecentSearches } = useStore();
   const items = focused ? suggest(q) : [];
+  const showHints = focused && !q.trim();
 
   const go = (text: string) => {
     const t = text.trim();
     setFocused(false);
+    if (t) addRecentSearch(t);
     router.push(t ? `/search?q=${encodeURIComponent(t)}` : "/search");
   };
 
@@ -50,6 +54,44 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
         aria-autocomplete="list"
         enterKeyHint="search"
       />
+      {showHints ? (
+        <div className="absolute inset-x-0 top-full z-30 mt-2 space-y-4 rounded-card border border-line bg-surface p-4 shadow-lift" onMouseDown={(e) => e.preventDefault()}>
+          {recentSearches.length ? (
+            <div>
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="flex items-center gap-1.5 font-bold">
+                  <Clock className="size-4 text-ink-soft" aria-hidden />
+                  جستجوهای اخیر
+                </span>
+                <button type="button" onClick={clearRecentSearches} className="inline-flex items-center gap-1 text-xs text-ink-soft hover:text-danger">
+                  <X className="size-3.5" aria-hidden />
+                  پاک کردن
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recentSearches.map((r) => (
+                  <button key={r} type="button" onClick={() => { setQ(r); go(r); }} className="min-h-9 rounded-full border border-line px-3 text-sm hover:border-brand">
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <div>
+            <p className="mb-2 flex items-center gap-1.5 text-sm font-bold">
+              <TrendingUp className="size-4 text-brand" aria-hidden />
+              جستجوهای پرطرفدار
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {["انار ساوه", "سیب قرمز", "کیوی", "خرما مضافتی", "نارنگی", "سبزی خوردن", "سیب‌زمینی"].map((r) => (
+                <button key={r} type="button" onClick={() => { setQ(r); go(r); }} className="min-h-9 rounded-full bg-surface-2 px-3 text-sm hover:bg-brand-soft hover:text-brand-strong">
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
       {items.length > 0 ? (
         <ul id={listId} role="listbox" className="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-card border border-line bg-surface p-1.5 shadow-lift">
           {items.map((pt) => (

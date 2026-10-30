@@ -55,6 +55,23 @@ export function BottomNav() {
   );
 }
 
+function AccountButton() {
+  const { user, ready } = useStore();
+  if (ready && user)
+    return (
+      <Link href="/me" className="hidden min-h-10 items-center gap-2 rounded-control px-3 text-sm font-bold hover:bg-surface-2 md:inline-flex">
+        <User className="size-5" aria-hidden />
+        <span className="max-w-32 truncate">{user.name || "حساب من"}</span>
+      </Link>
+    );
+  return (
+    <Link href="/login" className="hidden min-h-10 items-center gap-2 rounded-control border border-line-strong px-3 text-sm font-bold hover:bg-surface-2 md:inline-flex">
+      <LogIn className="size-4" aria-hidden />
+      ورود | ثبت‌نام
+    </Link>
+  );
+}
+
 /** Header actions: sign-in and cart (Digikala-style). */
 export function HeaderActions() {
   return (
@@ -63,10 +80,7 @@ export function HeaderActions() {
         <Sprout className="size-5" aria-hidden />
         باغبون
       </Link>
-      <Link href="/me" className="hidden min-h-10 items-center gap-2 rounded-control border border-line-strong px-3 text-sm font-bold hover:bg-surface-2 md:inline-flex">
-        <LogIn className="size-4" aria-hidden />
-        ورود | ثبت‌نام
-      </Link>
+      <AccountButton />
       <span className="hidden h-6 w-px bg-line-strong md:block" aria-hidden />
       <Link href="/cart" className="relative grid size-10 place-items-center rounded-control hover:bg-surface-2" aria-label="سبد خرید">
         <ShoppingCart className="size-6" strokeWidth={1.8} aria-hidden />

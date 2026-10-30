@@ -8,6 +8,7 @@ import { Suspense, type ReactNode } from "react";
 import { BottomNav, CompareTray, HeaderActions, SimpleVoiceFab, Toast } from "@/components/chrome";
 import { CityPicker } from "@/components/city-picker";
 import { SearchBox } from "@/components/search-box";
+import { SiteFooter } from "@/components/site-footer";
 import { PREFS_BOOT_SCRIPT } from "@/lib/constants";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
@@ -28,12 +29,6 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const SERVICES = [
-  { icon: Leaf, title: "تاریخ برداشت روی هر محصول" },
-  { icon: Truck, title: "فقط محصولی که تازه به شهرتان برسد" },
-  { icon: ShieldCheck, title: "پرداخت امن با حساب امانی" },
-  { icon: Undo2, title: "بازپرداخت اگر خراب رسید" },
-];
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -73,6 +68,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <Link href="/season" className="inline-flex min-h-10 items-center rounded-control px-2.5 text-ink-soft hover:bg-surface-2 hover:text-ink">
                   تقویم نوبر
                 </Link>
+                <Link href="/shops" className="inline-flex min-h-10 items-center rounded-control px-2.5 text-ink-soft hover:bg-surface-2 hover:text-ink">
+                  غرفه‌ها
+                </Link>
                 <Link href="/search?nobar=1" className="inline-flex min-h-10 items-center gap-1.5 rounded-control px-2.5 font-bold text-nobar hover:bg-nobar-soft">
                   <span className="size-1.5 rounded-full bg-nobar" aria-hidden />
                   نوبر شد!
@@ -88,48 +86,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
           </main>
 
-          <footer className="border-t border-line bg-surface pb-20 md:pb-0">
-            <div className="mx-auto max-w-7xl px-4">
-              <ul className="grid grid-cols-2 gap-4 border-b border-line py-8 lg:grid-cols-4">
-                {SERVICES.map(({ icon: Icon, title }) => (
-                  <li key={title} className="flex flex-col items-center gap-2 text-center text-xs text-ink-soft sm:text-sm">
-                    <Icon className="size-8 text-brand" strokeWidth={1.5} aria-hidden />
-                    {title}
-                  </li>
-                ))}
-              </ul>
-              <div className="grid gap-8 py-10 text-sm text-ink-soft sm:grid-cols-2 lg:grid-cols-4">
-                <div className="sm:col-span-2 lg:col-span-1">
-                  <Logo subtitle="نوبرِ هر شهر، مستقیم از باغ" />
-                  <p className="mt-4 leading-7">بازار آنلاین میوه و سبزی تازه. باغدارها و میوه‌فروشی‌های هر شهر، محصول منطقه‌ی خودشان را مستقیم به شما می‌فروشند.</p>
-                </div>
-                <div>
-                  <h2 className="mb-3 font-bold text-ink">خرید از نوبر</h2>
-                  <ul className="space-y-2">
-                    <li><Link href="/categories" className="hover:text-brand">دسته‌بندی‌ها و شهرهای مبدأ</Link></li>
-                    <li><Link href="/season" className="hover:text-brand">تقویم نوبر</Link></li>
-                    <li><Link href="/compare?type=انار" className="hover:text-brand">مقایسه‌گر</Link></li>
-                    <li><Link href="/baghboon" className="hover:text-brand">باغبون، دستیار خرید</Link></li>
-                  </ul>
-                </div>
-                <div>
-                  <h2 className="mb-3 font-bold text-ink">راهنما</h2>
-                  <ul className="space-y-2">
-                    <li><Link href="/about/escrow" className="hover:text-brand">پرداخت امن و حساب امانی</Link></li>
-                    <li><Link href="/about/credits" className="hover:text-brand">منابع عکس‌ها</Link></li>
-                    <li><span>قوانین و حریم خصوصی (به‌زودی)</span></li>
-                  </ul>
-                </div>
-                <div>
-                  <h2 className="mb-3 font-bold text-ink">غرفه‌داران</h2>
-                  <ul className="space-y-2">
-                    <li><Link href="/about/sell" className="hover:text-brand">در نوبر غرفه باز کنید</Link></li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <p className="border-t border-line py-4 text-center text-xs text-ink-soft">نسخه‌ی نمایشی — داده‌ها و عکس‌ها نمونه است و پرداخت واقعی انجام نمی‌شود.</p>
-          </footer>
+          <SiteFooter />
           <CompareTray />
           <SimpleVoiceFab />
           <Toast />

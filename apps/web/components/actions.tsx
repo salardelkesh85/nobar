@@ -3,7 +3,7 @@
 import { packageGrams, pricePerKg, type Listing } from "@nobar/demo";
 import { formatToman, toFaDigits } from "@nobar/fa";
 import { Button, cn } from "@nobar/ui";
-import { Check, Minus, Plus, Scale, ShoppingBasket } from "lucide-react";
+import { Check, Heart, Minus, Plus, Scale, ShoppingBasket } from "lucide-react";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 
@@ -122,6 +122,32 @@ export function QuickAdd({ listingId, packageId, label, className }: { listingId
       aria-label={`افزودن ${label} به سبد`}
     >
       {done ? <Check className="size-5" aria-hidden /> : <Plus className="size-5" aria-hidden />}
+    </button>
+  );
+}
+
+/** Heart toggle for the wishlist (علاقه‌مندی‌ها). */
+export function FavoriteToggle({ listingId, className, withLabel }: { listingId: string; className?: string; withLabel?: boolean }) {
+  const { favorites, toggleFavorite, showToast, ready } = useStore();
+  const on = ready && favorites.includes(listingId);
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      aria-label={on ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}
+      onClick={(e) => {
+        e.preventDefault();
+        showToast(toggleFavorite(listingId) ? "به علاقه‌مندی‌ها اضافه شد." : "از علاقه‌مندی‌ها حذف شد.");
+      }}
+      className={cn(
+        "inline-flex items-center justify-center gap-1.5 rounded-full border transition-colors",
+        withLabel ? "min-h-9 px-3 text-sm" : "size-8",
+        on ? "border-nobar/30 bg-nobar-soft text-nobar" : "border-line bg-surface text-ink-soft hover:text-nobar",
+        className,
+      )}
+    >
+      <Heart className={cn("size-4", on && "fill-current")} aria-hidden />
+      {withLabel ? (on ? "در علاقه‌مندی‌ها" : "علاقه‌مندی") : null}
     </button>
   );
 }

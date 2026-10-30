@@ -2,7 +2,7 @@ import { cityName, isNobar, minPricePerKg, type SearchHit } from "@nobar/demo";
 import { cn, Toman } from "@nobar/ui";
 import { Star } from "lucide-react";
 import Link from "next/link";
-import { CompareToggle, QuickAdd } from "./actions";
+import { CompareToggle, FavoriteToggle, QuickAdd } from "./actions";
 import { Photo } from "./photo";
 
 const FRESH_LABEL: Record<string, string> = {
@@ -71,7 +71,10 @@ export function ListingCard({ hit, variant = "grid" }: { hit: SearchHit; variant
           </p>
         ) : null}
       </div>
-      {variant === "grid" ? <CompareToggle listingId={l.id} label={false} className="absolute end-4 top-4 z-10 shadow-soft" /> : null}
+      <div className="absolute end-4 top-4 z-10 flex flex-col gap-1.5">
+        <FavoriteToggle listingId={l.id} className="shadow-soft" />
+        {variant === "grid" ? <CompareToggle listingId={l.id} label={false} className="shadow-soft" /> : null}
+      </div>
     </article>
   );
 }

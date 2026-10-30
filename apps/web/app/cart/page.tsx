@@ -9,6 +9,37 @@ import { useCartGroups } from "@/lib/cart";
 import { useStore } from "@/lib/store";
 import { Photo } from "@/components/photo";
 import { CheckoutSteps } from "@/components/checkout-steps";
+import { ListingRail } from "@/components/listing-card";
+import { search, type Shop, type ShippingMethodCode } from "@nobar/demo";
+import { formatToman } from "@nobar/fa";
+
+/** «X تومان تا ارسال رایگان» when the shop offers free shipping above a threshold for this method. */
+function FreeShippingHint({ shop, method, itemsRial }: { shop: Shop; method: ShippingMethodCode; itemsRial: number }) {
+  const rate = shop.shipping.find((r) => r.method === method);
+  if (!rate?.freeOverRial || itemsRial >= rate.freeOverRial) return null;
+  const pct = Math.min(100, (itemsRial / rate.freeOverRial) * 100);
+  return (
+    <div className="border-t border-line px-4 py-3 text-xs">
+      <p className="mb-1.5">
+        <span className="font-bold text-brand-strong">{formatToman(rate.freeOverRial - itemsRial)}</span> دیگر از همین غرفه بخرید تا ارسالش رایگان شود.
+      </p>
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function Suggestions({ dest, exclude, title }: { dest: string; exclude: string[]; title: string }) {
+  const hits = search({ dest, sort: "rating" }).hits.filter((h) => !exclude.includes(h.listing.id)).slice(0, 12);
+  if (!hits.length) return null;
+  return (
+    <section className="overflow-hidden rounded-card border border-line bg-surface">
+      <h2 className="px-4 pt-4 text-lg font-extrabold">{title}</h2>
+      <ListingRail hits={hits} />
+    </section>
+  );
+}
 
 export default function CartPage() {
   const { ready, dest, setQty } = useStore();
@@ -17,12 +48,15 @@ export default function CartPage() {
   if (!ready) return <Skeleton className="h-64 w-full" />;
   if (!groups.length)
     return (
-      <EmptyState
-        icon={<ShoppingBasket className="size-10" />}
-        title="سبدتان هنوز خالی است"
-        body="یک سر به نوبرهای این هفته بزنید."
-        action={<ButtonLink href="/">دیدن نوبرهای این هفته</ButtonLink>}
-      />
+      <div className="space-y-4">
+        <EmptyState
+          icon={<ShoppingBasket className="size-10" />}
+          title="سبدتان هنوز خالی است"
+          body="یک سر به نوبرهای این هفته بزنید."
+          action={<ButtonLink href="/">دیدن نوبرهای این هفته</ButtonLink>}
+        />
+        <Suggestions dest={dest} exclude={[]} title="پیشنهاد نوبر برای شما" />
+      </div>
     );
 
   const items = groups.reduce((s, g) => s + g.itemsRial, 0);
@@ -85,6 +119,7 @@ export default function CartPage() {
                   );
                 })}
               </ul>
+              {best && best.costRial > 0 ? <FreeShippingHint shop={g.shop} method={best.method} itemsRial={g.itemsRial} /> : null}
               <div className="flex flex-wrap justify-between gap-2 border-t border-line px-4 py-3 text-sm">
                 <span className="text-ink-soft">
                   وزن <Weight grams={g.grams} /> · ارسال {best ? (best.costRial ? <Toman rial={best.costRial} /> : "رایگان") : <span className="text-danger">ممکن نیست</span>}
@@ -123,6 +158,9 @@ export default function CartPage() {
           </p>
         </Card>
       </aside>
+    </div>
+    <div className="mt-6">
+      <Suggestions dest={dest} exclude={groups.flatMap((g) => g.lines.map((l) => l.listing.id))} title="شاید این‌ها را هم بخواهید" />
     </div>
     </>
   );

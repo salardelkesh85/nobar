@@ -3,8 +3,10 @@
 import { cityName, listingById, METHOD_FA, produceTypeById, SHOP_ORDER_STATUS_FA, shopById, type ShopOrderStatus } from "@nobar/demo";
 import { formatToman, toFaDigits } from "@nobar/fa";
 import { Badge, Button, ButtonLink, Card, cn, EmptyState, JalaliDate, Skeleton, Toman } from "@nobar/ui";
-import { CircleCheck, PartyPopper, ShieldCheck } from "lucide-react";
+import { CircleCheck, PartyPopper, ShieldCheck, Star } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { DisputeForm } from "@/components/dispute-form";
 import { Suspense, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import { Photo } from "@/components/photo";
@@ -25,6 +27,7 @@ function OrderView() {
   const paid = params.get("paid") === "1";
   const { ready, orders, showToast } = useStore();
   const [status, setStatus] = useState<Record<string, ShopOrderStatus>>({});
+  const [disputing, setDisputing] = useState<string | null>(null);
   useEffect(() => {
     try {
       setStatus(JSON.parse(localStorage.getItem(KEY) ?? "{}") as Record<string, ShopOrderStatus>);
@@ -70,6 +73,16 @@ function OrderView() {
           <Toman rial={order.payableRial} />
         </p>
       </header>
+      <div className="grid gap-3 rounded-card border border-line bg-surface p-4 text-sm sm:grid-cols-3">
+        <p>
+          <span className="block text-xs text-ink-soft">تحویل‌گیرنده</span>
+          {order.address.name} · <span dir="ltr">{toFaDigits(order.address.phone)}</span>
+        </p>
+        <p className="sm:col-span-2">
+          <span className="block text-xs text-ink-soft">آدرس</span>
+          {cityName(order.destCityId)}، {order.address.line} · کد پستی {toFaDigits(order.address.postalCode)}
+        </p>
+      </div>
 
       {order.shops.map((s) => {
         const shop = shopById(s.shopId)!;
@@ -119,9 +132,37 @@ function OrderView() {
               {st === "DELIVERED" ? (
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={() => { save(k, "COMPLETED"); showToast("ممنون! پول غرفه‌دار آزاد شد."); }}>همه‌چیز خوب بود</Button>
-                  <Button variant="danger" onClick={() => { save(k, "DISPUTED"); showToast("گزارش شما ثبت شد. غرفه‌دار تا ۱۲ ساعت پاسخ می‌دهد."); }}>
+                  <Button variant="danger" onClick={() => setDisputing(k)}>
                     گزارش مشکل (خراب، کم‌وزن…)
                   </Button>
+                </div>
+              ) : null}
+              {st === "DELIVERED" && disputing === k ? (
+                <DisputeForm
+                  onCancel={() => setDisputing(null)}
+                  onSubmit={(summary) => {
+                    save(k, "DISPUTED");
+                    setDisputing(null);
+                    showToast(`گزارش ثبت شد: ${summary}. غرفه‌دار تا ۱۲ ساعت پاسخ می‌دهد.`);
+                  }}
+                />
+              ) : null}
+              {st === "AWAITING_ACCEPTANCE" ? (
+                <button type="button" className="text-xs font-bold text-danger hover:underline" onClick={() => { save(k, "CANCELLED"); showToast("سفارش این غرفه لغو شد؛ مبلغ آن به کیف پولتان برمی‌گردد."); }}>
+                  لغو سفارش این غرفه (تا پیش از تأیید غرفه‌دار)
+                </button>
+              ) : null}
+              {st === "CANCELLED" ? (
+                <p className="rounded-control bg-surface-2 p-3 text-ink-soft">این بخش لغو شد و مبلغ آن به کیف پول شما برگشت.</p>
+              ) : null}
+              {st === "DELIVERED" || st === "COMPLETED" ? (
+                <div className="flex flex-wrap gap-2">
+                  {s.items.map((it) => (
+                    <Link key={it.packageId} href={`/l/${it.listingId}#reviews`} className="inline-flex items-center gap-1 rounded-full border border-line px-3 py-1.5 text-xs font-bold hover:border-brand hover:text-brand">
+                      <Star className="size-3.5 fill-saffron text-saffron" aria-hidden />
+                      دیدگاه درباره‌ی {listingById(it.listingId)?.title}
+                    </Link>
+                  ))}
                 </div>
               ) : null}
               {st === "DISPUTED" ? (
