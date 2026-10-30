@@ -1,0 +1,16 @@
+{
+  "name": "@nobar/fa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Persian text utilities: normalization, digits, money (Rial/Toman), Jalali dates, amount parsing",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
