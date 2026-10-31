@@ -71,3 +71,11 @@ The «nobar-claude-kit» (modular monolith, `apps/web|seller|admin`, `packages/u
 - `tools/static-export/flatten-segments.mjs` copies Next's nested prefetch files to the dotted names the client requests (static hosts cannot rewrite).
 - One-time setup: the repository must be public (free plan) and **Settings → Pages → Source = GitHub Actions**.
 - Local check: build with the env vars above, copy `apps/web/out` to `<dir>/nobar`, run the flatten script, serve `<dir>` with any static server. In Git Bash set `MSYS_NO_PATHCONV=1` or the base path gets rewritten to a Windows path.
+
+## Storefront visual direction — energetic market
+
+The buyer home page now uses a saffron hero, leaf-green calls to action and a pomegranate-coloured featured rail. Its layout and styles live in `apps/web/app/page.tsx` and the scoped `market.module.css`; other routes retain their existing layouts.
+
+The page prioritises product discovery: quick produce categories, destination-aware new-season and seasonal selections, everyday vegetables, seller discovery, and the seasonal calendar. Featured selections combine new-season items with other in-season products when available. Existing product cards retain quick-add and favourites. No discount percentages, countdowns or delivery guarantees are fabricated. Baghboon remains explicitly labelled as a scripted demo.
+
+Responsive layouts were checked in Chromium at 360, 390, 768 and 1440 pixels, including cart persistence, favourites and navigation to search. Product imagery uses the existing credited demo assets. This iteration covers the buyer home page; search, product details, checkout and the seller/admin panels have not been redesigned.
