@@ -92,7 +92,7 @@ export function BuyBox({ listing, disabled, disabledReason }: { listing: Listing
           }}
         >
           <ShoppingBasket className="size-5" aria-hidden />
-          افزودن به سبد · {formatToman(pkg.priceRial * qty)}
+          افزودن به سبد
         </Button>
       </div>
       {disabled && disabledReason ? <p className="text-sm text-danger">{disabledReason}</p> : null}
