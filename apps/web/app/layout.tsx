@@ -1,5 +1,5 @@
 import { Logo, ProduceDefs } from "@nobar/ui";
-import { ArrowLeft, LayoutGrid, Sprout } from "lucide-react";
+import { ArrowLeft, Sprout } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import Script from "next/script";
