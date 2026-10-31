@@ -1,12 +1,12 @@
-import { CATEGORIES } from "@nobar/demo";
 import { Logo, ProduceDefs } from "@nobar/ui";
-import { ArrowLeft, LayoutGrid, Sprout } from "lucide-react";
+import { ArrowLeft, Sprout } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import Script from "next/script";
 import { Suspense, type ReactNode } from "react";
 import { BottomNav, CompareTray, HeaderActions, SimpleVoiceFab, Toast } from "@/components/chrome";
 import { CityPicker } from "@/components/city-picker";
+import { MegaMenu } from "@/components/mega-menu";
 import { SearchBox } from "@/components/search-box";
 import { SiteFooter } from "@/components/site-footer";
 import { PREFS_BOOT_SCRIPT } from "@/lib/constants";
@@ -54,15 +54,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <HeaderActions />
               </div>
             </div>
-            <nav aria-label="دسته‌بندی اصلی" className="nobar-nav">
-              <div className="mx-auto flex max-w-[1480px] items-center gap-1 overflow-x-auto px-3 sm:px-4">
-                <Link href="/categories" className="nobar-nav-all"><LayoutGrid className="size-4" /> دسته‌بندی کالاها</Link>
+            <nav aria-label="دسته‌بندی اصلی" className="nobar-nav nobar-v3-nav">
+              <div className="mx-auto flex max-w-[1480px] items-center gap-2 overflow-visible px-3 sm:px-4">
+                <MegaMenu />
                 <span className="nobar-nav-divider" />
-                {CATEGORIES.slice(0, 7).map((c) => <Link key={c.id} href={"/search?cat=" + c.id} className="nobar-nav-link">{c.name}</Link>)}
-                <Link href="/season" className="nobar-nav-link">تقویم فصل‌ها</Link>
-                <Link href="/shops" className="nobar-nav-link">غرفه‌ها</Link>
-                <Link href="/search?nobar=1" className="nobar-nav-fresh"><span /> نوبر شد!</Link>
-                <Link href="/baghboon" className="nobar-nav-baghboon"><Sprout className="size-4" /> باغبون</Link>
+                <Link href="/search?nobar=1" className="nobar-v3-nav-link nobar-v3-nav-highlight">نوبرهای تازه</Link>
+                <Link href="/season" className="nobar-v3-nav-link">تقویم فصل‌ها</Link>
+                <Link href="/shops" className="nobar-v3-nav-link">غرفه‌ها</Link>
+                <Link href="/origin/miandoab" className="nobar-v3-nav-link">شهرهای مبدأ</Link>
+                <Link href="/baghboon" className="nobar-v3-nav-link nobar-v3-nav-baghboon"><Sprout className="size-4" /> باغبون</Link>
+                <Link href="/about/sell" className="nobar-v3-nav-seller">فروشنده هستید؟</Link>
               </div>
             </nav>
           </header>

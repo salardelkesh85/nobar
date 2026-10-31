@@ -17,68 +17,80 @@ export interface Slide {
 }
 
 const TONE = {
-  green: "nobar-slide-green",
-  red: "nobar-slide-red",
-  dark: "nobar-slide-dark",
+  green: "nobar-v3-slide-green",
+  red: "nobar-v3-slide-red",
+  dark: "nobar-v3-slide-dark",
 };
 
-/** Editorial, swipeable storefront hero. Keeps the original slide data and navigation contract. */
 export function BannerCarousel({ slides }: { slides: Slide[] }) {
-  const ref = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const touchStart = useRef<number | null>(null);
 
-  const go = (i: number) => {
-    const el = ref.current;
-    if (!el || slides.length === 0) return;
-    const n = (i + slides.length) % slides.length;
-    const direction = getComputedStyle(el).direction === "rtl" ? 1 : -1;
-    el.scrollTo({ left: -n * el.clientWidth * direction, behavior: "smooth" });
-    setIndex(n);
+  const go = (next: number) => {
+    if (!slides.length) return;
+    setIndex((next + slides.length) % slides.length);
   };
 
   useEffect(() => {
     if (paused || slides.length < 2) return;
-    const timer = window.setInterval(() => go(index + 1), 6200);
+    const timer = window.setInterval(() => go(index + 1), 5600);
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, paused, slides.length]);
 
   return (
-    <div className="nobar-hero-carousel" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <div
+      className="nobar-v3-hero-carousel"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onTouchStart={(event) => { touchStart.current = event.touches[0]?.clientX ?? null; }}
+      onTouchEnd={(event) => {
+        if (touchStart.current === null) return;
+        const endX = event.changedTouches[0]?.clientX;
+        if (endX === undefined) return;
+        const delta = endX - touchStart.current;
+        if (Math.abs(delta) > 42) go(index + (delta < 0 ? 1 : -1));
+        touchStart.current = null;
+      }}
+    >
       <div
-        ref={ref}
-        className="nobar-hero-track"
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          if (el.clientWidth > 0) setIndex(Math.min(slides.length - 1, Math.round(Math.abs(el.scrollLeft) / el.clientWidth)));
-        }}
-        aria-roledescription="carousel"
-        aria-label="پیشنهادهای ویژه‌ی نوبر"
+        className="nobar-v3-hero-track"
+        style={{ transform: "translate3d(-" + index * 100 + "%,0,0)" }}
+        aria-live="polite"
+        aria-atomic="true"
       >
         {slides.map((slide, i) => (
-          <Link key={slide.href + i} href={slide.href} className={cn("nobar-hero-slide", TONE[slide.tone])} aria-roledescription="slide" aria-label={`${i + 1} از ${slides.length}: ${slide.title}`}>
-            <Image src={slide.src} alt="" fill priority={i === 0} sizes="(max-width: 1024px) 100vw, 68vw" className="nobar-hero-image" />
-            <span className="nobar-hero-overlay" />
-            <span className="nobar-hero-text">
-              <span className="nobar-hero-eyebrow"><span className="nobar-hero-eyebrow-dot" />{slide.eyebrow}</span>
-              {i === 0 ? <h1 className="nobar-hero-title">{slide.title}</h1> : <h2 className="nobar-hero-title">{slide.title}</h2>}
-              <span className="nobar-hero-copy">{slide.body}</span>
-              <span className="nobar-hero-cta">{slide.cta}<ArrowLeft className="size-4" /></span>
-              <span className="nobar-hero-footnote"><Leaf className="size-4" /> از مبدأ تا مقصد، انتخابی آگاهانه</span>
+          <Link
+            key={slide.href + i}
+            href={slide.href}
+            className={cn("nobar-v3-hero-slide", TONE[slide.tone])}
+            aria-roledescription="slide"
+            aria-label={"اسلاید " + (i + 1) + " از " + slides.length + ": " + slide.title}
+            tabIndex={i === index ? 0 : -1}
+          >
+            <Image src={slide.src} alt="" fill priority={i === 0} sizes="(max-width: 760px) 100vw, (max-width: 1100px) 68vw, 70vw" className="nobar-v3-hero-image" />
+            <span className="nobar-v3-hero-overlay" />
+            <span className="nobar-v3-hero-content">
+              <span className="nobar-v3-hero-eyebrow"><span />{slide.eyebrow}</span>
+              {i === 0 ? <h1 className="nobar-v3-hero-title">{slide.title}</h1> : <h2 className="nobar-v3-hero-title">{slide.title}</h2>}
+              <span className="nobar-v3-hero-copy">{slide.body}</span>
+              <span className="nobar-v3-hero-cta">{slide.cta}<ArrowLeft className="size-4" /></span>
+              <span className="nobar-v3-hero-footnote"><Leaf className="size-4" /> از مبدأ تا مقصد، انتخابی آگاهانه</span>
             </span>
-            <span className="nobar-hero-index">{String(i + 1).padStart(2, "0")} <span>/</span> {String(slides.length).padStart(2, "0")}</span>
+            <span className="nobar-v3-hero-count">{String(i + 1).padStart(2, "0")} <i>/</i> {String(slides.length).padStart(2, "0")}</span>
           </Link>
         ))}
       </div>
-      <div className="nobar-hero-pagination">
+
+      <div className="nobar-v3-hero-pagination">
         {slides.map((slide, i) => (
-          <button key={slide.title} type="button" onClick={() => go(i)} className={cn("nobar-hero-dot", i === index && "is-active")} aria-label={`اسلاید ${i + 1}`} aria-current={i === index} />
+          <button key={slide.title} type="button" onClick={() => go(i)} className={"nobar-v3-hero-dot" + (i === index ? " is-active" : "")} aria-label={"رفتن به اسلاید " + (i + 1)} aria-current={i === index} />
         ))}
       </div>
-      <div className="nobar-hero-controls">
-        <button type="button" onClick={() => go(index - 1)} className="nobar-hero-control" aria-label="اسلاید قبلی"><ChevronRight className="size-5" /></button>
-        <button type="button" onClick={() => go(index + 1)} className="nobar-hero-control" aria-label="اسلاید بعدی"><ChevronLeft className="size-5" /></button>
+      <div className="nobar-v3-hero-controls">
+        <button type="button" onClick={() => go(index - 1)} className="nobar-v3-hero-control" aria-label="اسلاید قبلی"><ChevronRight className="size-5" /></button>
+        <button type="button" onClick={() => go(index + 1)} className="nobar-v3-hero-control" aria-label="اسلاید بعدی"><ChevronLeft className="size-5" /></button>
       </div>
     </div>
   );
