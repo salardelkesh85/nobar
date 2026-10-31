@@ -26,7 +26,7 @@ function Newsletter() {
   return (
     <form className="flex gap-2" onSubmit={(e) => {
       e.preventDefault();
-      if (!/^\\S+@\\S+\\.\\S+$/.test(email.trim())) return showToast("ایمیل درست نیست.");
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) return showToast("ایمیل درست نیست.");
       setEmail("");
       showToast("عضو خبرنامه شدید؛ نوبرهای هر فصل را خبرتان می‌کنیم.");
     }}>
