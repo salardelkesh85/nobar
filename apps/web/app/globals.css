@@ -1,2 +1,14 @@
 @import "tailwindcss";
 @import "@nobar/ui/theme.css";
+
+/* Storefront polish — preserve Nobar's established visual identity. */
+.nobar-section {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: 0 2px 12px rgb(16 24 20 / 0.035);
+}
+@media (hover: hover) {
+  .nobar-section a:focus-visible { outline-offset: 3px; }
+}
