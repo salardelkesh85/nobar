@@ -146,7 +146,7 @@ function OriginDiscovery({ origins }: { origins: { cityId: string; count: number
               <strong>{cityName(origin.cityId)}</strong>
               <i>{origin.count.toLocaleString("fa-IR")} محصول در بازار <ArrowLeft className="size-4" /></i>
             </span>
-            <span className="nobar-v4-origin-index">۰{index + ۱}</span>
+            <span className="nobar-v4-origin-index">{"۰" + (index + 1).toLocaleString("fa-IR")}</span>
           </Link>
         ))}
       </div>
