@@ -47,8 +47,10 @@ export function BannerCarousel({ slides }: { slides: Slide[] }) {
       onTouchStart={(event) => { touchStart.current = event.touches[0]?.clientX ?? null; }}
       onTouchEnd={(event) => {
         if (touchStart.current === null) return;
-        const delta = event.changedTouches[0]?.clientX - touchStart.current;
-        if (typeof delta === "number" && Math.abs(delta) > 42) go(index + (delta < 0 ? 1 : -1));
+        const endX = event.changedTouches[0]?.clientX;
+        if (endX === undefined) return;
+        const delta = endX - touchStart.current;
+        if (Math.abs(delta) > 42) go(index + (delta < 0 ? 1 : -1));
         touchStart.current = null;
       }}
     >
