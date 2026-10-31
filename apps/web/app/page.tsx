@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BannerCarousel, type Slide } from "@/components/banner-carousel";
 import { ListingRail } from "@/components/listing-card";
+import { NobarFreshCarousel } from "@/components/nobar-fresh-carousel";
 import { Photo } from "@/components/photo";
 import { bannerSrc } from "@/lib/photos";
 import { useStore } from "@/lib/store";
@@ -244,7 +245,7 @@ export default function HomePage() {
             </div>
             <Link href="/search?nobar=1" className="nobar-fresh-link">همه‌ی نوبرها <ArrowLeft className="size-4" /></Link>
           </div>
-          <div className="nobar-fresh-rail"><ListingRail hits={weekly} /></div>
+          <div className="nobar-fresh-rail"><NobarFreshCarousel hits={weekly} /></div>
         </section>
       ) : null}
 
