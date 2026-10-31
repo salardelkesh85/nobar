@@ -59,7 +59,6 @@ export default function HomePage() {
   const seasonalHits = all.filter((hit) => inSeason(hit.type, month) && !nobarIds.has(hit.listing.id));
   const specialHits = [...nobarHits, ...seasonalHits].slice(0, 4);
   const byCat = (categoryId: string) => all.filter((hit) => hit.type.categoryId === categoryId);
-  const quickTypes = PRODUCE_TYPES.filter((type) => LISTINGS.some((listing) => listing.produceTypeId === type.id)).slice(0, 10);
   const topShops = [...SHOPS].sort((a, b) => ratingBayes(b) - ratingBayes(a)).slice(0, 4);
 
   const slides: Slide[] = [
