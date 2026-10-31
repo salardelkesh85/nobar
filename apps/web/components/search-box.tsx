@@ -45,7 +45,7 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
         onFocus={() => setFocused(true)}
         onBlur={() => window.setTimeout(() => setFocused(false), 150)}
         placeholder="دنبال چه طعمی هستی؟ مثلاً انار ساوه"
-        className={cn(inputClass, "nobar-search-input min-h-12 border-transparent bg-surface-2 ps-12 pe-4 shadow-none focus:bg-surface")}
+        className={cn(inputClass, "nobar-search-input min-h-12 border-transparent bg-surface-2 ps-12 pe-20 shadow-none focus:bg-surface")}
         role="combobox"
         aria-expanded={items.length > 0}
         aria-controls={listId}
