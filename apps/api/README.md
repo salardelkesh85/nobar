@@ -7,7 +7,7 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 | Module | Schema | Status |
 |---|---|---|
 | identity: OTP sign-in, sessions, profile, addresses | `identity` | done |
-| catalog: produce types, shops, listings, stock | `catalog` | next |
+| catalog: categories, produce types, shops, listings; search, comparison, delivery quotes | `catalog` | read side done; seller writes next |
 | order: cart, checkout, per-shop orders | `ordering` | planned |
 | payment: escrow, ledger, payouts | `payment` | planned |
 
@@ -38,6 +38,7 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
 | `JWT_PRIVATE_JWK` | generated in dev | ES256 private key (JSON); required in production |
 | `ACCESS_TTL_SEC` / `REFRESH_TTL_DAYS` | `900` / `30` | |
 | `SMS_PROVIDER` | `console` | `kavenegar` in production (`KAVENEGAR_API_KEY`, `KAVENEGAR_TEMPLATE`) |
+| `SEED_DEMO` | on outside production | import the demo catalog into an empty database |
 | `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | `pretty` for local reading |
 
 ## Design notes
@@ -48,6 +49,12 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
   token ends the whole session family.
 - **Migrations** are plain SQL embedded in TypeScript (`modules/*/migrations.ts`) instead of TypeORM or
   Prisma: the same SQL runs on PGlite and PostgreSQL, survives bundling into one file, and keeps the queries visible.
+- **Catalog rules** come from [`packages/domain`](../../packages/domain), the same code the static store runs
+  on its demo data, so freshness, delivery options and landed prices agree between the site and the API
+  (checked by `test/catalog.test.ts`). The service keeps a snapshot of the `catalog` schema for 30 s and
+  refreshes it after writes; search can move to OpenSearch later behind the same endpoints.
+- **Demo catalog**: with `SEED_DEMO` on (default outside production) an empty database gets the
+  `packages/demo` catalog on start.
 - **Events**: `user.registered` and `user.updated` are written to the outbox in the same transaction as the change.
 
 ## Container

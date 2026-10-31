@@ -1,6 +1,9 @@
 import { Module } from "@nestjs/common";
 import { allowOrigins, JwtVerifier, type ServiceDefinition } from "@nobar/common";
-import { type ApiConfig, apiConfigSchema, assertProductionConfig } from "./config";
+import { type ApiConfig, apiConfigSchema, assertProductionConfig, seedDemoEnabled } from "./config";
+import { CatalogModule } from "./modules/catalog/catalog.module";
+import { CatalogService } from "./modules/catalog/catalog.service";
+import { catalogMigrations } from "./modules/catalog/migrations";
 import { IdentityModule } from "./modules/identity/identity.module";
 import { KeyStore } from "./modules/identity/keys";
 import { identityMigrations } from "./modules/identity/migrations";
@@ -15,7 +18,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
   return {
     name: "api",
     configSchema: apiConfigSchema,
-    migrations: [...identityMigrations],
+    migrations: [...identityMigrations, ...catalogMigrations],
     // the API verifies its own tokens with the identity module's keys (no JWKS round trip)
     async verifier({ config }) {
       assertProductionConfig(config);
@@ -24,8 +27,16 @@ export function apiService(): ServiceDefinition<ApiConfig> {
     },
     module: (deps) => ({
       module: ApiModule,
-      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) })],
+      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), CatalogModule],
     }),
     configure: ({ app, deps }) => allowOrigins(app, deps.config.CORS_ORIGINS.split(",")),
+    async onStart({ app, deps }) {
+      if (!seedDemoEnabled(deps.config)) return;
+      // the same sample catalog as the static demo site, so both show the same shops and listings
+      await app.get(CatalogService).seedIfEmpty(async () => {
+        const demo = await import("@nobar/demo");
+        return { categories: demo.CATEGORIES, types: demo.PRODUCE_TYPES, shops: demo.SHOPS, listings: demo.LISTINGS };
+      });
+    },
   };
 }

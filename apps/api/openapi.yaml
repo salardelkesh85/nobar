@@ -161,3 +161,69 @@ paths:
     delete:
       summary: Remove an address
       responses: { "204": { description: Removed }, "404": { $ref: "#/components/responses/Problem" } }
+  # ---------- catalog (public; `dest` is a destination city id, default tehran)
+  /v1/catalog/categories:
+    get: { security: [], summary: Categories, responses: { "200": { description: Categories } } }
+  /v1/catalog/produce-types:
+    get: { security: [], summary: Produce types with season and market statistics, responses: { "200": { description: Produce types } } }
+  /v1/catalog/produce-types/{id}/candidates:
+    get:
+      security: []
+      summary: Cheapest deliverable listing ids of one produce type
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: dest, in: query, schema: { type: string } }
+        - { name: grams, in: query, schema: { type: integer, minimum: 250, maximum: 50000, default: 5000 } }
+      responses: { "200": { description: Listing ids }, "404": { $ref: "#/components/responses/Problem" } }
+  /v1/shops:
+    get:
+      security: []
+      summary: Active shops
+      parameters: [{ name: city, in: query, schema: { type: string } }]
+      responses: { "200": { description: Shop cards } }
+  /v1/shops/{slug}:
+    get:
+      security: []
+      summary: One shop with its published listings
+      parameters: [{ name: slug, in: path, required: true, schema: { type: string } }]
+      responses: { "200": { description: Shop }, "404": { $ref: "#/components/responses/Problem" } }
+  /v1/listings/{slug}:
+    get:
+      security: []
+      summary: Listing with freshness, delivery options to `dest`, market statistic and price position
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: dest, in: query, schema: { type: string } }
+      responses: { "200": { description: Listing detail }, "404": { $ref: "#/components/responses/Problem" } }
+  /v1/search:
+    get:
+      security: []
+      summary: Persian search over deliverable listings (landed price to `dest`)
+      parameters:
+        - { name: dest, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: category, in: query, schema: { type: string } }
+        - { name: produceType, in: query, schema: { type: string } }
+        - { name: originProvince, in: query, schema: { type: string } }
+        - { name: shopId, in: query, schema: { type: string } }
+        - { name: organic, in: query, schema: { type: boolean } }
+        - { name: freshOnly, in: query, schema: { type: boolean } }
+        - { name: nobarOnly, in: query, schema: { type: boolean } }
+        - { name: sort, in: query, schema: { enum: [relevance, landed, freshness, newest, rating] } }
+      responses: { "200": { description: Hits and the listings that cannot reach `dest` }, "400": { $ref: "#/components/responses/Problem" } }
+  /v1/compare:
+    get:
+      security: []
+      summary: Compare up to 4 listings by landed price per kg, freshness on arrival, rating and speed
+      parameters:
+        - { name: ids, in: query, required: true, schema: { type: string, description: comma separated listing ids } }
+        - { name: dest, in: query, schema: { type: string } }
+        - { name: grams, in: query, schema: { type: integer, default: 5000 } }
+        - { name: preset, in: query, schema: { enum: [balanced, budget, freshest, fastest], default: balanced } }
+      responses: { "200": { description: Ranked offers with badges, and excluded listings }, "400": { $ref: "#/components/responses/Problem" } }
+  /v1/suggest:
+    get:
+      security: []
+      summary: Autocomplete over produce types
+      parameters: [{ name: q, in: query, schema: { type: string } }]
+      responses: { "200": { description: Produce types } }

@@ -102,5 +102,5 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 | P1 monorepo skeleton | Done | pnpm + Turborepo; shared runtime in `packages/common`; no Docker needed (PGlite) |
 | Frontend (store, seller, admin) | Done | Static demo on GitHub Pages; rules in `packages/demo` with unit tests |
 | P2 identity | Done | `apps/api` identity module: OTP, rotating sessions, profile, addresses; 21 integration tests |
-| P3 catalog and shops | Next | Move the `packages/demo` rules into a shared domain package used by both sides |
+| P3 catalog and shops | In progress | Rules shared in `packages/domain`; catalog read API done (search, compare, delivery); seller writes next |
 | Checkout and escrow | Waiting | Needs the owner's answer to Q1 (one payment per cart or per seller) |

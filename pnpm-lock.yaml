@@ -71,6 +71,15 @@ importers:
       '@nobar/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@nobar/demo':
+        specifier: workspace:*
+        version: link:../../packages/demo
+      '@nobar/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@nobar/fa':
+        specifier: workspace:*
+        version: link:../../packages/fa
       fastify:
         specifier: ^5.6.0
         version: 5.11.3
@@ -277,6 +286,9 @@ importers:
       '@nobar/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@nobar/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@nobar/fa':
         specifier: workspace:*
         version: link:../fa
@@ -287,6 +299,19 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.32.0)
+
+  packages/domain:
+    dependencies:
+      '@nobar/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@nobar/fa':
+        specifier: workspace:*
+        version: link:../fa
+    devDependencies:
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
 
   packages/fa:
     devDependencies:

@@ -21,11 +21,17 @@ export const apiConfigSchema = baseConfigSchema.extend({
   SMS_PROVIDER: z.enum(["console", "kavenegar"]).default("console"),
   KAVENEGAR_API_KEY: z.string().optional(),
   KAVENEGAR_TEMPLATE: z.string().default("nobar-otp"),
+
+  // catalog
+  /** import the demo catalog (packages/demo) into an empty database; on by default outside production */
+  SEED_DEMO: flag,
 });
 
 export type ApiConfig = z.infer<typeof apiConfigSchema>;
 
 export const otpEchoEnabled = (c: ApiConfig) => (c.OTP_ECHO ? c.OTP_ECHO === "true" : c.NODE_ENV !== "production");
+
+export const seedDemoEnabled = (c: ApiConfig) => (c.SEED_DEMO ? c.SEED_DEMO === "true" : c.NODE_ENV !== "production");
 
 export function assertProductionConfig(c: ApiConfig): void {
   if (c.NODE_ENV !== "production") return;
