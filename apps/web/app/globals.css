@@ -583,3 +583,15 @@
 }
 
 .nobar-footer-logo { --brand-strong: #14532d; --brand: #2e7d32; --ink-soft: #647469; }
+
+.nobar-city-picker-compact { min-height: 39px; gap: 0.3rem; padding-inline: 0.65rem; font-size: 0.69rem; }
+.nobar-city-picker-compact > svg { width: 0.9rem; height: 0.9rem; }
+@media (max-width: 1100px) {
+  .nobar-header-main { flex-wrap: wrap; }
+  .nobar-header-tools { width: 100%; justify-content: space-between; }
+  .nobar-search-shell { flex: 1 1 360px; }
+}
+@media (max-width: 760px) {
+  .nobar-header-main { gap: 0.65rem 0.9rem; }
+  .nobar-header-tools { min-height: 40px; }
+}
