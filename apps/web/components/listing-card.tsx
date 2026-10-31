@@ -1,6 +1,6 @@
 import { cityName, isNobar, minPricePerKg, type SearchHit } from "@nobar/demo";
 import { cn, Toman } from "@nobar/ui";
-import { BadgeCheck, Heart, MapPin, Star } from "lucide-react";
+import { BadgeCheck, MapPin, Star } from "lucide-react";
 import Link from "next/link";
 import { CompareToggle, FavoriteToggle, QuickAdd } from "./actions";
 import { Photo } from "./photo";
