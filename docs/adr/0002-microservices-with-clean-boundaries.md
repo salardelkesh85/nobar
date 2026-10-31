@@ -1,6 +1,6 @@
 # 0002. Microservices with clean boundaries (vs. modular monolith)
 
-- Status: Proposed
+- Status: Superseded by [0008](0008-modular-monolith-first.md)
 - Date: 2026-10-22
 
 ## Context

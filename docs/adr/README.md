@@ -5,12 +5,13 @@ Each ADR records one significant decision: the context, the options we weighed, 
 | # | Title | Status |
 |---|---|---|
 | [0001](0001-monorepo-pnpm-turborepo.md) | Monorepo with pnpm workspaces and Turborepo | Proposed |
-| [0002](0002-microservices-with-clean-boundaries.md) | Microservices with clean boundaries (vs. modular monolith) | Proposed |
+| [0002](0002-microservices-with-clean-boundaries.md) | Microservices with clean boundaries (vs. modular monolith) | Superseded by 0008 |
 | [0003](0003-nestjs-for-domain-services-fastapi-for-ai.md) | NestJS for domain services, Python/FastAPI for AI workers | Proposed |
 | [0004](0004-event-bus-nats-jetstream.md) | Event bus: NATS JetStream (vs. Kafka) | Proposed — **needs confirmation** |
 | [0005](0005-postgresql-database-per-service.md) | PostgreSQL with a database per service | Proposed |
 | [0006](0006-pgvector-for-vector-search.md) | pgvector first for vector search, Qdrant later | Proposed |
-| [0007](0007-api-gateway-kong-plus-bff.md) | API Gateway: Kong (DB-less) + NestJS BFF | Proposed |
+| [0007](0007-api-gateway-kong-plus-bff.md) | API Gateway: Kong (DB-less) + NestJS BFF | Proposed — deferred by 0008 |
+| [0008](0008-modular-monolith-first.md) | Modular monolith first (supersedes 0002) | Accepted |
 
 Statuses: Proposed → Accepted → (Deprecated | Superseded by NNNN).
 

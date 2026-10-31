@@ -1,11 +1,12 @@
 # Nobar — Architecture
 
 > Status: **Draft for approval** · Last updated: 2026-10-22
+> **2026-10-31:** the backend is now a modular monolith ([ADR 0008](adr/0008-modular-monolith-first.md)) and the marketplace is nationwide. The service split below becomes the module split inside `apps/api`; each "database per service" becomes a schema per module.
 > Source brief: [brief/nobar-architecture-brief.fa.md](brief/nobar-architecture-brief.fa.md) · Decisions: [adr/](adr/README.md) · Domain: [domain.md](domain.md)
 
 ## 1. Goals and quality attributes
 
-Nobar connects local sellers (farmers, orchard owners, stall owners) with buyers **in the same city**.
+Nobar connects local sellers (farmers, orchard owners, stall owners) with buyers **across Iran** (nationwide since 2026-10-31; delivery is limited by freshness on arrival).
 The goods are perishable, so the architecture is optimized for:
 
 | Quality attribute | What it means for Nobar | Primary mechanisms |

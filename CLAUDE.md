@@ -1,34 +1,40 @@
 # Nobar (نوبر) — Project Rules
 
 ## What this is
-Nobar is a multi-vendor marketplace for fruits and vegetables in Iran. Sellers
-(farmers, orchard owners, stall owners) in each city sell directly to buyers in
-the same city. Brand tagline: "From orchard to table". The platform includes an
+Nobar is a nationwide multi-vendor marketplace for fruits and vegetables in Iran.
+Sellers (farmers, orchard owners, stall owners) in any city sell directly to
+buyers across Iran; a listing is offered to a destination only if it arrives
+fresh (see packages/demo rules). Pilot region: West Azerbaijan (Miandoab, Urmia). Brand tagline: "From orchard to table". The platform includes an
 AI shopping assistant, smart search, product comparison, recommendations, and a
 seller copilot.
 
 ## Architecture
-- Monorepo: /services/*, /apps/*, /packages/*, /infra/*, /docs/*
-- Microservices (NestJS + TypeScript) except AI workers (Python + FastAPI)
-- Database per service (PostgreSQL), no cross-service DB access
-- Events via Kafka (or NATS); use the Outbox pattern; events are versioned
-- API Gateway as the single public entrypoint
-- Cloud-native: every service is containerized, stateless, has health endpoints
-  (/healthz, /readyz), structured JSON logs, OpenTelemetry tracing, and /metrics
+- Monorepo: /apps/*, /packages/*, /services/* (AI workers), /infra/*, /docs/*
+- Modular monolith (ADR 0008): one NestJS app `apps/api`, one module per bounded
+  context under `apps/api/src/modules/*`; AI workers stay Python + FastAPI
+- One PostgreSQL database, one schema per module; a module never touches another
+  module's tables (use its exported service or its events)
+- Embedded PGlite when DATABASE_URL is unset (dev/tests); same SQL migrations
+- Events via the Outbox pattern, in-memory bus in one process (NATS optional);
+  events are versioned
+- `apps/api` is the single public entrypoint
+- Cloud-native: containerized, stateless, health endpoints (/healthz, /readyz),
+  structured JSON logs, tracing, and /metrics
 
 ## Conventions
 - TypeScript strict mode; ESLint + Prettier; no `any`
 - Python: type hints, ruff, mypy, pytest
 - Conventional Commits; small focused commits
-- Every service: README, OpenAPI spec, Dockerfile (multi-stage, non-root), Helm chart
+- Every deployable: README, OpenAPI spec, Dockerfile (multi-stage, non-root), Helm chart
 - Config only via environment variables; never commit secrets
 - Money is stored as integers in Rial; never floats
 - Dates stored in UTC; UI shows Jalali calendar and Asia/Tehran timezone
 - UI is Persian-first: RTL, Vazirmatn font, Persian digits in display
 
 ## Testing
-- Unit tests for domain logic; integration tests with Testcontainers
-- Contract tests between services
+- Unit tests for domain logic; integration tests against embedded PGlite
+  (Testcontainers + real PostgreSQL in CI once Docker is available)
+- Contract tests between modules' public interfaces and with the frontends
 - AI features must have eval cases under /services/ai/evals (Persian prompts)
 - Do not mark a task done until tests and lint pass
 
