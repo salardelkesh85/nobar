@@ -581,3 +581,5 @@
   .nobar-shop-grid { grid-template-columns: minmax(0, 1fr); }
   .nobar-footer-grid { font-size: 0.76rem; }
 }
+
+.nobar-footer-logo { --brand-strong: #14532d; --brand: #2e7d32; --ink-soft: #647469; }
