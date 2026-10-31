@@ -1,5 +1,5 @@
 import { Logo, ProduceDefs } from "@nobar/ui";
-import { ArrowLeft, Sprout } from "lucide-react";
+import { Sprout } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import Script from "next/script";
@@ -19,7 +19,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { PREFS_BOOT_SCRIPT } from "@/lib/constants";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
-import "./studio.css";
+import "./nobar.css";
 
 export const metadata: Metadata = {
   title: { default: "نوبر — خرید تازه، مستقیم از باغ", template: "%s | نوبر" },
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: light)", color: "#fafbf6" },
     { media: "(prefers-color-scheme: dark)", color: "#101c15" },
   ],
   width: "device-width",
@@ -54,50 +54,38 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             رفتن به محتوای اصلی
           </a>
           <header className="studio-header sticky top-0 z-30">
-            <div className="studio-announcement">
-              <span>فصل عوض می‌شود؛ طعم خوب می‌ماند.</span>
-              <Link href="/season">
-                کشف طعم‌های فصل <ArrowLeft size={13} />
-              </Link>
-            </div>
             <div className="studio-header-main">
               <Link
                 href="/"
                 aria-label="نوبر — صفحهٔ اصلی"
                 className="studio-brand"
               >
-                <Logo subtitle="از باغ، برای زندگی" />
+                <Logo subtitle="خوب بخور، تازه زندگی کن" />
               </Link>
-              <Suspense
-                fallback={<div className="studio-search-placeholder" />}
-              >
-                <SearchBox className="studio-header-search" />
-              </Suspense>
+              <nav className="nobar-desktop-links" aria-label="کشف نوبر">
+                <Link href="/search">بازار تازه‌ها</Link>
+                <Link href="/shops">آدم‌ها و غرفه‌ها</Link>
+                <Link href="/season">به وقت فصل</Link>
+                <Link href="/about">قصهٔ نوبر</Link>
+              </nav>
               <div className="studio-header-actions">
-                <CityPicker compact />
                 <HeaderActions />
               </div>
             </div>
-            <nav aria-label="دسته‌بندی اصلی" className="studio-navigation">
+            <div className="studio-navigation">
               <div>
                 <MegaMenu />
-                <span className="studio-nav-separator" />
-                <Link href="/search?nobar=1" className="studio-nav-fresh">
-                  <span /> نوبرهای تازه
-                </Link>
-                <Link href="/shops">غرفه‌گردی</Link>
-                <Link href="/season">تقویم فصل‌ها</Link>
-                <Link href="/origin/miandoab" className="studio-nav-origin">
-                  کشف مبدأها
-                </Link>
+                <Suspense
+                  fallback={<div className="studio-search-placeholder" />}
+                >
+                  <SearchBox className="studio-header-search" />
+                </Suspense>
+                <CityPicker compact />
                 <Link href="/baghboon" className="studio-nav-assistant">
-                  <Sprout size={16} /> از باغبون بپرس
-                </Link>
-                <Link href="/about/sell" className="studio-nav-sell">
-                  غرفه‌دار شو <ArrowLeft size={14} />
+                  <Sprout size={17} /> از باغبون بپرس
                 </Link>
               </div>
-            </nav>
+            </div>
           </header>
           <main id="main" className="studio-main">
             <PageFrame>{children}</PageFrame>

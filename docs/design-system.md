@@ -1,6 +1,8 @@
-# Nobar — Orchard Studio
+# Nobar — Fresh
 
-The current frontend direction is a contemporary Persian marketplace: warm neutral space, generous product imagery, considered typography, and restrained colour. Forest green is the main action colour, pomegranate identifies new-season discovery, and saffron supports seasonal editorial content. Colourful market sections remain on the home page; product and checkout pages are quieter.
+The owner requested a completely new visual proposal, keeping the prior storefront recoverable. Fresh is an editorial Persian produce market: ivory canvas, charcoal type and panels, vivid lime accents, oversized photography and open product cards. The new layout replaces the previous yellow hero and berry carousel.
+
+The previous published design is preserved at commit `9b902a3` on `backup/orchard-studio-9b902a3`. If the owner requests rollback, revert the Fresh redesign in a new commit, validate, and publish to `main`. Do not force-push or discard unrelated later changes.
 
 ## References actually inspected
 
@@ -14,8 +16,8 @@ Direct access to Aesop, Linear, Apple, Digikala and Snapp Market was blocked by 
 
 - Shared colours, radii, typography and component styles: `packages/ui/src/theme.css`.
 - Shared buttons, cards, inputs, empty states, stats and section headings: `packages/ui/src/primitives.tsx`.
-- Existing self-hosted Vazirmatn Nobar font. Display weights 700–800; normal content 400–600. No external font requests.
-- Warm canvas, white surfaces, quiet borders; shadows reserved for overlays. Card radius 20px, control radius 12px. Main action height 44–52px.
+- Existing self-hosted Vazirmatn Nobar font. Display weights 700–900; normal content 400–600. No external font requests.
+- Ivory canvas, white surfaces, quiet borders; charcoal/lime brand compositions. Open product cards use 20px image corners; action controls are rounded with 44–58px targets. Accent backgrounds have fixed dark foregrounds in light and dark modes.
 - Logical direction and RTL throughout. Numeric money stays integer Rial in data; display stays Persian Toman. No fabricated discounts, stock counters, timers or delivery promises.
 - Explicit/system dark mode and reduced motion remain supported. Existing simple mode remains available.
 
@@ -23,11 +25,11 @@ Direct access to Aesop, Linear, Apple, Digikala and Snapp Market was blocked by 
 
 | Family | Composition |
 | --- | --- |
-| Home | Saffron image hero, produce categories, pomegranate featured rail, destination-aware seasonal selections, origin story, seller discovery |
-| Search | Quiet filter sidebar, sorting strip, separate product cards; native filter dialog on mobile |
-| Product | Large gallery, readable details/specifications, separate purchase panel, related products, story/reviews and Q&A |
-| Produce | Soft branded introduction, product image and season badges, comparable offers |
-| Shops | Editorial introduction and image-led seller cards with location, rating and story |
+| Home | Oversized two-line headline, arch-shaped citrus photograph, four collections, open product rails, harvest story, seller list and season/assistant cards |
+| Search | Contained filter sidebar, sorting strip, three-column desktop catalogue with larger borderless cards; native filter dialog on mobile |
+| Product | Two-column desktop composition: large sticky gallery, details and purchase panel in one column; stacked mobile purchase flow, related products, story/reviews and Q&A |
+| Produce | Neutral introduction with arched produce image, season badges and comparable offers |
+| Shops | Large editorial title, lime count medallion, open image-led seller cards with location, rating and story |
 | Shop/origin | Large origin imagery, identity and facts, products and producer story |
 | Categories | Category jump links, numbered sections, produce tiles, origin discovery |
 | Season/compare | Readable data with bounded horizontal table regions where needed; comparison cards and priorities |
@@ -36,9 +38,9 @@ Direct access to Aesop, Linear, Apple, Digikala and Snapp Market was blocked by 
 | Login | Focused form card, clear phone/code/name steps, demo-auth disclosure |
 | Baghboon | Calm chat surface, clear input and proposal actions; scripted demo remains labelled |
 | Help/policies | Quiet side navigation and readable article layout |
-| Seller/staff | Shared workspace topbar/sidebar, soft active navigation, consistent metrics, forms and scrollable tables |
+| Seller/staff | Charcoal navigation, lime active states, spacious shared metrics, forms and bounded tables |
 
-Buyer composition lives in `apps/web/app/studio.css`, with route context in `components/page-frame.tsx` and reusable editorial introductions in `components/page-intro.tsx`. The home keeps its scoped `market.module.css`. Operational shells share the `studio-workspace` styles from the UI package.
+Buyer composition lives in `apps/web/app/nobar.css`, with route context in `components/page-frame.tsx` and reusable editorial introductions in `components/page-intro.tsx`. The home keeps its scoped `fresh.module.css`. Operational shells share the `studio-workspace` styles from the UI package. Existing `studio-*` structural hooks are intentionally retained for route integration; they now receive Fresh styling. Header navigation and search occupy separate rows, and the dark footer uses a new composition. The accent button treatment is shared by all three apps.
 
 ## Interaction details
 
@@ -52,6 +54,6 @@ Validate all three frontends with `pnpm typecheck:frontends`, the shared rules w
 
 The 64 existing tests, full type check, RTL lint and all three static exports passed. The assembled `/nobar/` artifact was served locally: 11 representative routes, image navigation, cart hydration, panel-to-store links and requested assets passed.
 
-Browser checks cover 46 routes: every static buyer, seller and staff route plus representative product, produce, shop and origin routes at 390px and 1440px. Additional focused checks cover narrow mobile/tablet layouts, cart/address persistence, favourites, filter reset and dismissal, gallery dismissal, keyboard suggestions, city selection and dark/reduced-motion rendering. These are local browser checks, not production service validation.
+Browser checks cover 46 routes: every static buyer, seller and staff route plus representative product, produce, shop and origin routes at 390px and 1440px. Additional focused checks cover narrow mobile/tablet layouts, cart/address persistence, favourites, filter reset and dismissal, gallery dismissal, keyboard suggestions, city selection and dark/reduced-motion rendering. Fresh also received visual review in light/dark modes after scrolling to load images. These are local browser checks, not production service validation.
 
 The user requested publishing frontend changes after validation. Push the reviewed change to `main` and verify the existing **Deploy demo to GitHub Pages** workflow completes successfully. Buyer: `/nobar/`; seller: `/nobar/seller/`; staff: `/nobar/admin/`. Do not describe a push as a completed deployment until the Pages job succeeds.

@@ -439,8 +439,8 @@
 .nobar-product-actions { position: absolute; top: 9px; inset-inline-end: 9px; z-index: 12; display: flex; flex-direction: column; gap: 6px; }
 .nobar-icon-action { display: grid !important; width: 33px !important; height: 33px !important; place-items: center; padding: 0 !important; border: 1px solid rgb(24 55 32 / 0.1) !important; border-radius: 50% !important; background: rgb(255 255 255 / 0.94) !important; color: #647469 !important; box-shadow: 0 4px 13px rgb(0 0 0 / 0.08); backdrop-filter: blur(8px); }
 .nobar-icon-action:hover { border-color: rgb(169 47 56 / 0.2) !important; color: #a92f38 !important; }
-.nobar-quick-add { position: absolute; inset-inline-end: 9px; bottom: 9px; z-index: 12; width: 38px !important; height: 38px !important; border: 1px solid rgb(255 255 255 / 0.75) !important; background: #fff !important; color: #1d6337 !important; box-shadow: 0 6px 18px rgb(0 0 0 / 0.13) !important; }
-.nobar-quick-add:hover { background: #1e6b3a !important; color: #fff !important; }
+.nobar-quick-add { position: absolute; inset-inline-end: 9px; bottom: 9px; z-index: 12; width: 38px; height: 38px; border: 1px solid rgb(255 255 255 / 0.75); background: #fff; color: #1d6337; box-shadow: 0 6px 18px rgb(0 0 0 / 0.13); }
+.nobar-quick-add:hover { background: #1e6b3a; color: #fff; }
 .nobar-product-info { min-width: 0; padding: 0.75rem 0.15rem 0; }
 .nobar-product-shop { display: inline-flex; min-width: 0; align-items: center; gap: 0.25rem; color: var(--ink-soft); font-size: 0.64rem; font-weight: 800; }
 .nobar-product-shop svg { color: var(--brand); }

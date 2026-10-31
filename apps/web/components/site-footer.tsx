@@ -1,5 +1,4 @@
-import { Logo } from "@nobar/ui";
-import { ArrowLeft, ArrowUpLeft, Leaf } from "lucide-react";
+import { ArrowUpLeft, Sprout } from "lucide-react";
 import Link from "next/link";
 
 const COLUMNS: Array<[string, Array<[string, string]>]> = [
@@ -34,22 +33,37 @@ const COLUMNS: Array<[string, Array<[string, string]>]> = [
 
 export function SiteFooter() {
   return (
-    <footer className="studio-footer">
-      <div className="studio-footer-inner">
-        <div className="studio-footer-invitation">
+    <footer className="fresh-footer">
+      <div className="fresh-footer-top">
+        <div>
           <span>
-            <Leaf size={18} /> از باغ، برای زندگی
+            <Sprout size={20} /> یک بازار، هزار قصهٔ تازه
           </span>
           <h2>
-            طعم خوب، آدم‌ها را
+            به یک زندگی تازه‌تر،
             <br />
-            به هم نزدیک می‌کند.
+            سلام کن.
           </h2>
-          <Link href="/about">
-            قصهٔ نوبر را بخوان <ArrowUpLeft size={19} />
+        </div>
+        <Link href="/search">
+          از بازار شروع کن <ArrowUpLeft size={25} />
+        </Link>
+      </div>
+      <div className="fresh-footer-body">
+        <div className="fresh-footer-note">
+          <span className="fresh-footer-word">
+            نوبر<span aria-hidden>✳</span>
+          </span>
+          <p>
+            از خاک خوب، به حال خوب.
+            <br />
+            بازار آنلاین میوه و سبزی، با شناخت آدم‌ها و مبدأها.
+          </p>
+          <Link href="/about/sell">
+            محصولت را به سفره‌های بیشتری برسان <ArrowUpLeft size={17} />
           </Link>
         </div>
-        <div className="studio-footer-links">
+        <div className="fresh-footer-links">
           {COLUMNS.map(([title, links]) => (
             <div key={title}>
               <h3>{title}</h3>
@@ -63,20 +77,9 @@ export function SiteFooter() {
             </div>
           ))}
         </div>
-        <div className="studio-footer-seller">
-          <Logo subtitle="بازار تازهٔ ایران" />
-          <p>
-            محصول خوبت را
-            <br />
-            به سفره‌های بیشتری برسان.
-          </p>
-          <Link href="/about/sell">
-            غرفه‌دار نوبر شو <ArrowLeft size={16} />
-          </Link>
-        </div>
       </div>
-      <div className="studio-footer-bottom">
-        <span>© ۱۴۰۵ نوبر · با سلیقه، برای تازگی</span>
+      <div className="fresh-footer-bottom">
+        <span>© ۱۴۰۵ نوبر · خوب بخور، تازه زندگی کن</span>
         <span>
           نسخهٔ نمایشی · داده‌ها و عکس‌ها نمونه‌اند؛ پرداخت واقعی انجام نمی‌شود.
         </span>
