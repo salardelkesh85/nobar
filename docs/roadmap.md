@@ -98,5 +98,9 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 
 | Step | Status | Notes |
 |---|---|---|
-| P0 docs & ADRs | In review | Awaiting owner approval and answers to ADR-0004 and Q1–Q12 |
-| P1 monorepo skeleton | Not started | Needs pnpm + Docker installed |
+| P0 docs & ADRs | Done | ADR 0008 (2026-10-31): modular monolith, nationwide marketplace |
+| P1 monorepo skeleton | Done | pnpm + Turborepo; shared runtime in `packages/common`; no Docker needed (PGlite) |
+| Frontend (store, seller, admin) | Done | Static demo on GitHub Pages; rules in `packages/demo` with unit tests |
+| P2 identity | Done | `apps/api` identity module: OTP, rotating sessions, profile, addresses; 21 integration tests |
+| P3 catalog and shops | Next | Move the `packages/demo` rules into a shared domain package used by both sides |
+| Checkout and escrow | Waiting | Needs the owner's answer to Q1 (one payment per cart or per seller) |

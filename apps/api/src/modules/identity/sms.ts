@@ -1,5 +1,5 @@
 import type { Logger } from "@nobar/common";
-import type { IdentityConfig } from "./config";
+import type { ApiConfig } from "../../config";
 
 /** SMS delivery behind an interface so providers can be swapped by configuration. */
 export interface SmsProvider {
@@ -32,10 +32,13 @@ export class KavenegarSmsProvider implements SmsProvider {
   }
 }
 
-export function createSmsProvider(config: IdentityConfig, log: Logger): SmsProvider {
+export function createSmsProvider(config: ApiConfig, log: Logger): SmsProvider {
   if (config.SMS_PROVIDER === "kavenegar") {
     if (!config.KAVENEGAR_API_KEY) throw new Error("KAVENEGAR_API_KEY is required when SMS_PROVIDER=kavenegar");
     return new KavenegarSmsProvider(config.KAVENEGAR_API_KEY, config.KAVENEGAR_TEMPLATE);
   }
   return new ConsoleSmsProvider(log);
 }
+
+/** DI token for the SmsProvider. */
+export const SMS_PROVIDER = Symbol.for("nobar.identity.sms");

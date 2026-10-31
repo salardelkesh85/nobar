@@ -1,17 +1,19 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { calculateJwkThumbprint, createLocalJWKSet, exportJWK, generateKeyPair, importJWK, type JWK, type JWTVerifyGetKey, SignJWT } from "jose";
-import type { IdentityConfig } from "./config";
+import type { ApiConfig } from "../../config";
+
+type SigningKey = Awaited<ReturnType<typeof importJWK>>;
 
 /** ES256 signing key + the public JWKS other services (and the gateway) verify against. */
 export class KeyStore {
   private constructor(
-    private readonly privateKey: CryptoKey,
+    private readonly privateKey: SigningKey,
     readonly kid: string,
     readonly publicJwk: JWK,
   ) {}
 
-  static async load(config: IdentityConfig): Promise<KeyStore> {
+  static async load(config: ApiConfig): Promise<KeyStore> {
     let jwk: JWK | undefined;
     if (config.JWT_PRIVATE_JWK) {
       jwk = JSON.parse(config.JWT_PRIVATE_JWK) as JWK;
@@ -29,7 +31,7 @@ export class KeyStore {
       }
     }
     const kid = await calculateJwkThumbprint(jwk);
-    const privateKey = (await importJWK(jwk, "ES256")) as CryptoKey;
+    const privateKey = await importJWK(jwk, "ES256");
     const { d: _d, ...publicJwk } = jwk;
     return new KeyStore(privateKey, kid, { ...publicJwk, kid, alg: "ES256", use: "sig" });
   }
@@ -53,3 +55,6 @@ export class KeyStore {
       .sign(this.privateKey);
   }
 }
+
+/** DI token for the KeyStore. */
+export const KEY_STORE = Symbol.for("nobar.identity.keys");

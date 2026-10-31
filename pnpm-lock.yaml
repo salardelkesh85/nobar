@@ -51,6 +51,58 @@ importers:
         specifier: ^5.9.2
         version: 5.9.3
 
+  apps/api:
+    dependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.3.7
+        version: 0.3.16
+      '@nestjs/common':
+        specifier: ^11.1.6
+        version: 11.2.7(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core':
+        specifier: ^11.1.6
+        version: 11.2.7(@nestjs/common@11.2.7(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/platform-fastify':
+        specifier: ^11.1.6
+        version: 11.2.7(@nestjs/common@11.2.7(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.2.7(@nestjs/common@11.2.7(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
+      '@nobar/common':
+        specifier: workspace:*
+        version: link:../../packages/common
+      '@nobar/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      fastify:
+        specifier: ^5.6.0
+        version: 5.11.3
+      jose:
+        specifier: ^6.1.0
+        version: 6.2.13
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      zod:
+        specifier: ^4.1.5
+        version: 4.6.7
+    devDependencies:
+      '@swc/core':
+        specifier: ^1.13.5
+        version: 1.16.18(@swc/helpers@0.5.23)
+      '@types/node':
+        specifier: ^24.3.0
+        version: 24.19.2
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.31)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      unplugin-swc:
+        specifier: ^1.5.7
+        version: 1.6.0(@swc/core@1.16.18(@swc/helpers@0.5.23))(esbuild@0.27.7)(rollup@4.65.0)(vite@7.3.7(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.32.0))
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.32.0)
+
   apps/seller:
     dependencies:
       '@nobar/demo':
@@ -222,6 +274,9 @@ importers:
 
   packages/demo:
     dependencies:
+      '@nobar/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@nobar/fa':
         specifier: workspace:*
         version: link:../fa
@@ -267,46 +322,6 @@ importers:
         specifier: ^5.9.2
         version: 5.9.3
 
-  services/identity:
-    dependencies:
-      '@nestjs/common':
-        specifier: ^11.1.6
-        version: 11.2.7(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nobar/common':
-        specifier: workspace:*
-        version: link:../../packages/common
-      '@nobar/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      fastify:
-        specifier: ^5.6.0
-        version: 5.11.3
-      jose:
-        specifier: ^6.1.0
-        version: 6.2.13
-      zod:
-        specifier: ^4.1.5
-        version: 4.6.7
-    devDependencies:
-      '@swc/core':
-        specifier: ^1.13.5
-        version: 1.16.18(@swc/helpers@0.5.23)
-      '@types/node':
-        specifier: ^24.3.0
-        version: 24.19.2
-      tsup:
-        specifier: ^8.5.0
-        version: 8.5.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.31)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.2
-        version: 5.9.3
-      unplugin-swc:
-        specifier: ^1.5.7
-        version: 1.6.0(@swc/core@1.16.18(@swc/helpers@0.5.23))(esbuild@0.27.7)(rollup@4.65.0)(vite@7.3.7(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.32.0))
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.7(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.32.0)
-
   tools/check-rtl: {}
 
   tools/seminar-deck:
@@ -329,6 +344,8 @@ importers:
       sharp:
         specifier: ^0.34.3
         version: 0.34.5
+
+  tools/static-export: {}
 
 packages:
 

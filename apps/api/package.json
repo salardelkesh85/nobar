@@ -1,0 +1,33 @@
+{
+  "name": "@nobar/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nobar backend: one NestJS app with a module per bounded context (ADR 0008)",
+  "scripts": {
+    "dev": "tsup --watch --onSuccess \"node --enable-source-maps dist/main.js\"",
+    "build": "tsup",
+    "start": "node --enable-source-maps dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.7",
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-fastify": "^11.1.6",
+    "@nobar/common": "workspace:*",
+    "@nobar/contracts": "workspace:*",
+    "fastify": "^5.6.0",
+    "jose": "^6.1.0",
+    "reflect-metadata": "^0.2.2",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.13.5",
+    "@types/node": "^24.3.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "unplugin-swc": "^1.5.7",
+    "vitest": "^3.2.4"
+  }
+}

@@ -5,7 +5,7 @@ import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fa
 import type { z } from "zod";
 import { JwtVerifier } from "./auth";
 import { createEventBus, type EventBus } from "./bus";
-import { type BaseConfig, loadConfig } from "./config";
+import { type BaseConfig, loadConfig, trustProxyOption } from "./config";
 import { contextFromHeaders, currentContext, requestContext } from "./context";
 import { CoreModule, type ServiceDeps } from "./core";
 import { createDatabase } from "./db";
@@ -23,6 +23,8 @@ export interface ServiceDefinition<C extends BaseConfig = BaseConfig> {
   module(deps: ServiceDeps<C>): DynamicModule;
   /** start consumers / background jobs; may return a cleanup function */
   onStart?(ctx: { app: NestFastifyApplication; deps: ServiceDeps<C> }): Promise<void | (() => Promise<void> | void)>;
+  /** register Fastify hooks/plugins before the server starts listening (CORS, …) */
+  configure?(ctx: { app: NestFastifyApplication; deps: ServiceDeps<C> }): Promise<void> | void;
   /** extra JwtVerifier (identity verifies with its own keys instead of fetching its JWKS) */
   verifier?(deps: Omit<ServiceDeps<C>, "verifier">): Promise<JwtVerifier>;
 }
@@ -57,7 +59,7 @@ export async function startService<C extends BaseConfig>(
   const deps: ServiceDeps<C> = { ...partial, verifier };
 
   const root: DynamicModule = { module: ServiceRootModule, imports: [CoreModule.forRoot(deps), def.module(deps)] };
-  const app = await NestFactory.create<NestFastifyApplication>(root, new FastifyAdapter({ trustProxy: true, bodyLimit: 1_048_576 }), {
+  const app = await NestFactory.create<NestFastifyApplication>(root, new FastifyAdapter({ trustProxy: trustProxyOption(config.TRUST_PROXY), bodyLimit: 1_048_576 }), {
     logger: new NestPinoLogger(log),
     abortOnError: false,
   });
@@ -81,6 +83,7 @@ export async function startService<C extends BaseConfig>(
     done();
   });
   app.useGlobalFilters(new ProblemFilter(log));
+  await def.configure?.({ app, deps });
 
   await app.listen(config.PORT, config.HOST);
   outbox.start();

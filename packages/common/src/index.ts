@@ -3,6 +3,7 @@ export * from "./bootstrap";
 export * from "./bus";
 export * from "./config";
 export * from "./context";
+export * from "./cors";
 export * from "./core";
 export * from "./db";
 export * from "./errors";

@@ -12,6 +12,11 @@ export const baseConfigSchema = z.object({
   SERVICE_NAME: z.string().min(1),
   HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().int().positive(),
+  /**
+   * Which proxies may set X-Forwarded-For (the client IP used by rate limits): "loopback" (default),
+   * "true" (any — only behind an ingress that overwrites the header), "false", a hop count, or IPs/CIDRs.
+   */
+  TRUST_PROXY: z.string().default("loopback"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   LOG_FORMAT: z.enum(["json", "pretty"]).default("json"),
   /** postgres://… — when absent the service uses embedded PGlite under DATA_DIR */
@@ -30,6 +35,12 @@ export const baseConfigSchema = z.object({
 });
 
 export type BaseConfig = z.infer<typeof baseConfigSchema>;
+
+/** TRUST_PROXY → Fastify's `trustProxy` option. */
+export function trustProxyOption(value: string): boolean | number | string {
+  if (value === "true" || value === "false") return value === "true";
+  return /^\d+$/.test(value) ? Number(value) : value;
+}
 
 export function loadConfig<S extends z.ZodType<BaseConfig>>(schema: S, overrides: Record<string, string | undefined> = {}): z.infer<S> {
   const env: Record<string, string | undefined> = { ...process.env };

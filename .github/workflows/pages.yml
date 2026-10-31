@@ -42,9 +42,9 @@ jobs:
 
       - name: Test and check
         run: |
-          pnpm --filter @nobar/fa --filter @nobar/demo test
+          pnpm test
           pnpm lint:rtl
-          pnpm typecheck:frontends
+          pnpm typecheck
 
       - name: Build store
         run: pnpm --filter @nobar/web build

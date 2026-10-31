@@ -1,0 +1,163 @@
+openapi: 3.1.0
+info:
+  title: Nobar API
+  version: 0.1.0
+  description: |
+    Backend of Nobar (نوبر), one modular app (ADR 0008). Errors are RFC 9457 Problem Details
+    (`application/problem+json`) with a stable `code` and a Persian `detail`.
+    Money is integer Rial; dates are ISO-8601 UTC.
+servers:
+  - url: http://localhost:4000
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    Problem:
+      type: object
+      required: [status, code, detail]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        code: { type: string, examples: [OTP_INVALID, OTP_EXPIRED, OTP_LOCKED, RATE_LIMITED, REFRESH_REUSED, VALIDATION, UNAUTHORIZED, NOT_FOUND] }
+        detail: { type: string, examples: ["کد درست نیست؛ ۴ بار دیگر می‌توانید امتحان کنید"] }
+        errors: {}
+        requestId: { type: string }
+    Phone:
+      type: string
+      description: Iranian mobile number in any common form (Persian digits allowed); stored as E.164.
+      examples: ["09141234567", "۰۹۱۴۱۲۳۴۵۶۷", "+989141234567"]
+    User:
+      type: object
+      required: [id, phone, name, roles, cityId, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        phone: { type: string, examples: ["+989141234567"] }
+        name: { type: [string, "null"] }
+        roles: { type: array, items: { enum: [BUYER, SELLER, COURIER, ADMIN] } }
+        cityId: { type: [string, "null"] }
+        createdAt: { type: string, format: date-time }
+    AuthTokens:
+      type: object
+      required: [accessToken, refreshToken, expiresIn, user]
+      properties:
+        accessToken: { type: string, description: "ES256 JWT, 15 minutes" }
+        refreshToken: { type: string, description: "opaque; rotated on every refresh" }
+        expiresIn: { type: integer, examples: [900] }
+        user: { $ref: "#/components/schemas/User" }
+    AddressInput:
+      type: object
+      required: [title, cityId, name, phone, line, postalCode]
+      properties:
+        title: { type: string, maxLength: 40, examples: ["خانه"] }
+        cityId: { type: string, examples: [miandoab] }
+        name: { type: string, minLength: 3 }
+        phone: { $ref: "#/components/schemas/Phone" }
+        line: { type: string, minLength: 10 }
+        postalCode: { type: string, description: "10 digits; Persian digits allowed" }
+    Address:
+      allOf:
+        - $ref: "#/components/schemas/AddressInput"
+        - type: object
+          required: [id]
+          properties: { id: { type: string, format: uuid } }
+  responses:
+    Problem:
+      description: Error
+      content: { application/problem+json: { schema: { $ref: "#/components/schemas/Problem" } } }
+security:
+  - bearer: []
+paths:
+  /healthz:
+    get: { security: [], summary: Liveness, responses: { "200": { description: Process is up } } }
+  /readyz:
+    get: { security: [], summary: Readiness (database reachable), responses: { "200": { description: Ready }, "503": { description: Not ready } } }
+  /metrics:
+    get: { security: [], summary: Prometheus metrics, responses: { "200": { description: Metrics text } } }
+  /.well-known/jwks.json:
+    get: { security: [], summary: Public keys that verify access tokens, responses: { "200": { description: JWKS } } }
+  /v1/auth/otp:
+    post:
+      security: []
+      summary: Send a 6-digit sign-in code by SMS
+      description: Code expires after 2 minutes; resend after 60 s; at most 5 codes per phone and 20 per IP per hour.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [phone], properties: { phone: { $ref: "#/components/schemas/Phone" } } } } }
+      responses:
+        "200":
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expiresInSec: { type: integer, examples: [120] }
+                  resendInSec: { type: integer, examples: [60] }
+                  devCode: { type: string, description: "only when OTP_ECHO is on (never in production)" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /v1/auth/verify:
+    post:
+      security: []
+      summary: Check the code and sign in (registers the user on first sign-in)
+      description: At most 5 attempts per code. `isNew` tells the app to ask for the user's name.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [phone, code], properties: { phone: { $ref: "#/components/schemas/Phone" }, code: { type: string, examples: ["123456", "۱۲۳۴۵۶"] } } }
+      responses:
+        "200":
+          description: Signed in
+          content: { application/json: { schema: { allOf: [{ $ref: "#/components/schemas/AuthTokens" }, { type: object, properties: { isNew: { type: boolean } } }] } } }
+        "400": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /v1/auth/refresh:
+    post:
+      security: []
+      summary: Rotate the refresh token
+      description: Reusing an already-rotated token ends the whole session family (REFRESH_REUSED).
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [refreshToken], properties: { refreshToken: { type: string } } } } } }
+      responses:
+        "200": { description: New tokens, content: { application/json: { schema: { $ref: "#/components/schemas/AuthTokens" } } } }
+        "401": { $ref: "#/components/responses/Problem" }
+  /v1/auth/logout:
+    post:
+      security: []
+      summary: Sign out (ends this session family)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [refreshToken], properties: { refreshToken: { type: string } } } } } }
+      responses: { "204": { description: Signed out } }
+  /v1/me:
+    get:
+      summary: Current user
+      responses:
+        "200": { description: User, content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } }
+        "401": { $ref: "#/components/responses/Problem" }
+    patch:
+      summary: Update name or city
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { name: { type: string, minLength: 2, maxLength: 60 }, cityId: { type: string } } } } } }
+      responses:
+        "200": { description: User, content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } }
+        "400": { $ref: "#/components/responses/Problem" }
+  /v1/me/addresses:
+    get:
+      summary: My addresses
+      responses: { "200": { description: Addresses, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Address" } } } } } }
+    post:
+      summary: Add an address
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/AddressInput" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Address" } } } }
+        "400": { $ref: "#/components/responses/Problem" }
+  /v1/me/addresses/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+    patch:
+      summary: Edit an address
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/AddressInput" } } } }
+      responses:
+        "200": { description: Updated, content: { application/json: { schema: { $ref: "#/components/schemas/Address" } } } }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      summary: Remove an address
+      responses: { "204": { description: Removed }, "404": { $ref: "#/components/responses/Problem" } }

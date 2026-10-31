@@ -11,7 +11,10 @@
     "dev:web": "pnpm --filter @nobar/web dev",
     "dev:seller": "pnpm --filter @nobar/seller dev",
     "dev:admin": "pnpm --filter @nobar/admin dev",
+    "dev:api": "pnpm --filter @nobar/api dev",
     "typecheck:frontends": "pnpm --filter @nobar/web --filter @nobar/seller --filter @nobar/admin typecheck",
-    "lint:rtl": "node tools/check-rtl/check-rtl.mjs"
+    "lint:rtl": "node tools/check-rtl/check-rtl.mjs",
+    "test": "pnpm --filter @nobar/fa --filter @nobar/demo --filter @nobar/api test",
+    "typecheck": "pnpm --filter @nobar/common --filter @nobar/contracts --filter @nobar/demo --filter @nobar/api typecheck && pnpm typecheck:frontends"
   }
 }
