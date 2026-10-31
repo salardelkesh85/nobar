@@ -6,7 +6,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const config: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@nobar/ui", "@nobar/fa", "@nobar/demo", "@nobar/contracts"],
+  transpilePackages: ["@nobar/ui", "@nobar/fa", "@nobar/demo", "@nobar/domain", "@nobar/contracts"],
   poweredByHeader: false,
   ...(basePath ? { basePath } : {}),
   ...(exportMode ? { output: "export" as const, trailingSlash: true, images: { unoptimized: true } } : {}),
