@@ -882,3 +882,41 @@
 :global(html[data-theme="dark"]) .season .primary {
   background: #126c43;
 }
+
+/* The storefront uses the same quieter type and surfaces as inner pages. */
+.heroCopy {
+  padding-block: 42px 34px;
+}
+.hero h1 {
+  font-weight: 800;
+  letter-spacing: -1.8px;
+}
+.categories li strong {
+  font-weight: 600;
+}
+.heading h2 {
+  font-weight: 750;
+}
+.fresh {
+  --market-berry: #b5344e;
+}
+.freshIntro h3 {
+  font-weight: 700;
+}
+.storyCopy h2 {
+  font-weight: 750;
+}
+.assistant h2 {
+  font-weight: 750;
+}
+.season h2 {
+  font-weight: 750;
+}
+@media (max-width: 700px) {
+  .heroCopy {
+    padding-block: 26px;
+  }
+  .hero h1 {
+    font-size: 39px;
+  }
+}

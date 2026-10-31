@@ -5,7 +5,7 @@ import { toFaDigits } from "@nobar/fa";
 import { cn, Select } from "@nobar/ui";
 import { ArrowDownWideNarrow, SlidersHorizontal, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const ORIGIN_PROVINCES = ["azg", "mrk", "mzn", "gil", "krm", "khj", "isf"];
 const TOGGLES: Array<[string, string]> = [
@@ -24,15 +24,46 @@ function useParamSetter() {
     else next.set(key, value);
     router.replace(`${path}?${next.toString()}`, { scroll: false });
   };
-  return { params, set };
+  const clear = () => {
+    const next = new URLSearchParams(params.toString());
+    ["cat", "origin", "fresh", "organic", "nobar"].forEach((k) =>
+      next.delete(k),
+    );
+    router.replace(`${path}?${next.toString()}`, { scroll: false });
+  };
+  return { params, set, clear };
 }
 
-function Switch({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
+function Switch({
+  on,
+  onClick,
+  label,
+}: {
+  on: boolean;
+  onClick: () => void;
+  label: string;
+}) {
   return (
-    <button type="button" role="switch" aria-checked={on} onClick={onClick} className="flex min-h-11 w-full items-center justify-between gap-3 text-sm">
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onClick}
+      className="flex min-h-11 w-full items-center justify-between gap-3 text-sm"
+    >
       <span className={on ? "font-bold" : ""}>{label}</span>
-      <span className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", on ? "bg-brand" : "bg-line-strong")}>
-        <span className={cn("absolute top-0.5 size-5 rounded-full bg-white shadow transition-all", on ? "start-[1.125rem]" : "start-0.5")} />
+      <span
+        className={cn(
+          "relative h-6 w-10 shrink-0 rounded-full transition-colors",
+          on ? "bg-brand" : "bg-line-strong",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-0.5 size-5 rounded-full bg-white shadow transition-all",
+            on ? "start-[1.125rem]" : "start-0.5",
+          )}
+        />
       </span>
     </button>
   );
@@ -40,8 +71,10 @@ function Switch({ on, onClick, label }: { on: boolean; onClick: () => void; labe
 
 /** Filter panel: sidebar on desktop, bottom sheet on mobile. */
 export function FilterPanel() {
-  const { params, set } = useParamSetter();
-  const active = ["cat", "origin", "fresh", "organic", "nobar"].some((k) => params.get(k));
+  const { params, set, clear } = useParamSetter();
+  const active = ["cat", "origin", "fresh", "organic", "nobar"].some((k) =>
+    params.get(k),
+  );
   return (
     <div className="divide-y divide-line">
       <div className="flex items-center justify-between pb-3">
@@ -50,7 +83,7 @@ export function FilterPanel() {
           <button
             type="button"
             className="text-xs font-bold text-brand"
-            onClick={() => ["cat", "origin", "fresh", "organic", "nobar"].forEach((k) => set(k, null))}
+            onClick={clear}
           >
             حذف فیلترها
           </button>
@@ -58,7 +91,12 @@ export function FilterPanel() {
       </div>
       <div className="py-2">
         {TOGGLES.map(([k, label]) => (
-          <Switch key={k} on={params.get(k) === "1"} label={label} onClick={() => set(k, params.get(k) === "1" ? null : "1")} />
+          <Switch
+            key={k}
+            on={params.get(k) === "1"}
+            label={label}
+            onClick={() => set(k, params.get(k) === "1" ? null : "1")}
+          />
         ))}
       </div>
       <fieldset className="py-3">
@@ -72,7 +110,12 @@ export function FilterPanel() {
                   type="button"
                   aria-pressed={on}
                   onClick={() => set("cat", on ? null : c.id)}
-                  className={cn("flex min-h-10 w-full items-center rounded-control px-2 text-start text-sm", on ? "bg-brand-soft font-bold text-brand-strong" : "hover:bg-surface-2")}
+                  className={cn(
+                    "flex min-h-10 w-full items-center rounded-control px-2 text-start text-sm",
+                    on
+                      ? "bg-brand-soft font-bold text-brand-strong"
+                      : "hover:bg-surface-2",
+                  )}
                 >
                   {c.name}
                 </button>
@@ -85,7 +128,11 @@ export function FilterPanel() {
         <label htmlFor="origin" className="mb-2 block text-sm font-bold">
           استان مبدأ
         </label>
-        <Select id="origin" value={params.get("origin") ?? ""} onChange={(e) => set("origin", e.target.value)}>
+        <Select
+          id="origin"
+          value={params.get("origin") ?? ""}
+          onChange={(e) => set("origin", e.target.value)}
+        >
           <option value="">همه‌ی استان‌ها</option>
           {PROVINCES.filter((p) => ORIGIN_PROVINCES.includes(p.id)).map((p) => (
             <option key={p.id} value={p.id}>
@@ -102,8 +149,15 @@ export function FilterPanel() {
 export function SearchFilters({ total }: { total: number }) {
   const { params, set } = useParamSetter();
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (open) dialogRef.current?.showModal();
+    else dialogRef.current?.close();
+  }, [open]);
   const sort = (params.get("sort") as SortKey) ?? "relevance";
-  const activeCount = ["cat", "origin", "fresh", "organic", "nobar"].filter((k) => params.get(k)).length;
+  const activeCount = ["cat", "origin", "fresh", "organic", "nobar"].filter(
+    (k) => params.get(k),
+  ).length;
 
   return (
     <div className="mb-3">
@@ -116,12 +170,19 @@ export function SearchFilters({ total }: { total: number }) {
             type="button"
             onClick={() => set("sort", k === "relevance" ? null : k)}
             aria-pressed={sort === k}
-            className={cn("min-h-9 rounded-control px-2.5", sort === k ? "font-bold text-brand" : "text-ink-soft hover:text-ink")}
+            className={cn(
+              "min-h-9 rounded-control px-2.5",
+              sort === k
+                ? "font-bold text-brand"
+                : "text-ink-soft hover:text-ink",
+            )}
           >
             {SORT_FA[k]}
           </button>
         ))}
-        <span className="ms-auto text-xs text-ink-soft">{toFaDigits(total)} کالا</span>
+        <span className="ms-auto text-xs text-ink-soft">
+          {toFaDigits(total)} کالا
+        </span>
       </div>
 
       <div className="flex items-center gap-2 lg:hidden">
@@ -137,7 +198,12 @@ export function SearchFilters({ total }: { total: number }) {
           <label htmlFor="sort" className="sr-only">
             مرتب‌سازی
           </label>
-          <Select id="sort" value={sort} onChange={(e) => set("sort", e.target.value)} className="min-h-10">
+          <Select
+            id="sort"
+            value={sort}
+            onChange={(e) => set("sort", e.target.value)}
+            className="min-h-10"
+          >
             {(Object.keys(SORT_FA) as SortKey[]).map((k) => (
               <option key={k} value={k}>
                 {SORT_FA[k]}
@@ -147,21 +213,36 @@ export function SearchFilters({ total }: { total: number }) {
         </div>
       </div>
 
-      {open ? (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/40 lg:hidden" onClick={() => setOpen(false)}>
-          <div role="dialog" aria-modal="true" aria-label="فیلترها" className="max-h-[85vh] w-full overflow-y-auto rounded-t-2xl bg-surface p-4 pb-8" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-2 flex justify-end">
-              <button type="button" onClick={() => setOpen(false)} className="grid size-10 place-items-center rounded-full hover:bg-surface-2" aria-label="بستن">
-                <X className="size-5" />
-              </button>
-            </div>
-            <FilterPanel />
-            <button type="button" onClick={() => setOpen(false)} className="mt-6 min-h-12 w-full rounded-control bg-brand font-bold text-on-brand">
-              دیدن نتیجه‌ها
+      <dialog
+        ref={dialogRef}
+        onClose={() => setOpen(false)}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setOpen(false);
+        }}
+        className="studio-filter-dialog"
+        aria-label="فیلترها"
+      >
+        <div className="p-5 pb-7">
+          <div className="mb-2 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="grid size-11 place-items-center rounded-full hover:bg-surface-2"
+              aria-label="بستن"
+            >
+              <X className="size-5" />
             </button>
           </div>
+          <FilterPanel />
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="mt-6 min-h-12 w-full rounded-control bg-brand font-bold text-on-brand"
+          >
+            دیدن نتیجه‌ها
+          </button>
         </div>
-      ) : null}
+      </dialog>
     </div>
   );
 }

@@ -41,7 +41,7 @@ const SIZE: Record<Size, string> = {
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string): string {
   return cn(
-    "inline-flex items-center justify-center rounded-control font-bold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none select-none",
+    "n-ui-button inline-flex items-center justify-center rounded-control font-bold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none select-none",
     VARIANT[variant],
     SIZE[size],
     extra,
@@ -87,7 +87,7 @@ export function Badge({ tone = "brand", className, children }: { tone?: Tone; cl
 }
 
 export function Card({ className, ...rest }: ComponentProps<"div">) {
-  return <div className={cn("rounded-card border border-line bg-surface shadow-soft", className)} {...rest} />;
+  return <div className={cn("n-ui-card rounded-card border border-line bg-surface shadow-soft", className)} {...rest} />;
 }
 
 export function Skeleton({ className }: { className?: string }) {
@@ -96,7 +96,7 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-4 flex items-end justify-between gap-3">
+    <div className="n-ui-section-header mb-4 flex items-end justify-between gap-3">
       <div>
         <h2 className="text-xl font-black tracking-tight text-ink sm:text-2xl">{title}</h2>
         {subtitle ? <p className="mt-0.5 text-sm text-ink-soft">{subtitle}</p> : null}
@@ -108,7 +108,7 @@ export function SectionHeader({ title, subtitle, action }: { title: string; subt
 
 export function EmptyState({ icon, title, body, action }: { icon?: ReactNode; title: string; body?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
+    <div className="n-ui-empty flex flex-col items-center gap-3 rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
       {icon ? <div className="text-4xl text-brand">{icon}</div> : null}
       <h3 className="text-lg font-bold">{title}</h3>
       {body ? <p className="max-w-md text-ink-soft">{body}</p> : null}
@@ -130,7 +130,7 @@ export function Field({ label, hint, error, children, htmlFor }: { label: string
 }
 
 export const inputClass =
-  "min-h-11 w-full rounded-control border border-line-strong bg-surface px-3.5 text-ink shadow-[0_1px_2px_rgb(var(--shadow-color)/0.04)] transition-shadow placeholder:text-ink-soft/70 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15";
+  "n-ui-input min-h-11 w-full rounded-control border border-line-strong bg-surface px-3.5 text-ink shadow-[0_1px_2px_rgb(var(--shadow-color)/0.04)] transition-shadow placeholder:text-ink-soft/70 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15";
 
 export function Input({ className, ...rest }: ComponentProps<"input">) {
   return <input className={cn(inputClass, className)} {...rest} />;
@@ -147,7 +147,7 @@ export function Select({ className, ...rest }: ComponentProps<"select">) {
 export function Stat({ label, value, hint, tone = "neutral" }: { label: string; value: ReactNode; hint?: ReactNode; tone?: "neutral" | "brand" | "nobar" | "warn" }) {
   const ring = tone === "brand" ? "border-brand/40" : tone === "nobar" ? "border-nobar/40" : tone === "warn" ? "border-saffron/50" : "border-line";
   return (
-    <div className={cn("min-w-0 rounded-card border bg-surface p-4 shadow-soft", ring)}>
+    <div className={cn("n-ui-stat min-w-0 rounded-card border bg-surface p-4 shadow-soft", ring)}>
       <p className="text-sm text-ink-soft">{label}</p>
       <p className="mt-1 text-lg font-extrabold text-ink sm:text-2xl [&_span]:whitespace-normal">{value}</p>
       {hint ? <p className="mt-1 text-xs text-ink-soft">{hint}</p> : null}

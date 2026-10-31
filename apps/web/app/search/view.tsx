@@ -30,7 +30,7 @@ export function SearchView() {
   const heading = q ? `نتیجه‌های «${q}»` : cat ? categoryById(cat)?.name ?? "محصولات" : origin ? `محصولات ${provinceById(origin)?.name ?? ""}` : "همه‌ی محصولات";
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
+    <div className="studio-search-layout grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
       <aside className="hidden lg:block">
         <div className="sticky top-36 rounded-card border border-line bg-surface p-4">
           <Suspense>

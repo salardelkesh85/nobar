@@ -15,7 +15,7 @@ export default function SeasonPage() {
         <h1 className="text-xl font-extrabold sm:text-2xl">تقویم نوبر</h1>
         <p className="mt-1 text-ink-soft">هر محصول در کدام ماه‌ها فصل دارد. خانه‌های پررنگ اوج فصل است. ماه جاری: {JALALI_MONTHS[month - 1]}.</p>
       </header>
-      <div className="overflow-x-auto rounded-card border border-line bg-surface">
+      <div className="studio-season-scroll overflow-x-auto rounded-card border border-line bg-surface" role="region" aria-label="تقویم فصل‌ها؛ برای دیدن همهٔ ماه‌ها جدول را افقی حرکت دهید" tabIndex={0}>
         <table className="w-full min-w-[46rem] border-collapse text-sm">
           <caption className="sr-only">تقویم فصل محصولات بر اساس ماه شمسی</caption>
           <thead>

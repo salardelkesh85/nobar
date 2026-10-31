@@ -26,7 +26,7 @@ export function AccountShell({ title, children, action }: { title: string; child
   const active = (href: string) => (href === "/me" ? path.endsWith("/me") : path.endsWith(href));
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <div className="studio-account-layout grid grid-cols-1 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
       <aside className="space-y-3">
         <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-4">
           <span className="grid size-12 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">

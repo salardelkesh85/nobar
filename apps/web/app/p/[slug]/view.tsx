@@ -17,7 +17,7 @@ export function ProduceTypeView({ id }: { id: string }) {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 rounded-card border border-line bg-surface p-5 sm:flex-row sm:items-center">
+      <header className="studio-produce-profile flex flex-col gap-4 rounded-card border border-line bg-surface p-5 sm:flex-row sm:items-center">
         <Photo kind={pt.id} alt="" className="size-28 shrink-0 rounded-card" fallback={{ emoji: pt.emoji, hue: pt.hue }} />
         <div className="flex-1">
           <p className="text-sm text-ink-soft">{categoryById(pt.categoryId)?.name}</p>

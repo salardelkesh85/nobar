@@ -89,7 +89,7 @@ export function ListingView({ id }: { id: string }) {
         <Link href={`/p/${pt.id}`} className="hover:text-brand">{pt.name}</Link>
       </nav>
 
-      <div className="grid gap-4 rounded-card border border-line bg-surface p-4 lg:grid-cols-12 lg:gap-6 lg:p-6">
+      <div className="studio-product-layout grid gap-4 rounded-card border border-line bg-surface p-4 lg:grid-cols-12 lg:gap-6 lg:p-6">
         {/* Gallery */}
         <div className="lg:col-span-4">
           <div className="relative">

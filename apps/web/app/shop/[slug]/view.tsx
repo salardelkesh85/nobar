@@ -30,7 +30,7 @@ export function ShopView({ id }: { id: string }) {
   return (
     <div className="space-y-4">
       {/* Shop header */}
-      <header className="overflow-hidden rounded-card border border-line bg-surface">
+      <header className="studio-shop-profile overflow-hidden rounded-card border border-line bg-surface">
         <div className="relative h-32 sm:h-44">
           <Image src={bannerSrc(coverFor(shop.art))} alt="" fill priority sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-linear-to-t from-black/45 to-transparent" />

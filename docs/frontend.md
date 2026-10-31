@@ -1,6 +1,6 @@
 # Nobar — Frontend demo (3 apps)
 
-> Status: **demo on sample data** · 2026-10-30 · no backend yet
+> Status: **demo on sample data**. For the current cross-application visual language and validation workflow, see [Orchard Studio](design-system.md). The NestJS API exists, but these frontends are not yet connected to it.
 
 ## What exists
 
@@ -72,7 +72,7 @@ The «nobar-claude-kit» (modular monolith, `apps/web|seller|admin`, `packages/u
 - One-time setup: the repository must be public (free plan) and **Settings → Pages → Source = GitHub Actions**.
 - Local check: build with the env vars above, copy `apps/web/out` to `<dir>/nobar`, run the flatten script, serve `<dir>` with any static server. In Git Bash set `MSYS_NO_PATHCONV=1` or the base path gets rewritten to a Windows path.
 
-## Storefront visual direction — energetic market
+## First home-page iteration — energetic market
 
 The buyer home page now uses a saffron hero, leaf-green calls to action and a pomegranate-coloured featured rail. Its layout and styles live in `apps/web/app/page.tsx` and the scoped `market.module.css`; other routes retain their existing layouts.
 

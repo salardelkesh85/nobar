@@ -54,7 +54,7 @@ function Chat() {
   const setProposal = (id: number, state: "confirmed" | "declined") => setMsgs((m) => m.map((x) => (x.id === id ? { ...x, proposalState: state } : x)));
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+    <div className="studio-chat mx-auto flex max-w-3xl flex-col gap-4">
       <header className="flex items-center gap-3">
         <span className="grid size-14 place-items-center rounded-full bg-brand-soft">
           <LogoMark className="size-9" />

@@ -1,5 +1,5 @@
 /*
- * Nobar design system v2 — tokens, elevation and surfaces (docs: product vision §7.2).
+ * Nobar design system — Orchard Studio — tokens, elevation and surfaces (docs: product vision §7.2).
  * Import after `@import "tailwindcss";`. Semantic tokens in the shadcn style: every colour has a
  * paired foreground, one radius scale, light/dark/simple mode share the same utilities.
  */
@@ -27,22 +27,22 @@
 @custom-variant simple (&:where([data-simple-mode], [data-simple-mode] *));
 
 :root {
-  --bg: #f4f5f4;            /* خاکستری روشن فروشگاهی */
+  --bg: #f8f9f6;            /* warm neutral canvas */
   --surface: #ffffff;
-  --surface-2: #f2f4f2;
-  --surface-3: #e9ece9;
-  --ink: #1d2620;
-  --ink-soft: #6a746d;
-  --line: #e7eae7;
-  --line-strong: #d6dbd6;
-  --brand: #2e7d32;         /* سبز برگ */
-  --brand-strong: #14532d;  /* سبز جنگلی */
-  --brand-soft: #e8f4e8;
+  --surface-2: #f2f4ee;
+  --surface-3: #e7ebe2;
+  --ink: #24392e;
+  --ink-soft: #69756c;
+  --line: #e5e9df;
+  --line-strong: #cdd6c8;
+  --brand: #216547;         /* سبز برگ */
+  --brand-strong: #164c35;  /* سبز جنگلی */
+  --brand-soft: #eaf1e5;
   --on-brand: #ffffff;
-  --nobar: #c62828;         /* قرمز اناری */
-  --nobar-soft: #fdecea;
-  --nobar-solid: #c62828;   /* solid backgrounds under white text */
-  --brand-solid: #14532d;
+  --nobar: #b5344e;         /* قرمز اناری */
+  --nobar-soft: #f9eaf0;
+  --nobar-solid: #b5344e;   /* solid backgrounds under white text */
+  --brand-solid: #164c35;
   --saffron: #f5a623;
   --saffron-soft: #fff4de;
   --warn: #8a5a00;
@@ -143,9 +143,9 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-cream: var(--cream);
-  --radius-card: 0.75rem;
-  --radius-control: 0.5rem;
-  --radius-tile: 0.5rem;
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+  --radius-tile: 1rem;
   --shadow-soft: 0 1px 2px rgb(var(--shadow-color) / 0.05);
   --shadow-lift: 0 4px 18px -6px rgb(var(--shadow-color) / 0.18);
   --shadow-float: 0 10px 40px -10px rgb(var(--shadow-color) / 0.35);
@@ -228,3 +228,341 @@ p { text-wrap: pretty; }
   }
 }
 .produce-shadow { filter: drop-shadow(0 10px 12px rgb(var(--shadow-color) / 0.18)); }
+
+/* Shared visual rhythm for storefront, seller and staff workspaces. */
+.n-ui-button {
+  box-shadow: none;
+  font-weight: 700;
+}
+.n-ui-button svg {
+  flex-shrink: 0;
+}
+.n-ui-card {
+  box-shadow: none;
+}
+.n-ui-input {
+  box-shadow: none;
+  min-height: 48px;
+  background: var(--surface);
+}
+.n-ui-input:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent);
+}
+.n-ui-empty {
+  min-height: 290px;
+  justify-content: center;
+  border-style: solid;
+  background: var(--surface);
+}
+.n-ui-empty > div:first-child {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  background: var(--brand-soft);
+}
+.n-ui-stat {
+  position: relative;
+  padding: 24px;
+  overflow: hidden;
+}
+.n-ui-stat > p:first-child {
+  font-size: 12px;
+}
+.n-ui-stat > p:nth-child(2) {
+  font-size: clamp(23px, 2.4vw, 32px);
+  margin-top: 15px;
+  letter-spacing: -0.5px;
+}
+.n-ui-stat:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline: 24px;
+  height: 3px;
+  background: var(--brand);
+  opacity: 0.35;
+  border-radius: 0 0 4px 4px;
+}
+.n-ui-section-header {
+  margin-block: 16px 24px;
+}
+.n-ui-section-header h2 {
+  font-weight: 800;
+  font-size: clamp(20px, 2vw, 27px);
+}
+.n-ui-logo {
+  letter-spacing: -0.5px;
+}
+.n-ui-logo > svg {
+  width: 43px;
+  height: 43px;
+}
+.n-ui-logo > span > span:first-child {
+  font-size: 33px;
+  letter-spacing: -1px;
+}
+.n-ui-logo > span > span:last-child:not(:first-child) {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+input,
+select,
+textarea {
+  accent-color: var(--brand);
+}
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+summary {
+  list-style-position: inside;
+}
+summary::marker {
+  color: var(--brand);
+}
+::placeholder {
+  opacity: 0.8;
+}
+@media (max-width: 640px) {
+  .n-ui-stat {
+    padding: 18px;
+  }
+  .n-ui-stat > p:nth-child(2) {
+    font-size: 22px;
+  }
+  .n-ui-stat > p:first-child {
+    font-size: 11px;
+  }
+  .n-ui-empty {
+    padding-inline: 20px;
+  }
+  .n-ui-logo > svg {
+    width: 34px;
+    height: 34px;
+  }
+  .n-ui-logo > span > span:first-child {
+    font-size: 29px;
+  }
+}
+/* The same components, composed as a calm operations workspace. */
+.studio-workspace {
+  background: var(--bg);
+}
+.studio-workspace-sidebar {
+  padding: 28px 20px;
+  background: var(--surface);
+}
+.studio-workspace-sidebar nav a {
+  border-radius: 12px;
+  min-height: 46px;
+  font-size: 12px;
+  box-shadow: none;
+  padding-inline: 14px;
+}
+.studio-workspace-sidebar nav a[aria-current="page"] {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+  font-weight: 700;
+}
+.studio-workspace-sidebar > .n-ui-logo {
+  margin-inline: 8px;
+}
+.studio-workspace-sidebar > div:not(:first-child) {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg);
+  padding: 15px;
+}
+.studio-workspace-sidebar > div p.font-bold {
+  font-size: 12px;
+}
+.studio-workspace-content {
+  min-width: 0;
+}
+.studio-workspace-topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 87px;
+  border-bottom: 1px solid var(--line);
+  padding: 18px 38px;
+  background: var(--surface);
+}
+.studio-workspace-topbar > div {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.studio-workspace-topbar > div > span {
+  color: var(--ink-soft);
+  border-inline-end: 1px solid var(--line);
+  padding-inline-end: 16px;
+  font-size: 11px;
+}
+.studio-workspace-topbar strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+.studio-demo-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: 100px;
+  background: var(--saffron-soft);
+  color: var(--warn);
+  margin-inline-start: auto;
+}
+.studio-demo-badge > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--saffron);
+}
+.studio-workspace-topbar > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--brand);
+}
+.studio-workspace .studio-workspace-main {
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: 36px 38px 64px;
+}
+.studio-workspace main h1 {
+  font-weight: 750;
+  font-size: 30px;
+  letter-spacing: -0.7px;
+  margin-bottom: 28px;
+}
+.studio-workspace main h2 {
+  font-weight: 700;
+  font-size: 17px;
+}
+.studio-workspace main h3 {
+  font-weight: 650;
+}
+.studio-workspace main > .space-y-6 {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.studio-workspace main > .space-y-6 > * {
+  margin-block: 0;
+}
+.studio-workspace main .n-ui-card {
+  border-radius: 18px;
+}
+.studio-workspace main .n-ui-card > h2 {
+  margin-bottom: 20px;
+}
+.studio-workspace main .n-ui-stat {
+  min-height: 155px;
+}
+.studio-workspace-table {
+  border-radius: 18px;
+  box-shadow: none;
+}
+.studio-workspace table th {
+  font-size: 11px;
+  font-weight: 600;
+  padding-block: 16px;
+}
+.studio-workspace table td {
+  padding-block: 16px;
+  font-size: 12px;
+}
+.studio-workspace table tr:hover td {
+  background: color-mix(in srgb, var(--brand-soft) 35%, transparent);
+}
+.studio-workspace table caption {
+  font-size: 16px;
+  padding: 23px;
+}
+.studio-workspace table thead {
+  background: var(--bg);
+}
+.studio-workspace main input,
+.studio-workspace main textarea,
+.studio-workspace main select {
+  font-size: 13px;
+}
+.studio-workspace main > .space-y-5 > div.flex:first-child,
+.studio-workspace main > .space-y-4 > div.flex:first-child {
+  flex-wrap: wrap;
+}
+@media (max-width: 1023px) {
+  .studio-workspace-admin .studio-workspace-sidebar {
+    padding: 20px;
+  }
+  .studio-workspace-topbar {
+    padding: 16px 24px;
+  }
+  .studio-workspace .studio-workspace-main {
+    padding: 28px 24px 80px;
+  }
+  .studio-workspace main .n-ui-stat {
+    min-height: 135px;
+  }
+}
+@media (max-width: 767px) {
+  .studio-workspace-topbar {
+    min-height: 64px;
+    padding: 14px 18px;
+    gap: 12px;
+  }
+  .studio-workspace-topbar > div > span {
+    display: none;
+  }
+  .studio-workspace-topbar > a {
+    font-size: 10px;
+  }
+  .studio-workspace-topbar strong {
+    font-size: 11px;
+  }
+  .studio-demo-badge {
+    font-size: 9px;
+    padding: 5px 7px;
+  }
+  .studio-workspace .studio-workspace-main {
+    padding: 24px 16px 100px;
+  }
+  .studio-workspace main h1 {
+    font-size: 26px;
+    margin-bottom: 22px;
+  }
+  .studio-workspace main .n-ui-stat {
+    min-height: 130px;
+  }
+  .studio-workspace-admin .studio-workspace-sidebar {
+    padding: 18px 16px;
+  }
+  .studio-workspace-sidebar nav a {
+    min-height: 42px;
+    font-size: 11px;
+  }
+}
+.studio-workspace-table {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  position: relative;
+  contain: inline-size;
+  isolation: isolate;
+}

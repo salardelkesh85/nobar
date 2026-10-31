@@ -15,7 +15,7 @@ const LINKS: Array<[string, string]> = [
 /** Layout for help and policy pages: side menu + article. */
 export function InfoPage({ title, lead, children, current }: { title: string; lead?: ReactNode; children: ReactNode; current: string }) {
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
+    <div className="studio-info-layout grid grid-cols-1 gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
       <nav aria-label="راهنما" className="h-fit rounded-card border border-line bg-surface p-2 lg:sticky lg:top-36">
         <ul className="flex gap-1 overflow-x-auto scrollbar-none lg:flex-col">
           {LINKS.map(([href, label]) => (

@@ -1,57 +1,116 @@
-import { CATEGORIES, cityName, LISTINGS, PRODUCE_TYPES, SHOPS } from "@nobar/demo";
-import { ChevronLeft, MapPin } from "lucide-react";
+import {
+  CATEGORIES,
+  cityName,
+  LISTINGS,
+  PRODUCE_TYPES,
+  SHOPS,
+} from "@nobar/demo";
+import { ArrowLeft, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Photo } from "@/components/photo";
+import { PageIntro } from "@/components/page-intro";
 
 export const metadata: Metadata = { title: "دسته‌بندی‌ها" };
 
 export default function CategoriesPage() {
-  const originCities = [...new Set(SHOPS.map((s) => s.cityId))];
+  const origins = [
+    ...new Set(SHOPS.filter((s) => s.status === "ACTIVE").map((s) => s.cityId)),
+  ];
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-extrabold">دسته‌بندی‌ها</h1>
-      {CATEGORIES.map((c) => {
-        const types = PRODUCE_TYPES.filter((p) => p.categoryId === c.id && LISTINGS.some((l) => l.produceTypeId === p.id));
+    <div>
+      <PageIntro
+        eyebrow="بازار به سلیقهٔ تو"
+        title="یک دنیا طعم، همین‌جا."
+        description="از میوهٔ فصل تا سبزی هر روز؛ چیزی که دوست داری را پیدا کن."
+        href="/season"
+        action="این روزها فصل چیه؟"
+      >
+        <div className="studio-category-preview">
+          {["pomegranate", "tangerine", "apple-red"].map((kind) => (
+            <Photo
+              key={kind}
+              kind={kind}
+              alt=""
+              sizes="110px"
+              className="studio-preview-fruit"
+            />
+          ))}
+        </div>
+      </PageIntro>
+      <nav className="studio-category-jumps" aria-label="رفتن به دسته">
+        {CATEGORIES.map((c) => (
+          <a key={c.id} href={`#category-${c.id}`}>
+            {c.name}
+            <ArrowLeft size={14} />
+          </a>
+        ))}
+      </nav>
+      {CATEGORIES.map((c, index) => {
+        const types = PRODUCE_TYPES.filter(
+          (p) =>
+            p.categoryId === c.id &&
+            LISTINGS.some(
+              (l) => l.produceTypeId === p.id && l.status === "PUBLISHED",
+            ),
+        );
         if (!types.length) return null;
         return (
-          <section key={c.id} className="rounded-card border border-line bg-surface p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-lg font-extrabold">
-                <Photo kind={c.art} alt="" sizes="32px" className="size-8 rounded-full" />
-                {c.name}
-              </h2>
-              <Link href={`/search?cat=${c.id}`} className="inline-flex items-center gap-0.5 text-sm font-bold text-brand hover:underline">
-                همه‌ی محصولات {c.name}
-                <ChevronLeft className="size-4" aria-hidden />
+          <section
+            key={c.id}
+            id={`category-${c.id}`}
+            className="studio-category-section"
+          >
+            <div className="studio-category-title">
+              <span>
+                {(index + 1).toLocaleString("fa-IR", {
+                  minimumIntegerDigits: 2,
+                })}
+              </span>
+              <h2>{c.name}</h2>
+              <Link href={`/search?cat=${c.id}`}>
+                دیدن محصولات
+                <ArrowLeft size={15} />
               </Link>
             </div>
-            <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-8">
-              {types.map((pt) => {
-                const count = LISTINGS.filter((l) => l.produceTypeId === pt.id).length;
-                return (
-                  <li key={pt.id}>
-                    <Link href={`/p/${pt.id}`} className="group flex flex-col items-center gap-2 text-center">
-                      <Photo kind={pt.id} alt="" sizes="96px" fallback={{ emoji: pt.emoji, hue: pt.hue }} className="aspect-square w-full max-w-24 rounded-full ring-1 ring-line transition-shadow group-hover:ring-2 group-hover:ring-brand" />
-                      <span className="text-sm font-semibold">{pt.name}</span>
-                      <span className="-mt-1.5 text-[0.7rem] text-ink-soft">{count.toLocaleString("fa-IR")} غرفه</span>
-                    </Link>
-                  </li>
-                );
-              })}
+            <ul>
+              {types.map((pt) => (
+                <li key={pt.id}>
+                  <Link href={`/p/${pt.id}`}>
+                    <Photo
+                      kind={pt.id}
+                      alt=""
+                      sizes="(max-width: 700px) 27vw, 150px"
+                      fallback={{ emoji: pt.emoji, hue: pt.hue }}
+                      className="studio-category-produce"
+                    />
+                    <span>{pt.name}</span>
+                    <small>
+                      {LISTINGS.filter(
+                        (l) =>
+                          l.produceTypeId === pt.id && l.status === "PUBLISHED",
+                      ).length.toLocaleString("fa-IR")}{" "}
+                      محصول
+                    </small>
+                  </Link>
+                </li>
+              ))}
             </ul>
           </section>
         );
       })}
-      <section className="rounded-card border border-line bg-surface p-4">
-        <h2 className="mb-1 text-lg font-extrabold">شهرهای مبدأ</h2>
-        <p className="mb-3 text-sm text-ink-soft">از باغ‌های هر شهر مستقیم بخرید</p>
-        <ul className="flex flex-wrap gap-2">
-          {originCities.map((id) => (
+      <section className="studio-origin-links">
+        <div>
+          <span className="studio-eyebrow">سرزمین طعم‌ها</span>
+          <h2>دوست داری از کجا خرید کنی؟</h2>
+        </div>
+        <ul>
+          {origins.map((id) => (
             <li key={id}>
-              <Link href={`/origin/${id}`} className="inline-flex min-h-10 items-center gap-1.5 rounded-control border border-line px-3 text-sm font-semibold hover:border-brand hover:text-brand">
-                <MapPin className="size-4" aria-hidden />
+              <Link href={`/origin/${id}`}>
+                <MapPin size={14} />
                 {cityName(id)}
+                <ArrowLeft size={14} />
               </Link>
             </li>
           ))}

@@ -49,6 +49,7 @@ export default function CartPage() {
   if (!groups.length)
     return (
       <div className="space-y-4">
+        <h1 className="text-2xl font-bold">سبد تازهٔ تو</h1>
         <EmptyState
           icon={<ShoppingBasket className="size-10" />}
           title="سبدتان هنوز خالی است"

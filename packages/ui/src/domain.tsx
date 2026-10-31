@@ -18,7 +18,7 @@ export function LogoMark({ className }: { className?: string }) {
 
 export function Logo({ className, subtitle }: { className?: string; subtitle?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
+    <span className={cn("n-ui-logo inline-flex items-center gap-2", className)}>
       <LogoMark className="size-9" />
       <span className="flex flex-col leading-none">
         <span className="text-2xl font-black text-brand-strong">نوبر</span>

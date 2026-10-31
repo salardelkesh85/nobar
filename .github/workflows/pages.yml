@@ -62,6 +62,7 @@ jobs:
         run: pnpm --filter @nobar/admin build
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ env.REPO_BASE }}/admin
+          NEXT_PUBLIC_STORE_URL: ${{ env.REPO_BASE }}/
 
       - name: Assemble site
         run: |

@@ -48,7 +48,7 @@ function LoginView() {
   };
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="studio-login mx-auto max-w-md">
       <div className="rounded-card border border-line bg-surface p-6 sm:p-8">
         <div className="mb-6 flex items-center justify-between">
           {step !== "phone" ? (

@@ -10,7 +10,7 @@ const STEPS = [
 /** Cart → shipping → payment progress bar. */
 export function CheckoutSteps({ current }: { current: 0 | 1 | 2 }) {
   return (
-    <ol className="mb-4 flex items-center gap-2 rounded-card border border-line bg-surface px-4 py-3 text-sm" aria-label="مراحل خرید">
+    <ol className="studio-checkout-steps mb-4 flex items-center gap-2 rounded-card border border-line bg-surface px-4 py-3 text-sm" aria-label="مراحل خرید">
       {STEPS.map(({ label, icon: Icon }, i) => (
         <li key={label} className="flex flex-1 items-center gap-2 last:flex-none">
           <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap", i <= current ? "font-bold text-brand" : "text-ink-soft")} aria-current={i === current ? "step" : undefined}>

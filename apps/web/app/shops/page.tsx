@@ -1,42 +1,84 @@
-import { cityName, LISTINGS, provinceOfCity, ratingBayes, SHOP_TYPE_FA, SHOPS } from "@nobar/demo";
-import { BadgeCheck, MapPin, Star } from "lucide-react";
+import {
+  cityName,
+  LISTINGS,
+  ratingBayes,
+  SHOP_TYPE_FA,
+  SHOPS,
+} from "@nobar/demo";
+import { ArrowUpLeft, BadgeCheck, MapPin, Star } from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Photo } from "@/components/photo";
+import { PageIntro } from "@/components/page-intro";
+import { bannerSrc, type BannerPhoto } from "@/lib/photos";
 
 export const metadata: Metadata = { title: "غرفه‌ها" };
+const cover = (art: string): BannerPhoto =>
+  ["apple-red", "apple-yellow", "grape-white", "walnut"].includes(art)
+    ? "banner-orchard"
+    : ["pomegranate", "barberry", "quince"].includes(art)
+      ? "banner-pomegranate"
+      : "banner-market";
 
 export default function ShopsPage() {
-  const shops = [...SHOPS].sort((a, b) => ratingBayes(b) - ratingBayes(a));
+  const shops = [...SHOPS]
+    .filter((s) => s.status === "ACTIVE")
+    .sort((a, b) => ratingBayes(b) - ratingBayes(a));
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-extrabold">غرفه‌های نوبر</h1>
-        <p className="text-sm text-ink-soft">باغدارها، تعاونی‌ها و میوه‌فروشی‌هایی که مستقیم از مبدأ می‌فروشند؛ به ترتیب امتیاز.</p>
-      </div>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div>
+      <PageIntro
+        eyebrow="آدم‌های پشت طعم خوب"
+        title="از آشنایی تا اعتماد."
+        description="باغدارها و غرفه‌دارهای نوبر را بشناس؛ محصول خوب، از یک قصهٔ واقعی شروع می‌شود."
+      >
+        <div className="studio-intro-count">
+          <strong>{shops.length.toLocaleString("fa-IR")}</strong>
+          <span>غرفهٔ فعال، به ترتیب امتیاز</span>
+        </div>
+      </PageIntro>
+      <ul className="studio-shops-directory">
         {shops.map((s) => (
           <li key={s.id}>
-            <Link href={`/shop/${s.id}`} className="flex gap-3 rounded-card border border-line bg-surface p-4 hover:border-brand">
-              <Photo kind={s.art} alt="" sizes="64px" className="size-16 shrink-0 rounded-full" />
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1 font-bold">
-                  <span className="truncate">{s.name}</span>
-                  <BadgeCheck className="size-4 shrink-0 text-brand" aria-label="هویت تأییدشده" />
+            <Link href={`/shop/${s.id}`} className="studio-seller-card">
+              <div className="studio-seller-cover">
+                <Image
+                  src={bannerSrc(cover(s.art))}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <span>{SHOP_TYPE_FA[s.type]}</span>
+              </div>
+              <div className="studio-seller-info">
+                <Photo
+                  kind={s.art}
+                  alt=""
+                  sizes="64px"
+                  className="studio-seller-avatar"
+                />
+                <span className="studio-seller-score">
+                  <Star size={13} fill="currentColor" />
+                  {s.ratingAvg.toLocaleString("fa-IR")}
+                  <small>({s.ratingCount.toLocaleString("fa-IR")} نظر)</small>
+                </span>
+                <h2>
+                  {s.name}
+                  <BadgeCheck size={17} />
+                </h2>
+                <p>
+                  <MapPin size={13} />
+                  {cityName(s.cityId)}
+                  <span>·</span>
+                  {LISTINGS.filter(
+                    (l) => l.shopId === s.id && l.status === "PUBLISHED",
+                  ).length.toLocaleString("fa-IR")}{" "}
+                  محصول
                 </p>
-                <p className="flex items-center gap-1 text-xs text-ink-soft">
-                  <MapPin className="size-3.5" aria-hidden />
-                  {cityName(s.cityId)}، {provinceOfCity(s.cityId)?.name} · {SHOP_TYPE_FA[s.type]}
-                </p>
-                <p className="mt-1 flex items-center gap-2 text-xs">
-                  <span className="inline-flex items-center gap-0.5 font-bold">
-                    <Star className="size-3.5 fill-saffron text-saffron" aria-hidden />
-                    {s.ratingAvg.toLocaleString("fa-IR")}
-                  </span>
-                  <span className="text-ink-soft">({s.ratingCount.toLocaleString("fa-IR")} نظر)</span>
-                  <span className="text-ink-soft">· {LISTINGS.filter((l) => l.shopId === s.id).length.toLocaleString("fa-IR")} محصول</span>
-                </p>
-                <p className="mt-1 line-clamp-1 text-xs text-brand-strong">{s.story.title}</p>
+                <div className="studio-seller-story">
+                  <span>{s.story.title}</span>
+                  <ArrowUpLeft size={19} />
+                </div>
               </div>
             </Link>
           </li>

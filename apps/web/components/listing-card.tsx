@@ -27,7 +27,9 @@ export function ListingCard({ hit, variant = "grid" }: { hit: SearchHit; variant
   return (
     <article className={cn("nobar-product-card group relative flex h-full flex-col", variant === "row" ? "nobar-product-card-row w-56 shrink-0 sm:w-60" : "nobar-product-card-grid")}>
       <div className="nobar-product-visual">
-        <Photo kind={type.id} alt={l.title} fallback={{ emoji: type.emoji, hue: type.hue }} className="nobar-product-photo aspect-square w-full" />
+        <Link href={"/l/" + l.id} aria-label={l.title} className="nobar-product-image-link block">
+          <Photo kind={type.id} alt="" fallback={{ emoji: type.emoji, hue: type.hue }} className="nobar-product-photo aspect-square w-full" />
+        </Link>
         <span className="nobar-fresh-badge">
           <span className={cn("size-1.5 rounded-full", FRESH_DOT[freshness.badge])} /> {FRESH_LABEL[freshness.badge]}
         </span>

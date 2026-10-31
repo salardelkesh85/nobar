@@ -21,7 +21,7 @@ export function OriginView({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      <header className="relative isolate overflow-hidden rounded-card">
+      <header className="studio-origin-profile relative isolate overflow-hidden rounded-card">
         <Image src={bannerSrc(city.provinceId === "mrk" ? "banner-pomegranate" : city.provinceId === "azg" ? "banner-orchard" : "banner-market")} alt="" fill priority sizes="100vw" className="-z-10 object-cover" />
         <div className="absolute inset-0 -z-10 bg-linear-to-l from-black/75 via-black/45 to-black/10" />
         <div className="px-5 py-8 text-white sm:px-8 sm:py-12">
