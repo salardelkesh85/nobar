@@ -1,7 +1,7 @@
 "use client";
 
 import { CATEGORIES, cityName, currentMonth, inSeason, isNobar, LISTINGS, PRODUCE_TYPES, ratingBayes, search, SHOPS, SHOP_TYPE_FA, type SearchHit } from "@nobar/demo";
-import { ArrowLeft, BadgeCheck, CalendarDays, Leaf, MapPin, PackageCheck, Scale, Sparkles, Star, Store, Truck } from "lucide-react";
+import { ArrowLeft, CalendarDays, Leaf, MapPin, PackageCheck, Scale, Sparkles, Star, Store, Truck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { BannerCarousel, type Slide } from "@/components/banner-carousel";
