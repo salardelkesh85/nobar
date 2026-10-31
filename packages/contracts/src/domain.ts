@@ -148,11 +148,15 @@ export interface CartDto {
   hasIssues: boolean;
 }
 
+/** Same shape as the store's Address (apps/web/lib/store.tsx). */
 export interface AddressDto {
-  id?: string;
+  id: string;
+  title: string;
   cityId: string;
-  text: string;
-  label?: string | null;
+  name: string;
+  phone: string;
+  line: string;
+  postalCode: string;
 }
 
 export interface OrderItemDto {
@@ -208,7 +212,6 @@ export interface UserDto {
   name: string | null;
   roles: Role[];
   cityId: string | null;
-  sellerId: string | null;
   createdAt: string;
 }
 

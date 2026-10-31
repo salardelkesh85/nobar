@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@nobar/contracts": "workspace:*",
     "@nobar/fa": "workspace:*"
   },
   "devDependencies": {

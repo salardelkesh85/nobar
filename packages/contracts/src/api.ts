@@ -37,11 +37,19 @@ export const OtpVerifySchema = z.object({
 });
 export const RefreshSchema = z.object({ refreshToken: z.string().min(10) });
 export const UpdateMeSchema = z.object({ name: z.string().trim().min(2).max(60).optional(), cityId: CityIdSchema.optional() });
+/** Same rules as the store's address form (apps/web/components/address-form.tsx). */
 export const AddressCreateSchema = z.object({
+  title: z.string().trim().min(1).max(40),
   cityId: CityIdSchema,
-  text: z.string().trim().min(5).max(300),
-  label: z.string().trim().max(40).optional(),
+  name: z.string().trim().min(3, "نام و نام خانوادگی تحویل‌گیرنده را بنویسید").max(80),
+  phone: PhoneSchema,
+  line: z.string().trim().min(10, "آدرس را کامل‌تر بنویسید").max(300),
+  postalCode: z
+    .string()
+    .transform((v) => faDigitsToEn(v).replace(/\D/g, ""))
+    .pipe(z.string().regex(/^\d{10}$/, "کد پستی ۱۰ رقم است")),
 });
+export const AddressUpdateSchema = AddressCreateSchema.partial();
 
 const RialSchema = z.number().int().nonnegative().max(1_000_000_000_000);
 

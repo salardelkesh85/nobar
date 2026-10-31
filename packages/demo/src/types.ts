@@ -8,20 +8,7 @@ export type Grade = "PREMIUM" | "GRADE_1" | "GRADE_2" | "PROCESSING";
 export type ShopType = "GROWER" | "SHOP" | "COOPERATIVE";
 export type ShippingMethodCode = "SELLER_LOCAL" | "POST" | "TIPAX" | "FREIGHT";
 
-export interface Province {
-  id: string;
-  name: string;
-}
-
-export interface City {
-  id: string;
-  name: string;
-  provinceId: string;
-  lat: number;
-  lng: number;
-  /** offered in the destination picker */
-  destination: boolean;
-}
+export type { City, Province } from "@nobar/contracts/cities";
 
 export interface Category {
   id: string;
