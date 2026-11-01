@@ -972,3 +972,82 @@
     transform: none;
   }
 }
+/* Compact scale: restrained imagery and comfortable everyday browsing. */
+.hero { grid-template-columns:1.2fr 0.8fr; gap:40px; padding:12px 0 28px; }
+.heroCopy { padding-block:15px; }
+.hero h1 { font-size:46px; letter-spacing:-1.8px; line-height:1.5; }
+.titleLeaf { width:27px; height:27px; }
+.eyebrow { margin-bottom:16px; }
+.heroCopy > p { margin-top:14px; font-size:13px; }
+.heroActions { margin-top:20px; gap:22px; }
+.primary { min-height:46px; padding:12px 21px; font-size:12px; }
+.destination { margin-top:22px; }
+.heroArt { max-width:350px; width:100%; justify-self:end; padding:10px 16px; }
+.fruitWindow { height:275px; }
+.freshSeal { width:70px; height:70px; top:50px; font-size:9px; inset-inline-end:0; }
+.freshSeal svg { width:19px; height:19px; }
+.freshSeal strong { font-size:12px; }
+.littleFruit { display:none; }
+.fruitCaption { inset-inline:14px; bottom:14px; padding:12px; }
+.fruitCaption strong { font-size:13px; }
+.fruitCaption small { font-size:9px; }
+.fruitCaption > svg { width:19px; }
+.manifesto { padding-block:18px; }
+.collections,.productSection,.shops { margin-block:34px; }
+.collectionHeading h2 { font-size:20px; }
+.collection { min-height:90px; padding:12px; border-radius:15px; }
+.collectionImage { height:60px; flex-basis:55px; }
+.heading { margin-bottom:18px; }
+.heading h2 { font-size:24px; margin-top:6px; }
+.heading > a svg { padding:8px; width:16px; height:16px; }
+.originStory { min-height:280px; margin-block:38px; grid-template-columns:0.8fr 1.2fr; border-radius:20px; }
+.originImage { min-height:280px; }
+.originCopy { padding:24px 32px; }
+.originCopy h2 { font-size:27px; margin-block:12px; line-height:1.5; }
+.originCopy h2 br { display:none; }
+.originCopy h2 br:after { content:" "; }
+.originCopy p { max-width:440px; font-size:11px; }
+.originCopy > a { margin-top:18px; padding-top:15px; }
+.explore { margin-top:36px; gap:20px; }
+.seasonCard,.assistantCard { padding:26px 30px; border-radius:20px; }
+.seasonCard h2 { font-size:27px; line-height:1.5; }
+.seasonLeaf { width:155px; height:155px; }
+.assistantCard h2 { font-size:23px; }
+.assistantMark { width:45px; height:45px; margin-bottom:12px; }
+.assistantMark svg { width:27px; height:27px; }
+.assistantCard p { font-size:12px; margin-top:10px; }
+.assistantCard > a { margin-top:15px; padding-top:15px; }
+@media(max-width:700px) {
+ .hero { grid-template-columns:1fr; gap:12px; padding-block:10px 22px; }
+ .heroCopy { padding:0 3px; }
+ .hero h1 { font-size:33px; letter-spacing:-1px; }
+ .titleLeaf { width:24px; height:24px; }
+ .heroCopy > p { font-size:11px; margin-top:10px; }
+ .heroActions { margin-top:16px; gap:18px; }
+ .destination { margin-top:17px; }
+ .heroArt { max-width:290px; justify-self:center; padding-block:0; }
+ .fruitWindow { height:190px; border-radius:90px 90px 18px 18px; }
+ .artLabel { margin-bottom:7px; }
+ .freshSeal { top:40px; width:59px; height:59px; font-size:8px; }
+ .freshSeal svg { width:16px; height:16px; margin:0; }
+ .freshSeal strong { font-size:10px; }
+ .fruitCaption { padding:9px 12px; bottom:10px; }
+ .fruitCaption small { display:none; }
+ .fruitCaption strong { font-size:12px; }
+ .artFootnote { margin-top:7px; }
+ .collections,.productSection,.shops { margin-block:26px; }
+ .heading h2 { font-size:21px; }
+ .collectionHeading h2 { font-size:17px; }
+ .collection { min-height:80px; padding:9px; }
+ .collectionImage { flex-basis:40px; height:50px; }
+ .originStory { grid-template-columns:1fr; margin-block:28px; }
+ .originImage { min-height:170px; max-height:170px; }
+ .originCopy { padding:22px; }
+ .originCopy h2 { font-size:23px; }
+ .originCopy h2 br { display:block; }
+ .explore { margin-top:28px; gap:14px; }
+ .seasonCard,.assistantCard { padding:22px; }
+ .seasonCard h2 { font-size:24px; }
+ .seasonCard h2 br { display:none; }
+ .assistantCard h2 { font-size:21px; }
+}

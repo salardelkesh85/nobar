@@ -57,3 +57,7 @@ The 64 existing tests, full type check, RTL lint and all three static exports pa
 Browser checks cover 46 routes: every static buyer, seller and staff route plus representative product, produce, shop and origin routes at 390px and 1440px. Additional focused checks cover narrow mobile/tablet layouts, cart/address persistence, favourites, filter reset and dismissal, gallery dismissal, keyboard suggestions, city selection and dark/reduced-motion rendering. Fresh also received visual review in light/dark modes after scrolling to load images. These are local browser checks, not production service validation.
 
 The user requested publishing frontend changes after validation. Push the reviewed change to `main` and verify the existing **Deploy demo to GitHub Pages** workflow completes successfully. Buyer: `/nobar/`; seller: `/nobar/seller/`; staff: `/nobar/admin/`. Do not describe a push as a completed deployment until the Pages job succeeds.
+
+## Compact scale refinement
+
+Owner-approved direction retains the Fresh palette with medium-to-small elements: 46px desktop / 33px mobile home headlines, 275px / 190px hero imagery, smaller product rails, restrained interior headers and capped product galleries. Compact cards and reduced section spacing replace the oversized presentation.

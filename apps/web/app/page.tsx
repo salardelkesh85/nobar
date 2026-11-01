@@ -273,9 +273,9 @@ export default function HomePage() {
         <div className={styles.originCopy}>
           <span className={styles.index}>پشت هر میوه، یک قصه</span>
           <h2>
-            آدم‌ها را بشناس.
+            آدم‌ها را بشناس.{" "}
             <br />
-            با خیالِ خوب
+            با خیالِ خوب{" "}
             <br />
             <em>انتخاب کن.</em>
           </h2>
