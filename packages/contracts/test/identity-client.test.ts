@@ -3,6 +3,11 @@ import { IdentityClient } from '../src/identity-client';
 const tokens = { accessToken: 'a', refreshToken: 'r', expiresIn: 60, user: { id: 'u' } };
 const json = (body: unknown, status=200) => new Response(JSON.stringify(body), { status });
 describe('identity client sessions', () => {
+  it('calls fetch without binding the client as the browser receiver', async () => {
+    const transport = async function (this: unknown) { expect(this).toBeUndefined(); return json({ expiresInSec: 120, resendInSec: 60 }); };
+    const client = new IdentityClient('http://localhost:4000', transport);
+    await expect(client.requestOtp('09121234567')).resolves.toMatchObject({ resendInSec: 60 });
+  });
   it('shares refresh across concurrent unauthorized requests and retries with the new token', async () => {
     let refreshes=0;
     const transport=vi.fn<typeof fetch>(async (url, init) => {

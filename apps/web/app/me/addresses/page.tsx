@@ -5,14 +5,19 @@ import { toFaDigits } from "@nobar/fa";
 import { Button, EmptyState, Skeleton } from "@nobar/ui";
 import { MapPin, Pencil, Phone, Plus, Trash2, User } from "lucide-react";
 import { useState } from "react";
-import { AccountShell } from "@/components/account-shell";
+import { identityError } from "@/lib/api-identity";
+import { AccountShell, SignInPrompt } from "@/components/account-shell";
 import { AddressForm, emptyAddress } from "@/components/address-form";
 import { useStore, type Address } from "@/lib/store";
 
 export default function AddressesPage() {
-  const { ready, addresses, saveAddress, removeAddress, dest, user, showToast } = useStore();
+  const { ready, addresses, saveAddress, removeAddress, dest, user, apiMode, showToast } = useStore();
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [failure, setFailure] = useState("");
   const [editing, setEditing] = useState<Address | null>(null);
   if (!ready) return <Skeleton className="h-96 w-full" />;
+
+  if (apiMode && !user) return <AccountShell title="آدرس‌ها"><SignInPrompt next="/me/addresses" text="برای مدیریت آدرس‌ها وارد شوید." /></AccountShell>;
 
   return (
     <AccountShell
@@ -26,14 +31,15 @@ export default function AddressesPage() {
         ) : null
       }
     >
+      {failure ? <p role="alert" className="text-sm text-danger">{failure}</p> : null}
       {editing ? (
         <div className="rounded-card border border-brand/40 bg-surface p-5">
           <h2 className="mb-4 font-extrabold">{addresses.some((a) => a.id === editing.id) ? "ویرایش آدرس" : "آدرس جدید"}</h2>
           <AddressForm
             initial={editing}
             onCancel={() => setEditing(null)}
-            onSave={(a) => {
-              saveAddress(a);
+            onSave={async (a) => {
+              await saveAddress(a);
               setEditing(null);
               showToast("آدرس ذخیره شد.");
             }}
@@ -69,9 +75,12 @@ export default function AddressesPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    removeAddress(a.id);
-                    showToast("آدرس حذف شد.");
+                  disabled={removing !== null}
+                  onClick={async () => {
+                    setRemoving(a.id); setFailure("");
+                    try { await removeAddress(a.id); showToast("آدرس حذف شد."); }
+                    catch (error) { setFailure(identityError(error)); }
+                    finally { setRemoving(null); }
                   }}
                   className="grid size-10 place-items-center rounded-full text-danger hover:bg-danger-soft"
                   aria-label={`حذف ${a.title}`}

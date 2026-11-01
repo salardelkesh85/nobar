@@ -4,6 +4,7 @@ import { destinationCities } from "@nobar/demo";
 import { toEnDigits } from "@nobar/fa";
 import { Button, Field, Input, Select, Textarea } from "@nobar/ui";
 import { useState } from "react";
+import { identityError } from "@/lib/api-identity";
 import type { Address } from "@/lib/store";
 
 export const emptyAddress = (cityId: string, name = "", phone = ""): Address => ({
@@ -26,20 +27,30 @@ export function validateAddress(a: Address): Record<string, string> {
   return e;
 }
 
-export function AddressForm({ initial, onSave, onCancel, submitLabel = "ذخیره‌ی آدرس" }: { initial: Address; onSave: (a: Address) => void; onCancel?: () => void; submitLabel?: string }) {
+export function AddressForm({ initial, onSave, onCancel, submitLabel = "ذخیره‌ی آدرس" }: { initial: Address; onSave: (a: Address) => void | Promise<void>; onCancel?: () => void; submitLabel?: string }) {
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState("");
   const [a, setA] = useState<Address>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const upd = (k: keyof Address) => (e: { target: { value: string } }) => setA((x) => ({ ...x, [k]: e.target.value }));
   return (
     <form
       className="space-y-4"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
+        if (busy) return;
+        setFailure("");
         const errs = validateAddress(a);
         setErrors(errs);
-        if (Object.keys(errs).length === 0) onSave({ ...a, phone: toEnDigits(a.phone), postalCode: toEnDigits(a.postalCode) });
+        if (Object.keys(errs).length === 0) {
+          setBusy(true);
+          try { await onSave({ ...a, phone: toEnDigits(a.phone), postalCode: toEnDigits(a.postalCode) }); }
+          catch (error) { setFailure(identityError(error)); }
+          finally { setBusy(false); }
+        }
       }}
     >
+      <fieldset disabled={busy} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="عنوان آدرس" htmlFor={`${a.id}-title`} hint="مثلاً خانه، محل کار">
           <Input id={`${a.id}-title`} value={a.title} onChange={upd("title")} />
@@ -67,13 +78,15 @@ export function AddressForm({ initial, onSave, onCancel, submitLabel = "ذخیر
         <Input id={`${a.id}-postal`} inputMode="numeric" dir="ltr" className="text-end sm:max-w-56" value={a.postalCode} onChange={upd("postalCode")} />
       </Field>
       <div className="flex gap-2">
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit" disabled={busy}>{busy ? "در حال ذخیره…" : submitLabel}</Button>
         {onCancel ? (
           <Button variant="ghost" onClick={onCancel}>
             انصراف
           </Button>
         ) : null}
       </div>
+      </fieldset>
+      {failure ? <p role="alert" className="text-sm text-danger">{failure}</p> : null}
     </form>
   );
 }

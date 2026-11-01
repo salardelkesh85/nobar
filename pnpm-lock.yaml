@@ -157,6 +157,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@nobar/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@nobar/demo':
         specifier: workspace:*
         version: link:../../packages/demo

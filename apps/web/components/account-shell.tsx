@@ -66,9 +66,9 @@ export function AccountShell({ title, children, action }: { title: string; child
           {ready && user ? (
             <button
               type="button"
-              onClick={() => {
-                signOut();
-                showToast("از حساب خارج شدید.");
+              onClick={async () => {
+                try { await signOut(); showToast("از حساب خارج شدید."); }
+                catch { showToast("از این صفحه خارج شدید؛ پایان نشست روی سرور تأیید نشد."); }
               }}
               className="flex min-h-11 shrink-0 items-center gap-2.5 rounded-control px-3 text-sm text-danger hover:bg-danger-soft"
             >

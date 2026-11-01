@@ -21,7 +21,7 @@ const code = () => {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { ready, dest, clearCart, addOrder, addresses, saveAddress, user, showToast } = useStore();
+  const { ready, dest, clearCart, addOrder, addresses, saveAddress, user, apiMode, showToast } = useStore();
   const { groups } = useCartGroups();
   const [methods, setMethods] = useState<Record<string, ShippingMethodCode>>({});
   const [selected, setSelected] = useState<string | null>(null);
@@ -31,6 +31,8 @@ export default function CheckoutPage() {
   if (!ready) return <Skeleton className="h-64 w-full" />;
   if (!groups.length)
     return <EmptyState icon={<ShoppingBasket className="size-10" />} title="سبدتان خالی است" action={<ButtonLink href="/">بازگشت به فروشگاه</ButtonLink>} />;
+
+  if (apiMode && !user) return <EmptyState title="برای ثبت آدرس وارد شوید" action={<ButtonLink href="/login?next=/checkout">ورود یا ثبت‌نام</ButtonLink>} />;
 
   const chosen = (shopId: string) => {
     const g = groups.find((x) => x.shop.id === shopId)!;
@@ -124,9 +126,9 @@ export default function CheckoutPage() {
               initial={emptyAddress(dest, user?.name ?? "", user?.phone ?? "")}
               submitLabel="ثبت این آدرس"
               onCancel={cityAddresses.length ? () => setAdding(false) : undefined}
-              onSave={(a) => {
-                saveAddress({ ...a, cityId: dest });
-                setSelected(a.id);
+              onSave={async (a) => {
+                const saved = await saveAddress({ ...a, cityId: dest });
+                setSelected(saved.id);
                 setAdding(false);
                 showToast("آدرس ثبت شد.");
               }}

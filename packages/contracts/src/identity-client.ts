@@ -15,7 +15,9 @@ export class IdentityClient {
   }
   get user(): UserDto | null { return this.tokens?.user ?? null; }
   private async request<T>(path: string, method = 'GET', body?: unknown, token?: string): Promise<T> {
-    const response = await this.transport(`${this.base}/v1/${path}`, {
+    // Browser fetch must not receive the client instance as its receiver.
+    const transport = this.transport;
+    const response = await transport(`${this.base}/v1/${path}`, {
       method, cache: 'no-store', redirect: 'error',
       headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),

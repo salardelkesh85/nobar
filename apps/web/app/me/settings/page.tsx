@@ -3,12 +3,15 @@
 import { Button, cn, Field, Input } from "@nobar/ui";
 import { Monitor, Moon, Sun, Type } from "lucide-react";
 import { useEffect, useState } from "react";
+import { identityError } from "@/lib/api-identity";
 import { AccountShell } from "@/components/account-shell";
 import { CityPicker } from "@/components/city-picker";
 import { useStore } from "@/lib/store";
 
 export default function SettingsPage() {
   const { simple, setSimple, theme, setTheme, user, updateUser, showToast } = useStore();
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState("");
   const [name, setName] = useState("");
   useEffect(() => setName(user?.name ?? ""), [user?.name]);
 
@@ -17,10 +20,13 @@ export default function SettingsPage() {
       {user ? (
         <form
           className="space-y-4 rounded-card border border-line bg-surface p-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            updateUser({ name: name.trim() });
-            showToast("اطلاعات حساب ذخیره شد.");
+            if (busy) return;
+            setBusy(true); setFailure("");
+            try { await updateUser({ name: name.trim() }); showToast("اطلاعات حساب ذخیره شد."); }
+            catch (error) { setFailure(identityError(error)); }
+            finally { setBusy(false); }
           }}
         >
           <h2 className="font-extrabold">اطلاعات حساب</h2>
@@ -32,7 +38,8 @@ export default function SettingsPage() {
               <Input id="pphone" value={user.phone} dir="ltr" className="text-end" disabled />
             </Field>
           </div>
-          <Button type="submit">ذخیره</Button>
+          <Button type="submit" disabled={busy}>{busy ? "در حال ذخیره…" : "ذخیره"}</Button>
+          {failure ? <p role="alert" className="text-sm text-danger">{failure}</p> : null}
         </form>
       ) : null}
 

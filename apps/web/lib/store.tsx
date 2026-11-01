@@ -2,6 +2,7 @@
 
 import { cityById, DEFAULT_DESTINATION } from "@nobar/demo";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useApiIdentity } from "./api-identity";
 import { DEST_COOKIE } from "./constants";
 
 // Demo-only client state. Everything lives in this browser (localStorage); the real app keeps it in the API.
@@ -37,6 +38,10 @@ export interface User {
 }
 
 interface Store {
+  apiMode: boolean;
+  requestOtp: ReturnType<typeof useApiIdentity>["requestOtp"];
+  verifyCode: ReturnType<typeof useApiIdentity>["verifyCode"];
+  completeSignIn: ReturnType<typeof useApiIdentity>["completeSignIn"];
   ready: boolean;
   dest: string;
   setDest: (cityId: string) => void;
@@ -51,13 +56,13 @@ interface Store {
   addOrder: (o: PlacedOrder) => void;
   user: User | null;
   signIn: (u: User) => void;
-  updateUser: (patch: Partial<User>) => void;
-  signOut: () => void;
+  updateUser: (patch: Partial<User>) => Promise<void>;
+  signOut: () => Promise<void>;
   favorites: string[];
   toggleFavorite: (listingId: string) => boolean;
   addresses: Address[];
-  saveAddress: (a: Address) => void;
-  removeAddress: (id: string) => void;
+  saveAddress: (a: Address) => Promise<Address>;
+  removeAddress: (id: string) => Promise<void>;
   recentSearches: string[];
   addRecentSearch: (q: string) => void;
   clearRecentSearches: () => void;
@@ -114,6 +119,7 @@ function usePersisted<T>(key: string, initial: T): [T, (fn: (prev: T) => T) => v
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
+  const identity = useApiIdentity();
   const [ready, setReady] = useState(false);
   const [dest, setDestState] = useState(DEFAULT_DESTINATION);
   const [cart, updateCartRaw, loadCart] = usePersisted<CartItem[]>("nobar_cart", []);
@@ -157,6 +163,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Store>(
     () => ({
       ready,
+      apiMode: identity.apiMode,
+      requestOtp: identity.requestOtp,
+      verifyCode: identity.verifyCode,
+      completeSignIn: identity.completeSignIn,
       dest,
       setDest,
       cart,
@@ -173,19 +183,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       clearCompare: () => updateCompare(() => []),
       orders,
       addOrder: (o) => updateOrders((prev) => [o, ...prev]),
-      user,
-      signIn: (u) => updateUser(() => u),
-      updateUser: (patch) => updateUser((prev) => (prev ? { ...prev, ...patch } : prev)),
-      signOut: () => updateUser(() => null),
+      user: identity.apiMode ? identity.user : user,
+      signIn: (u) => { if (!identity.apiMode) updateUser(() => u); },
+      updateUser: async (patch) => { if (identity.apiMode) return identity.updateUser(patch); updateUser((prev) => (prev ? { ...prev, ...patch } : prev)); },
+      signOut: async () => { if (identity.apiMode) return identity.signOut(); updateUser(() => null); },
       favorites,
       toggleFavorite: (id) => {
         const on = !favorites.includes(id);
         updateFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]));
         return on;
       },
-      addresses,
-      saveAddress: (a) => updateAddresses((prev) => (prev.some((x) => x.id === a.id) ? prev.map((x) => (x.id === a.id ? a : x)) : [...prev, a])),
-      removeAddress: (id) => updateAddresses((prev) => prev.filter((x) => x.id !== id)),
+      addresses: identity.apiMode ? identity.addresses : addresses,
+      saveAddress: async (a) => { if (identity.apiMode) return identity.saveAddress(a); updateAddresses((prev) => (prev.some((x) => x.id === a.id) ? prev.map((x) => (x.id === a.id ? a : x)) : [...prev, a])); return a; },
+      removeAddress: async (id) => { if (identity.apiMode) return identity.removeAddress(id); updateAddresses((prev) => prev.filter((x) => x.id !== id)); },
       recentSearches,
       addRecentSearch: (q) => updateRecent((prev) => [q, ...prev.filter((x) => x !== q)].slice(0, 6)),
       clearRecentSearches: () => updateRecent(() => []),
@@ -206,7 +216,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toast,
       showToast,
     }),
-    [ready, dest, setDest, cart, updateCart, compare, updateCompare, orders, updateOrders, user, updateUser, favorites, updateFavorites, addresses, updateAddresses, recentSearches, updateRecent, theme, simple, toast, showToast],
+    [identity, ready, dest, setDest, cart, updateCart, compare, updateCompare, orders, updateOrders, user, updateUser, favorites, updateFavorites, addresses, updateAddresses, recentSearches, updateRecent, theme, simple, toast, showToast],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

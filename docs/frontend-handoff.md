@@ -34,3 +34,7 @@ GitHub Pages hosts the static demo. A running API needs its own deployment, conf
 - Demo shopping, simulated payment/order persistence, cart clearing, login/logout and the interaction checks above passed.
 - 64 existing tests, full TypeScript checks, RTL lint and all three static builds passed. The storefront was rebuilt after the season-label fix.
 - These results cover the demo frontend. Backend integration and production business flows remain the next phase.
+
+## Identity integration update
+
+The buyer frontend now supports API-backed identity, profile and address CRUD when `NEXT_PUBLIC_API_URL` is configured. The published Pages demo leaves it unset. See [identity integration](identity-client.md) for session lifetime, setup and verification; catalog, cart, order and payment integration remain outstanding.
