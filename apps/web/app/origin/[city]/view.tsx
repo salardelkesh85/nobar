@@ -1,6 +1,6 @@
 "use client";
 
-import { cityById, cityName, LISTINGS, provinceOfCity, search, SHOPS, SHOP_TYPE_FA } from "@nobar/demo";
+import { cityName, SHOP_TYPE_FA } from "@nobar/demo";
 import { Card, EmptyState, RatingStars } from "@nobar/ui";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,15 +9,17 @@ import { ListingGrid } from "@/components/listing-card";
 import { useStore } from "@/lib/store";
 import { Photo } from "@/components/photo";
 import { bannerSrc } from "@/lib/photos";
+import { CatalogFailure, CatalogLoading } from "@/components/catalog-state";
+import { useCatalogOrigin } from "@/lib/api-catalog";
 
 export function OriginView({ id }: { id: string }) {
-  const city = cityById(id);
-  if (!city) notFound();
   const { dest } = useStore();
-  const res = search({ dest });
-  const hits = res.hits.filter((h) => h.listing.originCityId === city.id);
-  const shops = SHOPS.filter((s) => s.cityId === city.id);
-  const total = LISTINGS.filter((l) => l.originCityId === city.id).length;
+  const detail = useCatalogOrigin(id, dest);
+  if (detail.loading) return <CatalogLoading label="مبدأ و محصولاتش" />;
+  if (detail.error) return <CatalogFailure message={detail.error} retry={detail.retry} />;
+  if (!detail.data) notFound();
+  const { city, province, shops, totalListings: total, search } = detail.data;
+  const hits = search.hits;
 
   return (
     <div className="space-y-4">
@@ -25,7 +27,7 @@ export function OriginView({ id }: { id: string }) {
         <Image src={bannerSrc(city.provinceId === "mrk" ? "banner-pomegranate" : city.provinceId === "azg" ? "banner-orchard" : "banner-market")} alt="" fill priority sizes="100vw" className="-z-10 object-cover" />
         <div className="absolute inset-0 -z-10 bg-linear-to-l from-black/75 via-black/45 to-black/10" />
         <div className="px-5 py-8 text-white sm:px-8 sm:py-12">
-          <p className="text-sm text-white/80">{provinceOfCity(city.id)?.name}</p>
+          <p className="text-sm text-white/80">{province.name}</p>
           <h1 className="mt-1 text-2xl font-black sm:text-3xl">از باغ‌های {city.name}</h1>
           <p className="mt-2 max-w-lg text-sm leading-7 text-white/85">
             {total.toLocaleString("fa-IR")} محصول از {shops.length.toLocaleString("fa-IR")} غرفه؛ {hits.length.toLocaleString("fa-IR")} محصول تازه به {cityName(dest)} می‌رسد.

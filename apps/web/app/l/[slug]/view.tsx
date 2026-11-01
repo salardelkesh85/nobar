@@ -1,27 +1,16 @@
 "use client";
 
 import {
-  categoryById,
   cityName,
   etaPhrase,
-  freshnessOf,
-  harvestPhrase,
-  isNobar,
   JALALI_MONTHS,
-  listingBySlug,
-  marketStat,
   minPricePerKg,
   packageGrams,
   PRICE_POSITION_FA,
   pricePerKg,
-  pricePosition,
-  produceTypeById,
-  search,
-  quoteDelivery,
   REASON_FA,
   reviewsForListing,
   SHOP_TYPE_FA,
-  shopById,
 } from "@nobar/demo";
 import { formatToman } from "@nobar/fa";
 import { Badge, ButtonLink, FreshnessBadge, FreshnessMeter, JalaliDate, RatingStars, RelativeDay, Toman, Weight } from "@nobar/ui";
@@ -35,6 +24,8 @@ import type { BannerPhoto } from "@/lib/photos";
 import { ListingRail } from "@/components/listing-card";
 import { Photo } from "@/components/photo";
 import { useStore } from "@/lib/store";
+import { CatalogFailure, CatalogLoading } from "@/components/catalog-state";
+import { useCatalogListing, useCatalogSearch } from "@/lib/api-catalog";
 
 const coverFor = (art: string): BannerPhoto =>
   ["pomegranate", "quince", "barberry"].includes(art) ? "banner-pomegranate" : ["apple-red", "apple-yellow", "grape-white", "walnut"].includes(art) ? "banner-orchard" : "banner-market";
@@ -42,20 +33,18 @@ const coverFor = (art: string): BannerPhoto =>
 const GRADE_FA = { PREMIUM: "ممتاز", GRADE_1: "درجه‌یک", GRADE_2: "درجه‌دو", PROCESSING: "آبمیوه‌ای / صنعتی" } as const;
 
 export function ListingView({ id }: { id: string }) {
-  const l = listingBySlug(id);
-  if (!l) notFound();
-  const shop = shopById(l.shopId)!;
-  const pt = produceTypeById(l.produceTypeId)!;
-  const cat = categoryById(pt.categoryId);
   const { dest } = useStore();
-  const fresh = freshnessOf(l);
-  const quote = quoteDelivery(l, dest);
+  const detail = useCatalogListing(id, dest);
+  const similarResult = useCatalogSearch({ dest, produceType: detail.data?.type.id });
+  if (detail.loading || similarResult.loading) return <CatalogLoading label="محصول و شرایط ارسال" />;
+  if (detail.error) return <CatalogFailure message={detail.error} retry={detail.retry} />;
+  if (similarResult.error) return <CatalogFailure message={similarResult.error} retry={similarResult.retry} />;
+  if (!detail.data) notFound();
+  const { listing: l, shop, type: pt, category: cat, freshness: fresh, delivery: quote, marketStat: stat, pricePosition: position } = detail.data;
   const first = l.packages[0]!;
-  const reviews = reviewsForListing(l.id);
-  const stat = marketStat(pt.id);
-  const position = pricePosition(l);
+  const reviews = detail.apiMode ? [] : reviewsForListing(l.id);
   const perKg = minPricePerKg(l);
-  const similar = search({ dest, produceType: pt.id }).hits.filter((h) => h.listing.id !== l.id);
+  const similar = similarResult.result.hits.filter((hit) => hit.type.id === pt.id && hit.listing.id !== l.id);
   const landedPerKg = quote.best ? pricePerKg(first.priceRial + quote.best.costRial, packageGrams(first)) : null;
 
 
@@ -94,7 +83,7 @@ export function ListingView({ id }: { id: string }) {
         <div className="lg:col-span-4">
           <div className="relative">
             <Gallery kind={pt.id} title={l.title} cover={coverFor(shop.art)} />
-            {isNobar(l) ? <span className="pointer-events-none absolute start-3 top-3 rounded-md bg-nobar-solid px-2 py-1 text-xs font-extrabold text-white">نوبر شد!</span> : null}
+            {detail.data.isNobar ? <span className="pointer-events-none absolute start-3 top-3 rounded-md bg-nobar-solid px-2 py-1 text-xs font-extrabold text-white">نوبر شد!</span> : null}
           </div>
         </div>
 
@@ -128,7 +117,7 @@ export function ListingView({ id }: { id: string }) {
 
           <div className="rounded-control bg-surface-2 p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <FreshnessBadge level={fresh.badge} detail={fresh.badge !== "PREORDER" ? harvestPhrase(fresh) : undefined} />
+              <FreshnessBadge level={fresh.badge} detail={fresh.badge !== "PREORDER" ? fresh.phrase : undefined} />
               {pt.storage !== "AMBIENT" ? (
                 <span className="inline-flex items-center gap-1 text-xs text-ink-soft">
                   <Snowflake className="size-3.5" aria-hidden />

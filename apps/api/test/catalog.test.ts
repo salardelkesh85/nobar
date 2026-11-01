@@ -80,9 +80,22 @@ describe("same answers as the storefront", () => {
     const r = await get<Out<"listing">>(`/v1/listings/${encodeURIComponent(l.slug)}?dest=isfahan`);
     expect(r.status).toBe(200);
     expect(r.body.listing.id).toBe(l.id);
+    expect(r.body.category.id).toBe(r.body.type.categoryId);
     expect(r.body.freshness.badge).toBe(demo.freshnessOf(l).badge);
     expect(r.body.delivery.deliverable).toBe(demo.quoteDelivery(l, "isfahan").deliverable);
     expect(r.body.delivery.options.map((o) => o.costRial)).toEqual(demo.quoteDelivery(l, "isfahan").options.map((o) => o.costRial));
+  });
+
+  it("shows an origin with only its shops and products", async () => {
+    const city = "saveh";
+    const r = await get<Out<"origin">>(`/v1/origins/${city}?dest=tehran`);
+    expect(r.status).toBe(200);
+    expect(r.body.city.id).toBe(city);
+    expect(r.body.province.id).toBe(r.body.city.provinceId);
+    expect(r.body.shops.every((shop) => shop.cityId === city && shop.status === "ACTIVE")).toBe(true);
+    expect(r.body.search.hits.every((hit) => hit.listing.originCityId === city)).toBe(true);
+    expect(r.body.search.notDeliverable.every((item) => item.listing.originCityId === city)).toBe(true);
+    expect(r.body.totalListings).toBe(demo.LISTINGS.filter((listing) => listing.status === "PUBLISHED" && listing.originCityId === city).length);
   });
 });
 
@@ -95,6 +108,16 @@ describe("catalog endpoints", () => {
     const shops = (await get<Out<"shops">>("/v1/shops?city=urmia")).body;
     expect(shops.length).toBeGreaterThan(0);
     expect(shops.every((s) => s.cityId === "urmia" && s.status === "ACTIVE")).toBe(true);
+  });
+
+  it("shows one produce type with its category and season state", async () => {
+    const r = await get<Out<"produceType">>("/v1/catalog/produce-types/pomegranate");
+    expect(r.status).toBe(200);
+    expect(r.body.id).toBe("pomegranate");
+    expect(r.body.category.id).toBe(r.body.categoryId);
+    expect(r.body.inSeason).toBeTypeOf("boolean");
+    expect(r.body.isPeak).toBeTypeOf("boolean");
+    expect((await get<Problem>("/v1/catalog/produce-types/no-such-type")).status).toBe(404);
   });
 
   it("shows a shop with its published listings", async () => {
@@ -123,6 +146,7 @@ describe("catalog endpoints", () => {
     expect(tooMany.status).toBe(400);
     expect((await get<Problem>("/v1/listings/no-such-listing")).status).toBe(404);
     expect((await get<Problem>("/v1/shops/no-such-shop")).status).toBe(404);
+    expect((await get<Problem>("/v1/origins/no-such-city")).status).toBe(400);
   });
 
   it("is public (no token needed)", async () => {

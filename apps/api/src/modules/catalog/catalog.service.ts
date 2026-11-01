@@ -13,6 +13,7 @@ import {
   type Shop,
 } from "@nobar/domain";
 import { CatalogRepo } from "./catalog.repo";
+import { CITIES, PROVINCES } from "@nobar/contracts/cities";
 
 /** How long a catalog snapshot is reused before it is read again (writes also refresh it). */
 const SNAPSHOT_TTL_MS = 30_000;
@@ -113,7 +114,15 @@ export class CatalogService {
 
   async produceTypes() {
     const m = await this.market();
-    return m.data.types.map((t) => ({ ...t, inSeason: m.inSeason(t), isPeak: m.isPeak(t), marketStat: m.marketStat(t.id) }));
+    return m.data.types.map((t) => ({ ...t, inSeason: m.inSeason(t), isPeak: m.isPeak(t), marketStat: m.marketStat(t.id) ?? null }));
+  }
+
+  async produceType(slugOrId: string) {
+    const m = await this.market();
+    const type = m.typeById(slugOrId) ?? m.data.types.find((item) => item.slug === slugOrId);
+    if (!type) throw notFound("نوع محصول");
+    const category = m.data.categories.find((item) => item.id === type.categoryId)!;
+    return { ...type, category, inSeason: m.inSeason(type), isPeak: m.isPeak(type), marketStat: m.marketStat(type.id) ?? null };
   }
 
   async shops(cityId?: string) {
@@ -134,16 +143,39 @@ export class CatalogService {
     const l = this.findListing(m, slugOrId);
     const shop = m.shopById(l.shopId)!;
     const type = m.typeById(l.produceTypeId)!;
+    const category = m.data.categories.find((item) => item.id === type.categoryId)!;
     const freshness = m.freshnessOf(l);
     return {
       listing: l,
       shop: this.shopCard(m, shop),
       type,
+      category,
       freshness: { ...freshness, phrase: harvestPhrase(freshness) },
       delivery: m.quoteDelivery(l, dest),
-      marketStat: m.marketStat(l.produceTypeId),
+      marketStat: m.marketStat(l.produceTypeId) ?? null,
       pricePosition: m.pricePosition(l),
       isNobar: m.isNobar(l),
+    };
+  }
+
+  async origin(cityId: string, dest: string) {
+    const city = CITIES.find((item) => item.id === cityId);
+    if (!city) throw notFound("شهر مبدأ");
+    const province = PROVINCES.find((item) => item.id === city.provinceId)!;
+    const m = await this.market();
+    const shops = m.data.shops.filter((shop) => shop.status === "ACTIVE" && shop.cityId === cityId).map((shop) => this.shopCard(m, shop));
+    const listings = m.data.listings.filter((listing) => listing.status === "PUBLISHED" && listing.originCityId === cityId);
+    const result = await this.search({ dest });
+    return {
+      city,
+      province,
+      shops,
+      totalListings: listings.length,
+      search: {
+        total: result.hits.filter((hit) => hit.listing.originCityId === cityId).length,
+        hits: result.hits.filter((hit) => hit.listing.originCityId === cityId),
+        notDeliverable: result.notDeliverable.filter((item) => item.listing.originCityId === cityId),
+      },
     };
   }
 

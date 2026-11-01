@@ -1,16 +1,18 @@
 import { Controller, Get, Inject, Param, Query } from "@nestjs/common";
 import { Public, ZodPipe } from "@nobar/common";
 import { BoolQuerySchema } from "@nobar/contracts";
-import { CITIES, DEFAULT_CITY_ID } from "@nobar/contracts/cities";
+import { CITIES, CITY_IDS, DEFAULT_CITY_ID } from "@nobar/contracts/cities";
 import { z } from "zod";
 import { CatalogService } from "./catalog.service";
 
 const DESTINATIONS = CITIES.filter((c) => c.destination).map((c) => c.id) as [string, ...string[]];
 const Dest = z.enum(DESTINATIONS, { error: "شهر مقصد پشتیبانی نمی‌شود" }).default(DEFAULT_CITY_ID);
+const City = z.enum(CITY_IDS, { error: "شهر مبدأ پشتیبانی نمی‌شود" });
 const Grams = z.coerce.number().int().min(250).max(50_000);
 const Id = z.string().trim().min(1).max(80);
 
 const DestQuery = z.object({ dest: Dest });
+const OriginQuery = z.object({ dest: Dest });
 const SearchQuery = z.object({
   dest: Dest,
   q: z.string().trim().max(100).optional(),
@@ -60,6 +62,11 @@ export class CatalogController {
     return this.catalog.candidates(id, q.dest, q.grams);
   }
 
+  @Get("catalog/produce-types/:id")
+  produceType(@Param("id") id: string) {
+    return this.catalog.produceType(id);
+  }
+
   @Get("shops")
   shops(@Query(new ZodPipe(ShopsQuery)) q: z.infer<typeof ShopsQuery>) {
     return this.catalog.shops(q.city);
@@ -68,6 +75,11 @@ export class CatalogController {
   @Get("shops/:slug")
   shop(@Param("slug") slug: string) {
     return this.catalog.shop(slug);
+  }
+
+  @Get("origins/:city")
+  origin(@Param("city", new ZodPipe(City)) city: string, @Query(new ZodPipe(OriginQuery)) q: z.infer<typeof OriginQuery>) {
+    return this.catalog.origin(city, q.dest);
   }
 
   @Get("listings/:slug")

@@ -1,6 +1,6 @@
 "use client";
 
-import { cityName, METHOD_FA, provinceOfCity, reviewsForShop, search, SHOP_TYPE_FA, shopBySlug } from "@nobar/demo";
+import { cityName, METHOD_FA, provinceOfCity, reviewsForShop, SHOP_TYPE_FA } from "@nobar/demo";
 import { Badge, EmptyState, RatingStars, RelativeDay } from "@nobar/ui";
 import { BadgeCheck, Check, Clock, MapPin, Star, Truck } from "lucide-react";
 import Image from "next/image";
@@ -9,16 +9,23 @@ import { ListingGrid } from "@/components/listing-card";
 import { Photo } from "@/components/photo";
 import { bannerSrc, type BannerPhoto } from "@/lib/photos";
 import { useStore } from "@/lib/store";
+import { CatalogFailure, CatalogLoading } from "@/components/catalog-state";
+import { useCatalogSearch, useCatalogShop } from "@/lib/api-catalog";
 
 const coverFor = (art: string): BannerPhoto =>
   ["pomegranate", "quince", "barberry"].includes(art) ? "banner-pomegranate" : ["apple-red", "apple-yellow", "grape-white", "walnut"].includes(art) ? "banner-orchard" : "banner-market";
 
 export function ShopView({ id }: { id: string }) {
-  const shop = shopBySlug(id);
-  if (!shop) notFound();
   const { dest } = useStore();
-  const res = search({ dest, shopId: shop.id, sort: "newest" });
-  const reviews = reviewsForShop(shop.id);
+  const detail = useCatalogShop(id);
+  const result = useCatalogSearch({ dest, shopId: id, sort: "newest" });
+  if (detail.loading || result.loading) return <CatalogLoading label="غرفه و محصولاتش" />;
+  if (detail.error) return <CatalogFailure message={detail.error} retry={detail.retry} />;
+  if (result.error) return <CatalogFailure message={result.error} retry={result.retry} />;
+  const shop = detail.data?.shop;
+  if (!shop) notFound();
+  const res = result.result;
+  const reviews = detail.apiMode ? [] : reviewsForShop(shop.id);
   const fa = (n: number) => n.toLocaleString("fa-IR", { useGrouping: false });
   const stats: Array<[string, string]> = [
     ["امتیاز تازگی", `${shop.freshnessRatingAvg.toLocaleString("fa-IR")} از ۵`],
