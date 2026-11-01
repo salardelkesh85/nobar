@@ -1,4 +1,4 @@
-import { type DynamicModule, Module } from "@nestjs/common";
+import { Global, type DynamicModule, Module } from "@nestjs/common";
 import { IdentityController } from "./identity.controller";
 import { KEY_STORE, type KeyStore } from "./keys";
 import { OtpService } from "./otp.service";
@@ -10,6 +10,7 @@ import { UsersService } from "./users.service";
  * Identity & access: OTP sign-in, sessions, profile, addresses. Owns the `identity` schema.
  * Other modules use the exported UsersService or the user.* events, never the tables.
  */
+@Global()
 @Module({})
 export class IdentityModule {
   static forRoot(opts: { keys: KeyStore; sms: SmsProvider }): DynamicModule {

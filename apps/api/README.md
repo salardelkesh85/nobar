@@ -8,8 +8,8 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 |---|---|---|
 | identity: OTP sign-in, sessions, profile, addresses | `identity` | done |
 | catalog: categories, produce types, shops, listings; search, comparison, delivery quotes | `catalog` | read side done; seller writes next |
-| cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done; checkout next |
-| order: checkout, per-shop orders | `ordering` | planned |
+| cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done |
+| order: checkout, expiring reservations, per-shop orders | `ordering` | reservation done; payment/seller lifecycle next |
 | payment: escrow, ledger, payouts | `payment` | planned |
 
 A module touches only its own schema; other modules use its exported service or its events.
@@ -52,6 +52,11 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
   `PATCH /v1/cart/items`, `DELETE /v1/cart/items/:listingId/:packageId` and `DELETE /v1/cart`. The
   response is grouped by seller and revalidates package existence, stock, freshness and delivery against
   the catalog snapshot on every read. Cart state is private to the authenticated user.
+- **Checkout reservations**: `POST /v1/checkouts` (requires `Idempotency-Key`) validates an owned address,
+  locks listing stock inside one transaction, accounts for active reservations, snapshots each item and
+  seller order, and clears the cart only after the checkout commits. `GET /v1/checkouts/:id` returns the
+  user-scoped checkout. Reservations expire after ten minutes and are released when the checkout is read
+  or a new checkout starts.
 - **Migrations** are plain SQL embedded in TypeScript (`modules/*/migrations.ts`) instead of TypeORM or
   Prisma: the same SQL runs on PGlite and PostgreSQL, survives bundling into one file, and keeps the queries visible.
 - **Catalog rules** come from [`packages/domain`](../../packages/domain), the same code the static store runs

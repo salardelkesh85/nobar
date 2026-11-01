@@ -10,6 +10,8 @@ import { identityMigrations } from "./modules/identity/migrations";
 import { createSmsProvider } from "./modules/identity/sms";
 import { CartModule } from "./modules/cart/cart.module";
 import { cartMigrations } from "./modules/cart/migrations";
+import { OrderModule } from "./modules/order/order.module";
+import { orderMigrations } from "./modules/order/migrations";
 
 @Module({})
 class ApiModule {}
@@ -20,7 +22,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
   return {
     name: "api",
     configSchema: apiConfigSchema,
-    migrations: [...identityMigrations, ...catalogMigrations, ...cartMigrations],
+    migrations: [...identityMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations],
     // the API verifies its own tokens with the identity module's keys (no JWKS round trip)
     async verifier({ config }) {
       assertProductionConfig(config);
@@ -29,7 +31,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
     },
     module: (deps) => ({
       module: ApiModule,
-      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), CatalogModule, CartModule],
+      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), CatalogModule, CartModule, OrderModule],
     }),
     configure: ({ app, deps }) => allowOrigins(app, deps.config.CORS_ORIGINS.split(",")),
     async onStart({ app, deps }) {

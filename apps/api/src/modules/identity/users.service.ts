@@ -118,6 +118,12 @@ export class UsersService {
     return rows.map(toAddress);
   }
 
+  async address(userId: string, id: string): Promise<AddressDto> {
+    const [row] = await this.db.query<AddressRow>(`select ${ADDRESS_COLS} from identity.addresses where id = $1 and user_id = $2`, [id, userId]);
+    if (!row) throw notFound("آدرس");
+    return toAddress(row);
+  }
+
   async addAddress(userId: string, a: AddressInput): Promise<AddressDto> {
     const [row] = await this.db.query<AddressRow>(
       `insert into identity.addresses (id, user_id, title, city_id, receiver_name, receiver_phone, line, postal_code)
