@@ -339,9 +339,9 @@ export default function HomePage() {
         <Link href="/season" className={styles.seasonCard}>
           <span className={styles.index}>طبیعت، بهترین راهنماست</span>
           <h2>
-            هر فصل،
+            هر فصل،{" "}
             <br />
-            یک دلیل تازه
+            یک دلیل تازه{" "}
             <br />
             برای خوش‌مزگی.
           </h2>
