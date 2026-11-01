@@ -1,12 +1,12 @@
 "use client";
 
-import { suggest } from "@nobar/demo";
 import { cn, inputClass } from "@nobar/ui";
 import { Photo } from "./photo";
 import { Clock, Search, TrendingUp, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
+import { useCatalogSuggestions } from "@/lib/api-catalog";
 
 export function SearchBox({
   className,
@@ -22,7 +22,7 @@ export function SearchBox({
   const [activeIndex, setActiveIndex] = useState(-1);
   const listId = useId();
   const { recentSearches, addRecentSearch, clearRecentSearches } = useStore();
-  const items = focused ? suggest(q) : [];
+  const items = useCatalogSuggestions(q, focused && Boolean(q.trim()));
   const showHints = focused && !q.trim();
 
   const go = (text: string) => {

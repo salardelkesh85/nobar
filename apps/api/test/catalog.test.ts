@@ -53,6 +53,8 @@ describe("same answers as the storefront", () => {
       expect(r.body.total).toBe(local.total);
       expect(r.body.hits.map((h: { listing: { id: string } }) => h.listing.id)).toEqual(local.hits.map((h) => h.listing.id));
       expect(r.body.hits.map((h: { offer: { landedRial: number } }) => h.offer.landedRial)).toEqual(local.hits.map((h) => h.offer.landedRial));
+      expect(r.body.hits.every((h) => h.type.id === h.listing.produceTypeId)).toBe(true);
+      expect(r.body.notDeliverable.every((x) => x.listing.id === x.listingId && x.shop.id === x.shopId)).toBe(true);
     }
   });
 
@@ -105,6 +107,7 @@ describe("catalog endpoints", () => {
   it("suggests produce types for Persian prefixes", async () => {
     const r = await get<Out<"suggest">>(`/v1/suggest?q=${encodeURIComponent("انا")}`);
     expect(r.body.map((t) => t.id)).toContain("pomegranate");
+    expect(r.body.find((t) => t.id === "pomegranate")?.hue).toBeTypeOf("number");
   });
 
   it("returns candidates of a produce type, cheapest landed first", async () => {

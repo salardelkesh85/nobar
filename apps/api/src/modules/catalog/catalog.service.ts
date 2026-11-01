@@ -17,7 +17,7 @@ import { CatalogRepo } from "./catalog.repo";
 /** How long a catalog snapshot is reused before it is read again (writes also refresh it). */
 const SNAPSHOT_TTL_MS = 30_000;
 
-export type ShopCard = Pick<Shop, "id" | "slug" | "name" | "type" | "cityId" | "ratingAvg" | "ratingCount" | "emoji" | "hue" | "art" | "status"> & {
+export type ShopCard = Shop & {
   /** Bayesian rating used for ranking (docs/02 §8.2) */
   rating: number;
 };
@@ -25,6 +25,8 @@ export type OfferView = Omit<Offer, "listing" | "shop"> & { listingId: string; s
 export interface ExcludedView {
   listingId: string;
   shopId: string;
+  listing: Listing;
+  shop: ShopCard;
   reason: Excluded["reason"];
   reasonFa: string;
 }
@@ -78,8 +80,7 @@ export class CatalogService {
   // ---------- views
 
   private shopCard(m: Market, s: Shop): ShopCard {
-    const { id, slug, name, type, cityId, ratingAvg, ratingCount, emoji, hue, art, status } = s;
-    return { id, slug, name, type, cityId, ratingAvg, ratingCount, emoji, hue, art, status, rating: m.ratingBayes(s) };
+    return { ...s, rating: m.ratingBayes(s) };
   }
 
   private offerView(o: Offer): OfferView {
@@ -87,8 +88,15 @@ export class CatalogService {
     return { ...rest, listingId: listing.id, shopId: shop.id };
   }
 
-  private excludedView(x: Excluded): ExcludedView {
-    return { listingId: x.listing.id, shopId: x.shop.id, reason: x.reason, reasonFa: REASON_FA[x.reason] };
+  private excludedView(m: Market, x: Excluded): ExcludedView {
+    return {
+      listingId: x.listing.id,
+      shopId: x.shop.id,
+      listing: x.listing,
+      shop: this.shopCard(m, x.shop),
+      reason: x.reason,
+      reasonFa: REASON_FA[x.reason],
+    };
   }
 
   private findListing(m: Market, slugOrId: string): Listing {
@@ -147,12 +155,13 @@ export class CatalogService {
       hits: r.hits.map((h) => ({
         listing: h.listing,
         shop: this.shopCard(m, h.shop),
+        type: h.type,
         freshness: h.freshness,
         offer: this.offerView(h.offer),
         relevance: h.relevance,
         isNobar: m.isNobar(h.listing),
       })),
-      notDeliverable: r.notDeliverable.map((x) => this.excludedView(x)),
+      notDeliverable: r.notDeliverable.map((x) => this.excludedView(m, x)),
     };
   }
 
@@ -164,7 +173,7 @@ export class CatalogService {
       targetGrams: c.targetGrams,
       preset: c.preset,
       offers: c.offers.map((o) => ({ ...this.offerView(o), listing: o.listing, shop: this.shopCard(m, o.shop) })),
-      excluded: c.excluded.map((x) => this.excludedView(x)),
+      excluded: c.excluded.map((x) => this.excludedView(m, x)),
     };
   }
 
@@ -176,6 +185,6 @@ export class CatalogService {
   }
 
   async suggest(q: string) {
-    return (await this.market()).suggest(q).map(({ id, slug, name, emoji, categoryId }) => ({ id, slug, name, emoji, categoryId }));
+    return (await this.market()).suggest(q).map(({ id, slug, name, emoji, hue, categoryId }) => ({ id, slug, name, emoji, hue, categoryId }));
   }
 }

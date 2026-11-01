@@ -2,8 +2,8 @@
 import { IdentityApiError, IdentityClient, type UserDto } from "@nobar/contracts";
 import { useRef, useState } from "react";
 import type { Address, User } from "./store";
+import { API_URL } from "./api-config";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL?.trim() ?? "";
 export const identityError = (error: unknown) => error instanceof IdentityApiError
   ? error.status === 401 ? "نشست پایان یافته یا کد ورود معتبر نیست؛ دوباره وارد شوید."
     : error.status === 429 ? "تعداد درخواست‌ها زیاد است؛ کمی بعد دوباره تلاش کنید."
