@@ -1463,3 +1463,44 @@
   contain: inline-size;
   isolation: isolate;
 }
+/* Compact scale for the approved Orchard layout; reading and touch targets stay comfortable. */
+.studio-main { padding-block:22px 48px; }
+.studio-page:not([data-page="home"]) h1 { font-size:28px; }
+.studio-intro { padding:18px 0 26px; gap:24px; }
+.studio-intro h1 { font-size:34px !important; letter-spacing:-.8px; }
+.studio-intro-count { padding-inline:28px 16px; }
+.studio-intro-count strong { font-size:48px; }
+.studio-preview-fruit { width:80px; height:100px; }
+.studio-seller-cover { height:150px; }
+.studio-shop-profile > div:first-child { height:210px; }
+.studio-origin-profile { min-height:220px; }
+.studio-origin-profile > div:last-child { padding:28px; }
+.studio-produce-profile { padding:24px; gap:22px; }
+.studio-produce-profile > div:first-child { width:125px; height:125px; }
+.studio-produce-profile h1 { font-size:30px !important; }
+.studio-app .studio-page .nobar-product-card-row { width:205px; }
+.studio-product-layout { gap:22px; }
+.studio-product-layout h1 { font-size:24px !important; }
+.studio-product-layout > div:first-child { max-width:350px; width:100%; }
+.studio-product-layout > aside > div { padding:18px; }
+.studio-account-layout { gap:24px; }
+.studio-info-layout > article { padding:28px; }
+.studio-chat > header { padding:20px; }
+.studio-footer-inner { padding-block:36px 28px; }
+.studio-footer-invitation h2 { font-size:23px; }
+@media(max-width:700px) {
+ .studio-main { padding-block:18px 75px; }
+ .studio-page:not([data-page="home"]) h1 { font-size:24px; }
+ .studio-intro h1 { font-size:27px !important; }
+ .studio-intro-count strong { font-size:36px; }
+ .studio-preview-fruit { width:65px; height:85px; }
+ .studio-product-layout > div:first-child { max-width:285px; margin-inline:auto; }
+ .studio-product-layout h1 { font-size:22px !important; }
+ .studio-shop-profile > div:first-child { height:160px; }
+ .studio-origin-profile { min-height:190px; }
+ .studio-produce-profile > div:first-child { width:90px; height:90px; }
+ .studio-produce-profile h1 { font-size:27px !important; }
+ .studio-app .studio-page .nobar-product-card-row { width:180px; }
+ .studio-info-layout > article { padding:22px; }
+ .studio-footer-invitation h2 { font-size:22px; }
+}

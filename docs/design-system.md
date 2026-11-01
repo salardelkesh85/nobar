@@ -55,3 +55,7 @@ The 64 existing tests, full type check, RTL lint and all three static exports pa
 Browser checks cover 46 routes: every static buyer, seller and staff route plus representative product, produce, shop and origin routes at 390px and 1440px. Additional focused checks cover narrow mobile/tablet layouts, cart/address persistence, favourites, filter reset and dismissal, gallery dismissal, keyboard suggestions, city selection and dark/reduced-motion rendering. These are local browser checks, not production service validation.
 
 The user requested publishing frontend changes after validation. Push the reviewed change to `main` and verify the existing **Deploy demo to GitHub Pages** workflow completes successfully. Buyer: `/nobar/`; seller: `/nobar/seller/`; staff: `/nobar/admin/`. Do not describe a push as a completed deployment until the Pages job succeeds.
+
+## Compact Orchard refinement
+
+The owner retained Orchard Studio and requested medium-to-small presentation. The home headline is 38px on desktop and 30px on mobile, with shorter imagery and tighter section spacing. Product galleries and shop/origin covers are bounded, and interior introductions and workspace metrics use a moderate scale. Form readability and interaction targets are retained. See [frontend handoff](frontend-handoff.md) for review scope and backend integration order.

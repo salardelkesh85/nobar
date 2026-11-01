@@ -920,3 +920,55 @@
     font-size: 39px;
   }
 }
+/* Compact Orchard: retain the approved palette and composition at a moderate scale. */
+.market { gap:26px; }
+.hero { min-height:300px; grid-template-columns:1.2fr 0.8fr; border-radius:20px; }
+.heroCopy { padding:24px 30px; }
+.hero h1 { font-size:38px; line-height:1.5; letter-spacing:-1px; margin-top:12px; }
+.heroCopy > p { font-size:12px; line-height:1.9; }
+.heroActions { margin-top:18px; gap:20px; }
+.primary { min-height:44px; padding:10px 19px; font-size:12px; }
+.destination { margin-top:18px; }
+.heroVisual { min-height:275px; }
+.harvestTag { top:16px; inset-inline-start:16px; font-size:10px; padding:7px 10px; }
+.photoCaption { inset-inline:20px; bottom:22px; }
+.photoCaption strong { font-size:19px; }
+.roundArrow { width:36px; height:36px; }
+.floatingNote { display:none; }
+.categoryPhoto { width:76px; height:76px; }
+.heading h2,.categoryIntro h2 { font-size:21px; }
+.fresh { padding:20px; }
+.freshIntro h3 { font-size:19px; }
+.discover { min-height:230px; }
+.orchard { min-height:230px; }
+.storyCopy { padding:24px; }
+.storyCopy h2 { font-size:24px; }
+.assistant { padding:22px; }
+.assistantIcon { width:45px; height:45px; }
+.assistantIcon svg { width:27px; height:27px; }
+.assistant h2 { font-size:22px; }
+.season { padding:22px; }
+.season h2 { font-size:21px; }
+.seasonMark { width:48px; height:48px; }
+@media(max-width:700px) {
+ .market { gap:22px; }
+ .hero { grid-template-columns:1fr; min-height:0; }
+ .heroCopy { padding:20px; }
+ .hero h1 { font-size:30px; line-height:1.5; }
+ .heroCopy > p { font-size:12px; }
+ .heroVisual { min-height:175px; margin:0 10px 10px; }
+ .heroActions { gap:16px; }
+ .primary { font-size:11px; }
+ .textLink { font-size:10px; }
+ .photoCaption strong { font-size:17px; }
+ .photoCaption small { font-size:10px; margin-bottom:4px; }
+ .categoryPhoto { width:62px; height:62px; }
+ .heading h2,.categoryIntro h2 { font-size:18px; }
+ .fresh { padding:16px 12px; }
+ .orchard { min-height:185px; }
+ .storyCopy { padding:22px; }
+ .storyCopy h2 { font-size:22px; }
+ .assistant { padding:20px; }
+ .assistant h2,.season h2 { font-size:20px; }
+ .season { padding:20px; }
+}

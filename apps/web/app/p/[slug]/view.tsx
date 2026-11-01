@@ -24,7 +24,7 @@ export function ProduceTypeView({ id }: { id: string }) {
           <h1 className="text-xl font-extrabold sm:text-2xl">{pt.name}</h1>
           <div className="mt-2 flex flex-wrap gap-2">
             {inSeason(pt, month) ? <Badge tone="brand">{isPeak(pt, month) ? "اوج فصل" : "در فصل"}</Badge> : <Badge tone="neutral">خارج از فصل</Badge>}
-            <Badge tone="neutral">فصل: {pt.months.map((m) => JALALI_MONTHS[m - 1]).join("، ")}</Badge>
+            <Badge tone="neutral" className="max-w-full whitespace-normal leading-relaxed">فصل: {pt.months.map((m) => JALALI_MONTHS[m - 1]).join("، ")}</Badge>
           </div>
           <p className="mt-3 text-sm text-ink-soft">
             {res.total.toLocaleString("fa-IR")} غرفه {pt.name} دارند که تازه به {cityName(dest)} می‌رسد؛ مرتب‌شده بر اساس قیمت تمام‌شده تا درِ خانه.
