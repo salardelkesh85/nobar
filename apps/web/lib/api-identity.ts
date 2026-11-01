@@ -1,6 +1,6 @@
 "use client";
 import { IdentityApiError, IdentityClient, type UserDto } from "@nobar/contracts";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Address, User } from "./store";
 import { API_URL } from "./api-config";
 
@@ -17,7 +17,27 @@ export function useApiIdentity() {
   const [client] = useState(() => new IdentityClient(API_URL));
   const [user, setUser] = useState<User | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [ready, setReady] = useState(!API_URL);
   const epoch = useRef(0);
+  useEffect(() => {
+    if (!API_URL) return;
+    const current = ++epoch.current;
+    client.restore()
+      .then(async (profile) => ({ profile, addresses: await client.addresses() }))
+      .then((result) => {
+        if (current !== epoch.current) return;
+        setUser(asUser(result.profile));
+        setAddresses(result.addresses);
+      })
+      .catch(() => {
+        if (current !== epoch.current) return;
+        setUser(null);
+        setAddresses([]);
+      })
+      .finally(() => {
+        if (current === epoch.current) setReady(true);
+      });
+  }, [client]);
   async function authenticated<T>(action: () => Promise<T>): Promise<T> {
     const current = epoch.current;
     try {
@@ -32,7 +52,7 @@ export function useApiIdentity() {
     }
   }
   return {
-    apiMode: Boolean(API_URL), user, addresses,
+    apiMode: Boolean(API_URL), ready, user, addresses,
     requestOtp: (phone: string) => client.requestOtp(phone),
     verifyCode: async (phone: string, code: string) => {
       epoch.current++; setUser(null); setAddresses([]);

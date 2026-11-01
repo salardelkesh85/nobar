@@ -8,6 +8,7 @@ import { currentContext } from "./context";
 import { forbidden, unauthorized } from "./errors";
 import { TOKENS } from "./tokens";
 import { safeEqual } from "./util";
+import { ACCESS_COOKIE, readCookie } from "./session-cookie";
 
 export interface AuthUser {
   id: string;
@@ -75,9 +76,11 @@ export class AuthGuard implements CanActivate {
     const req = ctx.switchToHttp().getRequest<AuthedRequest>();
 
     const header = req.headers.authorization;
-    if (header?.startsWith("Bearer ")) {
+    const bearer = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
+    const token = bearer ?? readCookie(req.headers.cookie, ACCESS_COOKIE);
+    if (token) {
       try {
-        req.user = await this.verifier.verify(header.slice(7));
+        req.user = await this.verifier.verify(token);
         const c = currentContext();
         if (c) c.userId = req.user.id;
       } catch {

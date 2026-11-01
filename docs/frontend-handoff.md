@@ -37,6 +37,6 @@ GitHub Pages hosts the static demo. A running API needs its own deployment, conf
 
 ## Identity integration update
 
-The buyer frontend now supports API-backed identity, profile and address CRUD when `NEXT_PUBLIC_API_URL` is configured. The published Pages demo leaves it unset. See [identity integration](identity-client.md) for session lifetime, setup and verification; catalog, cart, order and payment integration remain outstanding.
+The buyer frontend now supports API-backed identity, durable HttpOnly-cookie sessions, profile and address CRUD when `NEXT_PUBLIC_API_URL` is configured. The published Pages demo leaves it unset. See [identity integration](identity-client.md) for cookie/CORS setup and verification; cart, order and payment integration remain outstanding.
 
 Search results, suggestions and product/shop/produce/origin detail pages now use the catalog API in API mode. Detail requests have explicit loading, failure and retry states, and never replace an API failure with demo catalog data. Reviews remain hidden in API mode until a review service exists. See [v1 readiness](v1-readiness.md) for the remaining release gates.

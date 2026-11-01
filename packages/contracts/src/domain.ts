@@ -221,3 +221,9 @@ export interface AuthTokensDto {
   expiresIn: number;
   user: UserDto;
 }
+
+/** Public browser session response. Token material is delivered only in HttpOnly cookies. */
+export interface AuthSessionDto {
+  expiresIn: number;
+  user: UserDto;
+}

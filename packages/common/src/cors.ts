@@ -11,6 +11,16 @@ export function allowOrigins(app: NestFastifyApplication, origins: string[]): vo
     .getInstance()
     .addHook("onRequest", (req, reply, done) => {
       const origin = req.headers.origin;
+      const requestedMethod = req.headers["access-control-request-method"];
+      const method = req.method === "OPTIONS" && typeof requestedMethod === "string" ? requestedMethod.toUpperCase() : req.method;
+      const changesState = !["GET", "HEAD", "OPTIONS"].includes(method);
+      if (origin && !allowed.has(origin) && changesState) {
+        void reply
+          .status(403)
+          .header("content-type", "application/problem+json")
+          .send({ status: 403, code: "ORIGIN_FORBIDDEN", detail: "مبدأ درخواست مجاز نیست" });
+        return;
+      }
       if (origin && allowed.has(origin)) {
         void reply
           .header("access-control-allow-origin", origin)

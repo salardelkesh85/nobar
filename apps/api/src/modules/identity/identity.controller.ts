@@ -1,21 +1,21 @@
-import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Patch, Post, Req } from "@nestjs/common";
-import { type AuthUser, CurrentUser, notFound, Public, ZodPipe } from "@nobar/common";
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Patch, Post, Req, Res } from "@nestjs/common";
+import { ACCESS_COOKIE, type AuthUser, clearSessionCookie, CurrentUser, notFound, Public, readCookie, REFRESH_COOKIE, sessionCookie, TOKENS, unauthorized, ZodPipe } from "@nobar/common";
 import {
   AddressCreateSchema,
   AddressUpdateSchema,
-  type AuthTokensDto,
+  type AuthSessionDto,
   isUuid,
   OtpRequestSchema,
   OtpVerifySchema,
-  RefreshSchema,
   UpdateMeSchema,
 } from "@nobar/contracts";
-import type { FastifyRequest } from "fastify";
+import type { FastifyReply, FastifyRequest } from "fastify";
 import type { z } from "zod";
 import { KEY_STORE, type KeyStore } from "./keys";
 import { type OtpSent, OtpService } from "./otp.service";
 import { SessionsService } from "./sessions.service";
 import { UsersService } from "./users.service";
+import { type ApiConfig, secureSessionCookies } from "../../config";
 
 const addressId = (id: string) => {
   if (!isUuid(id)) throw notFound("آدرس");
@@ -29,7 +29,29 @@ export class IdentityController {
     @Inject(SessionsService) private readonly sessions: SessionsService,
     @Inject(UsersService) private readonly users: UsersService,
     @Inject(KEY_STORE) private readonly keys: KeyStore,
+    @Inject(TOKENS.CONFIG) private readonly config: ApiConfig,
   ) {}
+
+  private cookieOptions() {
+    const sameSite = `${this.config.SESSION_COOKIE_SAME_SITE[0]!.toUpperCase()}${this.config.SESSION_COOKIE_SAME_SITE.slice(1)}` as "Strict" | "Lax" | "None";
+    return { secure: secureSessionCookies(this.config), sameSite };
+  }
+
+  private setSession(reply: FastifyReply, tokens: Awaited<ReturnType<SessionsService["start"]>>) {
+    const options = this.cookieOptions();
+    void reply.header("set-cookie", [
+      sessionCookie(ACCESS_COOKIE, tokens.accessToken, { ...options, maxAgeSec: tokens.expiresIn }),
+      sessionCookie(REFRESH_COOKIE, tokens.refreshToken, { ...options, maxAgeSec: this.config.REFRESH_TTL_DAYS * 86_400, path: "/v1/auth" }),
+    ]);
+  }
+
+  private clearSession(reply: FastifyReply) {
+    const options = this.cookieOptions();
+    void reply.header("set-cookie", [
+      clearSessionCookie(ACCESS_COOKIE, options),
+      clearSessionCookie(REFRESH_COOKIE, { ...options, path: "/v1/auth" }),
+    ]);
+  }
 
   @Public()
   @Get(".well-known/jwks.json")
@@ -49,24 +71,32 @@ export class IdentityController {
   @Public()
   @Post("v1/auth/verify")
   @HttpCode(200)
-  async verify(@Body(new ZodPipe(OtpVerifySchema)) body: z.infer<typeof OtpVerifySchema>): Promise<AuthTokensDto & { isNew: boolean }> {
+  async verify(@Body(new ZodPipe(OtpVerifySchema)) body: z.infer<typeof OtpVerifySchema>, @Res({ passthrough: true }) reply: FastifyReply): Promise<AuthSessionDto & { isNew: boolean }> {
     await this.otp.verify(body.phone, body.code);
     const { user, created } = await this.users.signIn(body.phone);
-    return { ...(await this.sessions.start(user)), isNew: created };
+    const tokens = await this.sessions.start(user);
+    this.setSession(reply, tokens);
+    return { expiresIn: tokens.expiresIn, user: tokens.user, isNew: created };
   }
 
   @Public()
   @Post("v1/auth/refresh")
   @HttpCode(200)
-  refresh(@Body(new ZodPipe(RefreshSchema)) body: z.infer<typeof RefreshSchema>): Promise<AuthTokensDto> {
-    return this.sessions.refresh(body.refreshToken);
+  async refresh(@Req() req: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply): Promise<AuthSessionDto> {
+    const refreshToken = readCookie(req.headers.cookie, REFRESH_COOKIE);
+    if (!refreshToken) throw unauthorized("نشست معتبر نیست؛ دوباره وارد شوید");
+    const tokens = await this.sessions.refresh(refreshToken);
+    this.setSession(reply, tokens);
+    return { expiresIn: tokens.expiresIn, user: tokens.user };
   }
 
   @Public()
   @Post("v1/auth/logout")
   @HttpCode(204)
-  async logout(@Body(new ZodPipe(RefreshSchema)) body: z.infer<typeof RefreshSchema>): Promise<void> {
-    await this.sessions.end(body.refreshToken);
+  async logout(@Req() req: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply): Promise<void> {
+    const refreshToken = readCookie(req.headers.cookie, REFRESH_COOKIE);
+    if (refreshToken) await this.sessions.end(refreshToken);
+    this.clearSession(reply);
   }
 
   @Get("v1/me")

@@ -11,14 +11,22 @@ const e164 = (p: string) => `+98${p.slice(1)}`;
 /** a different client IP per request (forwarded by the trusted loopback "proxy"), unless a test sets one */
 const randomIp = () => `10.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${1 + Math.floor(Math.random() * 250)}`;
 
-async function call(method: string, path: string, body?: unknown, token?: string, headers: Record<string, string> = {}) {
+const setCookies = (headers: Headers): string[] => {
+  const values = (headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.();
+  return values?.length ? values : (headers.get("set-cookie")?.split(/,\s*(?=nobar_)/) ?? []);
+};
+const cookieValue = (cookies: string[], name: string) => cookies.map((value) => value.split(";", 1)[0]!).find((value) => value.startsWith(`${name}=`))?.slice(name.length + 1);
+const cookieHeader = (cookies: string[]) => cookies.map((value) => value.split(";", 1)[0]).join("; ");
+
+async function call(method: string, path: string, body?: unknown, cookie?: string, headers: Record<string, string> = {}) {
   const res = await fetch(`${api.url}${path}`, {
     method,
-    headers: { "x-forwarded-for": randomIp(), ...(body === undefined ? {} : { "content-type": "application/json" }), ...(token ? { authorization: `Bearer ${token}` } : {}), ...headers },
+    headers: { "x-forwarded-for": randomIp(), ...(body === undefined ? {} : { "content-type": "application/json" }), ...(cookie ? { cookie } : {}), ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await res.text();
-  return { status: res.status, headers: res.headers, body: text ? JSON.parse(text) : undefined };
+  const cookies = setCookies(res.headers);
+  return { status: res.status, headers: res.headers, cookies, cookie: cookieHeader(cookies), body: text ? JSON.parse(text) : undefined };
 }
 
 async function signIn(phone = newPhone()) {
@@ -26,7 +34,11 @@ async function signIn(phone = newPhone()) {
   expect(sent.status).toBe(200);
   const v = await call("POST", "/v1/auth/verify", { phone, code: sent.body.devCode });
   expect(v.status).toBe(200);
-  return v.body as { accessToken: string; refreshToken: string; isNew: boolean; user: { id: string; roles: string[]; name: string | null } };
+  return {
+    ...(v.body as { isNew: boolean; user: { id: string; roles: string[]; name: string | null } }),
+    cookie: v.cookie,
+    refreshToken: cookieValue(v.cookies, "nobar_refresh")!,
+  };
 }
 
 beforeAll(async () => {
@@ -128,7 +140,10 @@ describe("OTP sign-in", () => {
     expect(c!.code_hash).not.toContain(body.devCode);
     const s = await call("POST", "/v1/auth/verify", { phone, code: body.devCode });
     const rows = await api.deps.db.query<{ token_hash: string }>("select token_hash from identity.refresh_tokens where user_id = $1", [s.body.user.id]);
-    expect(rows.map((r) => r.token_hash)).not.toContain(s.body.refreshToken);
+    expect(s.body).not.toHaveProperty("accessToken");
+    expect(s.body).not.toHaveProperty("refreshToken");
+    expect(rows.map((r) => r.token_hash)).not.toContain(cookieValue(s.cookies, "nobar_refresh"));
+    expect(s.cookies.every((cookie) => cookie.includes("HttpOnly") && cookie.includes("SameSite=Lax"))).toBe(true);
   });
 
   it("gives configured phones the ADMIN role", async () => {
@@ -150,22 +165,35 @@ describe("OTP sign-in", () => {
 describe("sessions", () => {
   it("rotates refresh tokens and revokes the family when an old one is reused", async () => {
     const s = await signIn();
-    const r1 = await call("POST", "/v1/auth/refresh", { refreshToken: s.refreshToken });
+    const r1 = await call("POST", "/v1/auth/refresh", undefined, s.cookie);
     expect(r1.status).toBe(200);
-    expect(r1.body.refreshToken).not.toBe(s.refreshToken);
-    expect((await call("GET", "/v1/me", undefined, r1.body.accessToken)).status).toBe(200);
+    expect(cookieValue(r1.cookies, "nobar_refresh")).not.toBe(s.refreshToken);
+    expect((await call("GET", "/v1/me", undefined, r1.cookie)).status).toBe(200);
 
-    const reuse = await call("POST", "/v1/auth/refresh", { refreshToken: s.refreshToken });
+    await api.deps.db.query("update identity.refresh_tokens set revoked_at = now() - interval '11 seconds' where replaced_by is not null and user_id = $1", [s.user.id]);
+    const reuse = await call("POST", "/v1/auth/refresh", undefined, s.cookie);
     expect(reuse.status).toBe(401);
     expect(reuse.body.code).toBe("REFRESH_REUSED");
     // the token issued after the stolen one is dead too
-    expect((await call("POST", "/v1/auth/refresh", { refreshToken: r1.body.refreshToken })).status).toBe(401);
+    expect((await call("POST", "/v1/auth/refresh", undefined, r1.cookie)).status).toBe(401);
+  });
+
+  it("does not revoke a session for a concurrent refresh from another tab", async () => {
+    const s = await signIn();
+    const first = await call("POST", "/v1/auth/refresh", undefined, s.cookie);
+    expect(first.status).toBe(200);
+    const collision = await call("POST", "/v1/auth/refresh", undefined, s.cookie);
+    expect(collision.status).toBe(409);
+    expect(collision.body.code).toBe("REFRESH_RACE");
+    expect((await call("POST", "/v1/auth/refresh", undefined, first.cookie)).status).toBe(200);
   });
 
   it("ends the session on sign-out", async () => {
     const s = await signIn();
-    expect((await call("POST", "/v1/auth/logout", { refreshToken: s.refreshToken })).status).toBe(204);
-    expect((await call("POST", "/v1/auth/refresh", { refreshToken: s.refreshToken })).status).toBe(401);
+    const logout = await call("POST", "/v1/auth/logout", undefined, s.cookie);
+    expect(logout.status).toBe(204);
+    expect(logout.cookies.every((cookie) => cookie.includes("Max-Age=0"))).toBe(true);
+    expect((await call("POST", "/v1/auth/refresh", undefined, s.cookie)).status).toBe(401);
   });
 
   it("publishes the verification keys", async () => {
@@ -186,28 +214,28 @@ describe("profile and addresses", () => {
 
   it("updates the name and city", async () => {
     const s = await signIn();
-    const r = await call("PATCH", "/v1/me", { name: "سالار", cityId: "urmia" }, s.accessToken);
+    const r = await call("PATCH", "/v1/me", { name: "سالار", cityId: "urmia" }, s.cookie);
     expect(r.body).toMatchObject({ name: "سالار", cityId: "urmia" });
-    expect((await call("PATCH", "/v1/me", { cityId: "atlantis" }, s.accessToken)).status).toBe(400);
+    expect((await call("PATCH", "/v1/me", { cityId: "atlantis" }, s.cookie)).status).toBe(400);
   });
 
   it("adds, edits and removes addresses, normalising digits", async () => {
     const s = await signIn();
-    const add = await call("POST", "/v1/me/addresses", address, s.accessToken);
+    const add = await call("POST", "/v1/me/addresses", address, s.cookie);
     expect(add.status).toBe(201);
     expect(add.body).toMatchObject({ phone: "+989141234567", postalCode: "5971812345", cityId: "miandoab" });
 
-    const upd = await call("PATCH", `/v1/me/addresses/${add.body.id}`, { title: "محل کار" }, s.accessToken);
+    const upd = await call("PATCH", `/v1/me/addresses/${add.body.id}`, { title: "محل کار" }, s.cookie);
     expect(upd.body).toMatchObject({ title: "محل کار", line: address.line });
-    expect((await call("GET", "/v1/me/addresses", undefined, s.accessToken)).body).toHaveLength(1);
+    expect((await call("GET", "/v1/me/addresses", undefined, s.cookie)).body).toHaveLength(1);
 
-    expect((await call("DELETE", `/v1/me/addresses/${add.body.id}`, undefined, s.accessToken)).status).toBe(204);
-    expect((await call("GET", "/v1/me/addresses", undefined, s.accessToken)).body).toHaveLength(0);
+    expect((await call("DELETE", `/v1/me/addresses/${add.body.id}`, undefined, s.cookie)).status).toBe(204);
+    expect((await call("GET", "/v1/me/addresses", undefined, s.cookie)).body).toHaveLength(0);
   });
 
   it("validates addresses like the store's form", async () => {
     const s = await signIn();
-    const r = await call("POST", "/v1/me/addresses", { ...address, postalCode: "123" }, s.accessToken);
+    const r = await call("POST", "/v1/me/addresses", { ...address, postalCode: "123" }, s.cookie);
     expect(r.status).toBe(400);
     expect(r.body.detail).toBe("کد پستی ۱۰ رقم است");
   });
@@ -215,10 +243,10 @@ describe("profile and addresses", () => {
   it("keeps each user's addresses private", async () => {
     const a = await signIn();
     const b = await signIn();
-    const add = await call("POST", "/v1/me/addresses", address, a.accessToken);
-    expect((await call("DELETE", `/v1/me/addresses/${add.body.id}`, undefined, b.accessToken)).status).toBe(404);
-    expect((await call("PATCH", `/v1/me/addresses/${add.body.id}`, { title: "x" }, b.accessToken)).status).toBe(404);
-    expect((await call("DELETE", "/v1/me/addresses/not-a-uuid", undefined, a.accessToken)).status).toBe(404);
+    const add = await call("POST", "/v1/me/addresses", address, a.cookie);
+    expect((await call("DELETE", `/v1/me/addresses/${add.body.id}`, undefined, b.cookie)).status).toBe(404);
+    expect((await call("PATCH", `/v1/me/addresses/${add.body.id}`, { title: "x" }, b.cookie)).status).toBe(404);
+    expect((await call("DELETE", "/v1/me/addresses/not-a-uuid", undefined, a.cookie)).status).toBe(404);
   });
 });
 
@@ -227,7 +255,20 @@ describe("CORS", () => {
     const ok = await call("OPTIONS", "/v1/me", undefined, undefined, { origin: "http://localhost:3000", "access-control-request-method": "GET" });
     expect(ok.status).toBe(204);
     expect(ok.headers.get("access-control-allow-origin")).toBe("http://localhost:3000");
+    expect(ok.headers.get("access-control-allow-credentials")).toBe("true");
     const other = await call("GET", "/healthz", undefined, undefined, { origin: "https://evil.example" });
     expect(other.headers.get("access-control-allow-origin")).toBeNull();
+  });
+
+  it("rejects state changes from an untrusted browser origin", async () => {
+    const session = await signIn();
+    const allowed = await call("PATCH", "/v1/me", { name: "کاربر مجاز" }, session.cookie, { origin: "http://localhost:3000" });
+    expect(allowed.status).toBe(200);
+    expect(allowed.headers.get("access-control-allow-credentials")).toBe("true");
+    const denied = await call("PATCH", "/v1/me", { name: "مهاجم" }, session.cookie, { origin: "https://evil.example" });
+    expect(denied.status).toBe(403);
+    expect(denied.body.code).toBe("ORIGIN_FORBIDDEN");
+    const profile = await call("GET", "/v1/me", undefined, session.cookie);
+    expect(profile.body.name).toBe("کاربر مجاز");
   });
 });

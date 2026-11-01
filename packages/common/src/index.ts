@@ -15,6 +15,7 @@ export * from "./metrics";
 export * from "./migrate";
 export * from "./outbox";
 export * from "./ratelimit";
+export * from "./session-cookie";
 export * from "./tokens";
 export * from "./util";
 export * from "./validation";

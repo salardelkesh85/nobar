@@ -48,13 +48,17 @@ export class SessionsService {
 
   async refresh(refreshToken: string): Promise<AuthTokensDto> {
     const result = await this.db.tx<Rotation & { token?: string }>(async (sql) => {
-      const [t] = await sql.query<{ id: string; user_id: string; family_id: string; revoked: boolean; expired: boolean }>(
-        `select id, user_id, family_id, revoked_at is not null as revoked, expires_at <= now() as expired
+      const [t] = await sql.query<{ id: string; user_id: string; family_id: string; revoked: boolean; expired: boolean; rotation_race: boolean }>(
+        `select id, user_id, family_id, revoked_at is not null as revoked, expires_at <= now() as expired,
+                replaced_by is not null and revoked_at > now() - interval '10 seconds' as rotation_race
          from identity.refresh_tokens where token_hash = $1 for update`,
         [sha256(refreshToken)],
       );
       if (!t) return { ok: false, code: "REFRESH_INVALID", message: "نشست معتبر نیست؛ دوباره وارد شوید" };
       if (t.revoked) {
+        // Two tabs can submit the same cookie before the first rotation response updates the browser jar.
+        // The second request gets no token and may retry with the newly set cookie; old reuse still kills the family.
+        if (t.rotation_race) return { ok: false, code: "REFRESH_RACE", message: "نشست هم‌زمان در حال تمدید است؛ دوباره تلاش کنید" };
         // a rotated token came back: someone else may hold the family, so end all of it
         await sql.query("update identity.refresh_tokens set revoked_at = now() where family_id = $1 and revoked_at is null", [t.family_id]);
         return { ok: false, code: "REFRESH_REUSED", message: "نشست شما برای امنیت بسته شد؛ دوباره وارد شوید" };
@@ -64,7 +68,7 @@ export class SessionsService {
       await sql.query("update identity.refresh_tokens set revoked_at = now(), replaced_by = $2 where id = $1", [t.id, next.id]);
       return { ok: true, userId: t.user_id, familyId: t.family_id, token: next.token };
     });
-    if (!result.ok) throw new AppError(401, result.code, result.message);
+    if (!result.ok) throw new AppError(result.code === "REFRESH_RACE" ? 409 : 401, result.code, result.message);
     return this.tokens(await this.users.get(result.userId), result.token!);
   }
 

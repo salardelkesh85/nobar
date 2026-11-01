@@ -162,7 +162,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Store>(
     () => ({
-      ready,
+      ready: identity.apiMode ? ready && identity.ready : ready,
       apiMode: identity.apiMode,
       requestOtp: identity.requestOtp,
       verifyCode: identity.verifyCode,
