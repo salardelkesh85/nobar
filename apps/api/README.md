@@ -8,7 +8,8 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 |---|---|---|
 | identity: OTP sign-in, sessions, profile, addresses | `identity` | done |
 | catalog: categories, produce types, shops, listings; search, comparison, delivery quotes | `catalog` | read side done; seller writes next |
-| order: cart, checkout, per-shop orders | `ordering` | planned |
+| cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done; checkout next |
+| order: checkout, per-shop orders | `ordering` | planned |
 | payment: escrow, ledger, payouts | `payment` | planned |
 
 A module touches only its own schema; other modules use its exported service or its events.
@@ -47,6 +48,10 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
   at most 5 codes per phone and 20 per IP per hour. Codes and refresh tokens are stored only as hashes.
 - **Sessions**: 15-minute ES256 access tokens; refresh tokens rotate on every use, and reusing a rotated
   token ends the whole session family.
+- **Cart**: `GET /v1/cart?dest=tehran`, `POST /v1/cart/items?dest=tehran` (requires `Idempotency-Key`),
+  `PATCH /v1/cart/items`, `DELETE /v1/cart/items/:listingId/:packageId` and `DELETE /v1/cart`. The
+  response is grouped by seller and revalidates package existence, stock, freshness and delivery against
+  the catalog snapshot on every read. Cart state is private to the authenticated user.
 - **Migrations** are plain SQL embedded in TypeScript (`modules/*/migrations.ts`) instead of TypeORM or
   Prisma: the same SQL runs on PGlite and PostgreSQL, survives bundling into one file, and keeps the queries visible.
 - **Catalog rules** come from [`packages/domain`](../../packages/domain), the same code the static store runs

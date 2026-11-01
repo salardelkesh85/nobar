@@ -113,6 +113,8 @@ export type SearchQuery = z.infer<typeof SearchQuerySchema>;
 export const CartAddSchema = z.object({ productId: z.string().min(1), qty: z.number().int().min(1).max(100) });
 export const CartUpdateSchema = z.object({ qty: z.number().int().min(0).max(100) });
 export const CartMergeSchema = z.object({ guestId: z.string().min(8).max(64) });
+export const CartAddListingSchema = z.object({ listingId: z.string().trim().min(1).max(100), packageId: z.string().trim().min(1).max(100), qty: z.number().int().min(1).max(100) });
+export const CartSetSchema = z.object({ listingId: z.string().trim().min(1).max(100), packageId: z.string().trim().min(1).max(100), qty: z.number().int().min(0).max(100) });
 
 export const CheckoutSchema = z.object({
   address: z.object({ cityId: CityIdSchema, text: z.string().trim().min(5).max(300), label: z.string().trim().max(40).optional() }),
