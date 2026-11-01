@@ -14,7 +14,7 @@
     "dev:api": "pnpm --filter @nobar/api dev",
     "typecheck:frontends": "pnpm --filter @nobar/web --filter @nobar/seller --filter @nobar/admin typecheck",
     "lint:rtl": "node tools/check-rtl/check-rtl.mjs",
-    "test": "pnpm --filter @nobar/fa --filter @nobar/demo --filter @nobar/api test",
+    "test": "pnpm --filter @nobar/contracts --filter @nobar/fa --filter @nobar/demo --filter @nobar/api test",
     "typecheck": "pnpm --filter @nobar/common --filter @nobar/contracts --filter @nobar/domain --filter @nobar/demo --filter @nobar/api typecheck && pnpm typecheck:frontends"
   }
 }

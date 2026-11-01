@@ -4,3 +4,4 @@ export * from "./events";
 export * from "./cities";
 export * from "./domain";
 export * from "./api";
+export * from "./identity-client";
