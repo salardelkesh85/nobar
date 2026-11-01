@@ -1,5 +1,5 @@
 /*
- * Nobar design system — Fresh — tokens, elevation and surfaces (docs: product vision §7.2).
+ * Nobar design system — Orchard Studio — tokens, elevation and surfaces (docs: product vision §7.2).
  * Import after `@import "tailwindcss";`. Semantic tokens in the shadcn style: every colour has a
  * paired foreground, one radius scale, light/dark/simple mode share the same utilities.
  */
@@ -27,24 +27,22 @@
 @custom-variant simple (&:where([data-simple-mode], [data-simple-mode] *));
 
 :root {
-  --accent: #d9f36c;
-  --on-accent: #23332b;
-  --bg: #fafbf6;            /* warm neutral canvas */
+  --bg: #f8f9f6;            /* warm neutral canvas */
   --surface: #ffffff;
-  --surface-2: #f1f3eb;
-  --surface-3: #e5e9dd;
-  --ink: #23332b;
-  --ink-soft: #6c756c;
-  --line: #e0e5d9;
-  --line-strong: #cbd3c1;
-  --brand: #395b35;         /* سبز برگ */
-  --brand-strong: #263e29;  /* سبز جنگلی */
-  --brand-soft: #edf2d9;
+  --surface-2: #f2f4ee;
+  --surface-3: #e7ebe2;
+  --ink: #24392e;
+  --ink-soft: #69756c;
+  --line: #e5e9df;
+  --line-strong: #cdd6c8;
+  --brand: #216547;         /* سبز برگ */
+  --brand-strong: #164c35;  /* سبز جنگلی */
+  --brand-soft: #eaf1e5;
   --on-brand: #ffffff;
-  --nobar: #a34432;         /* قرمز اناری */
-  --nobar-soft: #f7ece5;
-  --nobar-solid: #a34432;   /* solid backgrounds under white text */
-  --brand-solid: #263e29;
+  --nobar: #b5344e;         /* قرمز اناری */
+  --nobar-soft: #f9eaf0;
+  --nobar-solid: #b5344e;   /* solid backgrounds under white text */
+  --brand-solid: #164c35;
   --saffron: #f5a623;
   --saffron-soft: #fff4de;
   --warn: #8a5a00;
@@ -145,8 +143,8 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-cream: var(--cream);
-  --radius-card: 1.5rem;
-  --radius-control: 1rem;
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
   --radius-tile: 1rem;
   --shadow-soft: 0 1px 2px rgb(var(--shadow-color) / 0.05);
   --shadow-lift: 0 4px 18px -6px rgb(var(--shadow-color) / 0.18);
@@ -568,22 +566,3 @@ summary::marker {
   contain: inline-size;
   isolation: isolate;
 }
-
-/* Fresh accent surfaces keep their own foreground in every theme. */
-.n-ui-button.bg-brand { background:#d9f36c; color:#23332b; box-shadow:none; }
-.n-ui-button.bg-brand:hover { background:#cbe657; color:#23332b; }
-.studio-workspace-sidebar { background:#23332b; color:#f1f5ea; border-color:#33493b; }
-.studio-workspace-sidebar .n-ui-logo > svg,
-.studio-workspace-sidebar .n-ui-logo > span > span:first-child { color:#d9f36c; }
-.studio-workspace-sidebar .text-ink-soft,
-.studio-workspace-sidebar .n-ui-logo > span > span:last-child,
-.studio-workspace-sidebar > a { color:#c3ceb9; }
-.studio-workspace-sidebar nav a { color:#e6ecdf; border-radius:100px; }
-.studio-workspace-sidebar nav a:hover { background:#344b3d; }
-.studio-workspace-sidebar nav a[aria-current="page"] { background:#d9f36c; color:#23332b; }
-.studio-workspace-sidebar > div:not(:first-child) { background:#2d4235; border-color:#415844; }
-.studio-workspace-sidebar > div:first-child > .bg-surface-2 { background:#344b3d; color:#e6ecdf; }
-.studio-workspace .studio-workspace-main .n-ui-stat { border-radius:22px; border-color:var(--line); }
-.studio-workspace main .n-ui-stat > p:nth-child(2) { font-size:32px; font-weight:750; letter-spacing:-1px; }
-
-.studio-workspace-sidebar .n-ui-logo { --brand: #bdd75f; --brand-strong: #d9f36c; }

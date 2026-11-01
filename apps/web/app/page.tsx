@@ -6,6 +6,8 @@ import {
   currentMonth,
   inSeason,
   isNobar,
+  LISTINGS,
+  PRODUCE_TYPES,
   ratingBayes,
   search,
   SHOPS,
@@ -13,13 +15,13 @@ import {
 } from "@nobar/demo";
 import {
   ArrowLeft,
-  ArrowUpLeft,
-  Check,
   Leaf,
   MapPin,
-  MoveUpLeft,
+  Scale,
+  Sparkles,
   Sprout,
   Star,
+  Truck,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,86 +29,48 @@ import { ListingRail } from "@/components/listing-card";
 import { Photo } from "@/components/photo";
 import { bannerSrc } from "@/lib/photos";
 import { useStore } from "@/lib/store";
-import styles from "./fresh.module.css";
-
-const COLLECTIONS = [
-  {
-    id: "fruit",
-    title: "میوه‌های فصل",
-    note: "رنگِ تازهٔ روزت",
-    photo: "tangerine",
-    href: "/search?cat=fruit",
-  },
-  {
-    id: "veg",
-    title: "سبزیجات",
-    note: "برای خوش‌طعم‌تر شدن",
-    photo: "tomato",
-    href: "/search?cat=veg",
-  },
-  {
-    id: "greens",
-    title: "سبزی‌های تازه",
-    note: "یک مشت حالِ خوب",
-    photo: "herbs",
-    href: "/search?cat=greens",
-  },
-  {
-    id: "dried",
-    title: "خشکبار و مغزها",
-    note: "کوچک و دوست‌داشتنی",
-    photo: "walnut",
-    href: "/search?cat=dried",
-  },
-];
+import styles from "./market.module.css";
 
 function Heading({
-  number,
   title,
   note,
   href,
-  action = "دیدن همه",
+  light = false,
 }: {
-  number: string;
   title: string;
   note: string;
   href: string;
-  action?: string;
+  light?: boolean;
 }) {
   return (
-    <div className={styles.heading}>
+    <div className={styles.heading} data-light={light || undefined}>
       <div>
-        <span className={styles.index}>
-          {number} / {note}
-        </span>
+        <span>{note}</span>
         <h2>{title}</h2>
       </div>
       <Link href={href}>
-        {action}
-        <ArrowUpLeft size={19} />
+        مشاهده همه <ArrowLeft size={16} />
       </Link>
     </div>
   );
 }
 
-function ProductSection({
+function Products({
   title,
   note,
-  hits,
-  number,
   href,
+  hits,
 }: {
   title: string;
   note: string;
-  hits: SearchHit[];
-  number: string;
   href: string;
+  hits: SearchHit[];
 }) {
   if (!hits.length) return null;
   return (
-    <section className={styles.productSection}>
-      <Heading title={title} note={note} number={number} href={href} />
-      <ListingRail hits={hits.slice(0, 8)} />
+    <section className={styles.products}>
+      <Heading title={title} note={note} href={href} />
+      <ListingRail hits={hits.slice(0, 10)} />
     </section>
   );
 }
@@ -116,262 +80,284 @@ export default function HomePage() {
   const all = search({ dest, sort: "newest" }).hits;
   const seasonal = all.filter((hit) => inSeason(hit.type, currentMonth()));
   const fresh = all.filter((hit) => isNobar(hit.listing));
-  const picks = [...fresh, ...all.filter((hit) => !isNobar(hit.listing))];
+  const featured = [
+    ...fresh,
+    ...seasonal.filter((hit) => !isNobar(hit.listing)),
+  ].slice(0, 8);
+  const quick = PRODUCE_TYPES.filter((type) =>
+    LISTINGS.some(
+      (l) => l.produceTypeId === type.id && l.status === "PUBLISHED",
+    ),
+  ).slice(0, 8);
   const shops = [...SHOPS]
     .filter((s) => s.status === "ACTIVE")
     .sort((a, b) => ratingBayes(b) - ratingBayes(a))
-    .slice(0, 3);
+    .slice(0, 4);
 
   return (
-    <div className={styles.home}>
-      <section className={styles.hero} aria-labelledby="fresh-title">
+    <div className={styles.market}>
+      <section className={styles.hero} aria-labelledby="market-title">
         <div className={styles.heroCopy}>
           <span className={styles.eyebrow}>
-            <span /> از خاک خوب، به حال خوب
+            <span /> بازار آنلاینِ طعم‌های واقعی
           </span>
-          <h1 id="fresh-title">
-            خوب بخور.
+          <h1 id="market-title">
+            تازه از باغ،
             <br />
-            <span>تازه زندگی کن.</span>
-            <Leaf aria-hidden className={styles.titleLeaf} />
+            با عشق <em>سرِ سفره.</em>
           </h1>
           <p>
-            طعمِ واقعی، راه دوری نیست.
+            از باغدارهای شهرهای مختلف خرید کن.
             <br />
-            میوه و سبزی دلخواهت را با شناخت باغدار،
-            <br className={styles.desktopBreak} /> از گوشه‌وکنار ایران انتخاب
-            کن.
+            با شناخت مبدأ، تازگی و قیمت تا درِ خانه.
           </p>
           <div className={styles.heroActions}>
             <Link className={styles.primary} href="/search">
-              کشف بازار نوبر <ArrowUpLeft size={23} />
+              بریم بازار <ArrowLeft size={19} />
             </Link>
-            <Link className={styles.storyLink} href="/about">
-              از کجا شروع شد؟ <ArrowLeft size={17} />
+            <Link className={styles.textLink} href="/shops">
+              آشنایی با غرفه‌دارها
             </Link>
           </div>
           <div className={styles.destination}>
-            <MapPin size={17} />
+            <MapPin size={16} />
             <span>
-              تازه‌ها برای <strong>{cityName(dest)}</strong>
+              بازار تازه‌ها برای <strong>{cityName(dest)}</strong>
             </span>
-            <span className={styles.destinationDot} /> انتخابِ مقصد، انتخابِ
-            تازگی
+            <span className={styles.destinationLine} />
+            <span>از مبدأ تا مقصد، شفاف</span>
           </div>
         </div>
-        <div className={styles.heroArt}>
-          <div className={styles.artLabel}>
-            <span>نوبر، به وقت طبیعت</span>
-            <span aria-hidden>✳</span>
-          </div>
-          <Link
-            href="/p/tangerine"
-            className={styles.fruitWindow}
-            aria-label="کشف نارنگی‌های نوبر"
-          >
-            <Photo
-              kind="tangerine"
-              alt="نارنگی رسیده و قاچ‌های تازهٔ آن"
-              priority
-              sizes="(max-width: 700px) 90vw, 550px"
-              className={styles.heroFruit}
-            />
-            <span className={styles.fruitCaption}>
-              <span>
-                <small>ساده. طبیعی. خوش‌طعم.</small>
-                <strong>یک قاچ حالِ خوب</strong>
-              </span>
-              <ArrowUpLeft size={27} />
-            </span>
-          </Link>
-          <span className={styles.freshSeal}>
-            <Sprout size={26} strokeWidth={1.5} />
-            از باغ
-            <br />
-            <strong>تا سفره</strong>
+        <div className={styles.heroVisual}>
+          <Image
+            src={bannerSrc("banner-pomegranate")}
+            alt="انارهای رسیده؛ رنگ و طعم تازهٔ فصل"
+            fill
+            priority
+            sizes="(max-width: 700px) 100vw, 55vw"
+          />
+          <span className={styles.imageShade} />
+          <span className={styles.harvestTag}>
+            <Leaf size={15} /> فصلِ طعم‌های تازه
           </span>
-          <Link href="/p/pomegranate" className={styles.littleFruit}>
-            <Photo
-              kind="pomegranate"
-              alt=""
-              sizes="120px"
-              className={styles.littlePhoto}
-            />
+          <Link href="/p/pomegranate" className={styles.photoCaption}>
             <span>
-              انارهای نوبر <ArrowUpLeft size={15} />
+              <small>از دل باغ‌های ایران</small>
+              <strong>دانه‌دانه، طعم زندگی.</strong>
+            </span>
+            <span className={styles.roundArrow}>
+              <ArrowLeft size={21} />
             </span>
           </Link>
-          <span className={styles.artFootnote}>
-            زیباییِ زندگی، در ساده‌ترین طعم‌هاست.
-          </span>
+          <div className={styles.floatingNote}>
+            <Sprout size={23} />
+            <span>
+              <strong>تازگی را ببین، بعد انتخاب کن.</strong>
+              <small>تاریخ برداشت و مبدأ، کنار هر محصول</small>
+            </span>
+          </div>
         </div>
       </section>
 
-      <div className={styles.manifesto}>
-        <span className={styles.manifestoTitle}>تازگی، با خیال روشن.</span>
-        <span>
-          <Check size={16} /> تاریخ برداشت مشخص
-        </span>
-        <span>
-          <Check size={16} /> شناخت باغدار و مبدأ
-        </span>
-        <span>
-          <Check size={16} /> هزینهٔ ارسال پیش از خرید
-        </span>
-        <Link href="/faq">
-          تازگی در نوبر <ArrowUpLeft size={17} />
-        </Link>
+      <div className={styles.benefits}>
+        {[
+          {
+            icon: Sprout,
+            title: "تازگی، قابل بررسی",
+            text: "تاریخ برداشت هر محصول",
+          },
+          {
+            icon: MapPin,
+            title: "مستقیم از مبدأ",
+            text: "با شناخت شهر و غرفه‌دار",
+          },
+          {
+            icon: Truck,
+            title: "قیمت روشن تا مقصد",
+            text: "هزینهٔ ارسال، پیش از خرید",
+          },
+          {
+            icon: Scale,
+            title: "انتخاب با مقایسه",
+            text: "قیمت، تازگی و زمان رسیدن",
+          },
+        ].map(({ icon: Icon, title, text }) => (
+          <div key={title}>
+            <Icon size={23} strokeWidth={1.5} />
+            <span>
+              <strong>{title}</strong>
+              <small>{text}</small>
+            </span>
+          </div>
+        ))}
       </div>
 
-      <section className={styles.collections} aria-label="دسته‌های بازار">
-        <div className={styles.collectionHeading}>
-          <span className={styles.index}>هر روز، یک انتخاب تازه</span>
-          <h2>سلیقه‌ات کدام طعم است؟</h2>
+      <section className={styles.categories} aria-labelledby="categories-title">
+        <div className={styles.categoryIntro}>
+          <span className={styles.kicker}>بازار به سلیقهٔ تو</span>
+          <h2 id="categories-title">امروز چی میل داری؟</h2>
           <Link href="/categories">
             همهٔ دسته‌ها <ArrowLeft size={15} />
           </Link>
         </div>
-        <div className={styles.collectionGrid}>
-          {COLLECTIONS.map((c) => (
-            <Link key={c.id} href={c.href} className={styles.collection}>
-              <span className={styles.collectionImage}>
-                <Photo
-                  kind={c.photo}
-                  alt=""
-                  sizes="150px"
-                  className={styles.collectionPhoto}
-                />
-              </span>
-              <span className={styles.collectionCopy}>
-                <small>{c.note}</small>
-                <strong>{c.title}</strong>
-              </span>
-              <ArrowUpLeft size={20} />
-            </Link>
+        <ul>
+          {quick.map((type) => (
+            <li key={type.id}>
+              <Link href={"/p/" + type.id}>
+                <span className={styles.categoryPhoto}>
+                  <Photo
+                    kind={type.id}
+                    alt=""
+                    sizes="110px"
+                    fallback={{ emoji: type.emoji, hue: type.hue }}
+                    className={styles.categoryImage}
+                  />
+                </span>
+                <strong>{type.name}</strong>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
-      <ProductSection
-        number="۰۱"
-        title="همین حالا در بازار"
-        note="تازه‌رسیده‌ها برای تو"
-        href="/search?sort=newest"
-        hits={picks}
+      {featured.length > 0 && (
+        <section className={styles.fresh}>
+          <Heading
+            title="نوبرش رسیده!"
+            note="نوبرهای تازه و انتخاب‌های این فصل"
+            href="/search?nobar=1"
+            light
+          />
+          <div className={styles.freshRail}>
+            <div className={styles.freshIntro}>
+              <Sparkles size={30} strokeWidth={1.4} />
+              <h3>
+                یک فصل تازه،
+                <br />
+                یک طعم تازه.
+              </h3>
+              <p>
+                تازه‌رسیده‌های بازار
+                <br />
+                برای مقصد تو
+              </p>
+              <Link href="/search?nobar=1" aria-label="دیدن همهٔ نوبرهای تازه">
+                <ArrowLeft size={23} />
+              </Link>
+            </div>
+            <ListingRail hits={featured} />
+          </div>
+        </section>
+      )}
+
+      <Products
+        title="فصلش رسیده، وقتشه!"
+        note={"انتخاب‌های فصل برای " + cityName(dest)}
+        href="/search"
+        hits={seasonal}
       />
 
-      <section className={styles.originStory}>
-        <div className={styles.originImage}>
+      <section className={styles.discover} aria-label="کشف بازار نوبر">
+        <Link href="/origin/miandoab" className={styles.orchard}>
           <Image
-            src={bannerSrc("banner-harvest")}
-            alt="برداشت سیب در باغ؛ دست‌های پشت هر محصول"
+            src={bannerSrc("banner-orchard")}
+            alt="باغ‌های سرسبز؛ مبدأ محصولات نوبر"
             fill
             sizes="(max-width: 700px) 100vw, 60vw"
           />
-          <span>هر طعم، از یک آدم شروع می‌شود.</span>
-        </div>
-        <div className={styles.originCopy}>
-          <span className={styles.index}>پشت هر میوه، یک قصه</span>
-          <h2>
-            آدم‌ها را بشناس.{" "}
-            <br />
-            با خیالِ خوب{" "}
-            <br />
-            <em>انتخاب کن.</em>
-          </h2>
+          <span className={styles.orchardShade} />
+          <span className={styles.storyCopy}>
+            <small>هر محصول، یک قصه دارد</small>
+            <h2>
+              از باغ‌های میاندوآب،
+              <br />
+              برای سفرهٔ تو.
+            </h2>
+            <span>
+              محصولات این مبدأ <ArrowLeft size={17} />
+            </span>
+          </span>
+        </Link>
+        <Link href="/baghboon" className={styles.assistant}>
+          <span className={styles.assistantIcon}>
+            <Sprout size={36} strokeWidth={1.4} />
+          </span>
+          <span className={styles.kicker}>همراهت در انتخاب</span>
+          <h2>چی بخریم، باغبون؟</h2>
           <p>
-            نوبر، نزدیک‌تر شدن به آدم‌هایی‌ست که محصولت را پرورش می‌دهند.
-            غرفه‌شان را ببین، مبدأ را بشناس و انتخاب خودت را پیدا کن.
+            برای مقایسهٔ محصول‌ها و پیدا کردن طعم دلخواهت، از باغبون کمک بگیر.
           </p>
-          <Link href="/shops">
-            از اینجا غرفه‌گردی کن <ArrowUpLeft size={22} />
-          </Link>
-        </div>
+          <span className={styles.assistantLink}>
+            بریم گپ بزنیم <ArrowLeft size={17} />
+          </span>
+          <small>نسخهٔ نمایشی با پاسخ‌های از پیش تعریف‌شده</small>
+        </Link>
       </section>
 
-      <ProductSection
-        number="۰۲"
-        title="طعمِ این روزهای سال"
-        note="با ریتم طبیعت"
-        href="/season"
-        hits={seasonal}
+      <Products
+        title="تازه برای هر روز"
+        note="از سالاد امروز تا غذای فردا"
+        href="/search?cat=veg"
+        hits={all.filter((hit) =>
+          ["veg", "greens"].includes(hit.type.categoryId),
+        )}
       />
 
       <section className={styles.shops}>
         <Heading
-          number="۰۳"
-          title="از آدم‌های کاربلد"
-          note="یک آشنایی خوش‌طعم"
+          title="آدم‌های پشت طعم خوب"
+          note="غرفه‌دارهای نوبر را بشناس"
           href="/shops"
-          action="همهٔ غرفه‌دارها"
         />
         <div className={styles.shopGrid}>
-          {shops.map((shop, i) => (
+          {shops.map((shop) => (
             <Link
               key={shop.id}
               href={"/shop/" + shop.id}
               className={styles.shop}
             >
-              <span className={styles.shopNumber}>۰{i + 1}</span>
               <Photo
                 kind={shop.art}
                 alt=""
-                sizes="76px"
+                sizes="72px"
                 className={styles.shopPhoto}
               />
-              <span className={styles.shopInfo}>
-                <strong>{shop.name}</strong>
-                <small>
-                  <MapPin size={13} />
+              <div>
+                <h3>{shop.name}</h3>
+                <span>
+                  <MapPin size={12} />
                   {cityName(shop.cityId)}
-                  <span>·</span>
-                  <Star size={12} />
-                  {shop.ratingAvg.toLocaleString("fa-IR")}
+                </span>
+                <small>
+                  <Star size={12} fill="currentColor" />
+                  {shop.ratingAvg.toLocaleString("fa-IR")}{" "}
+                  <i>از {shop.ratingCount.toLocaleString("fa-IR")} نظر</i>
                 </small>
-              </span>
-              <ArrowUpLeft size={20} />
+              </div>
+              <ArrowLeft className={styles.shopArrow} size={17} />
             </Link>
           ))}
         </div>
       </section>
 
-      <section className={styles.explore}>
-        <Link href="/season" className={styles.seasonCard}>
-          <span className={styles.index}>طبیعت، بهترین راهنماست</span>
-          <h2>
-            هر فصل،{" "}
-            <br />
-            یک دلیل تازه{" "}
-            <br />
-            برای خوش‌مزگی.
-          </h2>
-          <span className={styles.exploreAction}>
-            تقویم طعم‌ها <ArrowUpLeft size={24} />
-          </span>
-          <Leaf className={styles.seasonLeaf} strokeWidth={0.8} aria-hidden />
-        </Link>
-        <div className={styles.assistantCard}>
-          <span className={styles.assistantMark}>
-            <Sprout size={38} strokeWidth={1.4} />
-          </span>
-          <span className={styles.index}>یک همراه برای انتخاب</span>
-          <h2>سلام، من باغبونم.</h2>
-          <p>
-            بین چند طعم موندی؟
-            <br />
-            بیا از سلیقه‌ات شروع کنیم.
-          </p>
-          <Link href="/baghboon">
-            گپ زدن با باغبون <MoveUpLeft size={22} />
-          </Link>
-          <small>نسخهٔ نمایشی با پاسخ‌های از پیش تعریف‌شده</small>
+      <section className={styles.season}>
+        <span className={styles.seasonMark}>
+          <Leaf size={32} strokeWidth={1.3} />
+        </span>
+        <div>
+          <span className={styles.kicker}>هر چیزی در فصل خودش خوشمزه‌تره</span>
+          <h2>با ریتم طبیعت خرید کن.</h2>
+          <p>تقویم فصل‌ها، راهنمای تو برای کشف طعم بعدی.</p>
         </div>
+        <Link className={styles.primary} href="/season">
+          کشف تقویم فصل‌ها <ArrowLeft size={17} />
+        </Link>
       </section>
-      <nav className={styles.categoryLinks} aria-label="کشف بیشتر">
-        {CATEGORIES.map((c) => (
-          <Link href={"/search?cat=" + c.id} key={c.id}>
-            {c.name}
-            <ArrowUpLeft size={14} />
+      <nav className={styles.bottomCategories} aria-label="دسته‌های بازار">
+        {CATEGORIES.map((cat) => (
+          <Link href={"/search?cat=" + cat.id} key={cat.id}>
+            {cat.name}
+            <ArrowLeft size={14} />
           </Link>
         ))}
       </nav>
