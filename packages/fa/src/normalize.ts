@@ -24,6 +24,24 @@ export function normalizeFa(input: string): string {
 }
 
 /**
+ * Clean form for text people write (titles, descriptions, names) before it is stored: Arabic letters
+ * become Persian, diacritics, kashida and stray direction marks go, spaces collapse. Unlike normalizeFa it
+ * keeps digits, case and line breaks, so the text still reads exactly as written.
+ */
+export function cleanFaText(input: string): string {
+  return input
+    .replace(/ي|ى/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(DIACRITICS, "")
+    .replace(/[‎‏‪-‮]/g, "")
+    .replace(/[‌‍]+/g, ZWNJ)
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
  * Search key: normalized text with ZWNJ removed and common suffix spacing unified, so
  * «گوجه‌فرنگی», «گوجه فرنگی» and «گوجهفرنگی» compare equal as compact keys.
  */

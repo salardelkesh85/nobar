@@ -1,7 +1,10 @@
 import { Module } from "@nestjs/common";
 import { allowOrigins, every, JwtVerifier, type ServiceDefinition } from "@nobar/common";
 import { type ApiConfig, apiConfigSchema, assertProductionConfig, seedDemoEnabled } from "./config";
+import { AuditModule } from "./modules/audit/audit.module";
+import { auditMigrations } from "./modules/audit/migrations";
 import { CatalogModule } from "./modules/catalog/catalog.module";
+import { SellerCatalogService } from "./modules/catalog/seller-catalog.service";
 import { CatalogService } from "./modules/catalog/catalog.service";
 import { catalogMigrations } from "./modules/catalog/migrations";
 import { IdentityModule } from "./modules/identity/identity.module";
@@ -26,7 +29,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
   return {
     name: "api",
     configSchema: apiConfigSchema,
-    migrations: [...identityMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations, ...paymentMigrations],
+    migrations: [...identityMigrations, ...auditMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations, ...paymentMigrations],
     // the API verifies its own tokens with the identity module's keys (no JWKS round trip)
     async verifier({ config }) {
       assertProductionConfig(config);
@@ -35,7 +38,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
     },
     module: (deps) => ({
       module: ApiModule,
-      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), CatalogModule, CartModule, OrderModule],
+      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), AuditModule, CatalogModule, CartModule, OrderModule],
     }),
     configure: ({ app, deps }) => allowOrigins(app, deps.config.CORS_ORIGINS.split(",")),
     async onStart({ app, deps }) {
@@ -54,9 +57,17 @@ export function apiService(): ServiceDefinition<ApiConfig> {
         }
       }
       if (deps.config.ORDER_TIMER_SEC === 0) return;
-      // acceptance deadlines and complaint windows; also releases unpaid reservations
+      // acceptance deadlines, complaint windows, unpaid reservations, listings past their freshness
       const fulfilment = app.get(FulfilmentService);
-      return every(deps.config.ORDER_TIMER_SEC * 1000, async () => void (await fulfilment.tick()), (e) => deps.log.error({ err: e }, "order timer failed"));
+      const sellerCatalog = app.get(SellerCatalogService);
+      return every(
+        deps.config.ORDER_TIMER_SEC * 1000,
+        async () => {
+          await fulfilment.tick();
+          await sellerCatalog.pauseStale();
+        },
+        (e) => deps.log.error({ err: e }, "timer failed"),
+      );
     },
   };
 }

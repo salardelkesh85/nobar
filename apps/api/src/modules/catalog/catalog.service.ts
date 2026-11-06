@@ -96,7 +96,9 @@ export class CatalogService {
     this.loading ??= this.repo
       .load()
       .then((data) => {
-        const market = createMarket(data, () => new Date());
+        // buyers only see listings of active shops; every shop stays known for order history
+        const active = new Set(data.shops.filter((s) => s.status === "ACTIVE").map((s) => s.id));
+        const market = createMarket({ ...data, listings: data.listings.filter((l) => active.has(l.shopId)) }, () => new Date());
         this.snapshot = { market, at: Date.now() };
         return market;
       })

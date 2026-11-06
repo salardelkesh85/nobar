@@ -3,7 +3,8 @@ import { parseBudgetRial, parsePeopleCount } from "./amount";
 import { formatJalaliDate, relativeDayFa, tehranDaysBetween } from "./date";
 import { formatFaNumber, toEnDigits, toFaDigits } from "./digits";
 import { formatToman, formatTomanShort, rialToToman } from "./money";
-import { normalizeFa, searchKey, tokenizeFa } from "./normalize";
+import { isValidNationalId, normalizeSheba } from "./iran";
+import { cleanFaText, normalizeFa, searchKey, tokenizeFa } from "./normalize";
 import { formatWeight } from "./weight";
 
 describe("digits", () => {
@@ -61,5 +62,23 @@ describe("weight and dates", () => {
   });
   it("shows the Jalali calendar", () => {
     expect(formatJalaliDate("2026-10-30T08:00:00Z")).toContain("آبان");
+  });
+});
+
+describe("Iranian identifiers and stored text", () => {
+  it("checks the national ID check digit", () => {
+    expect(isValidNationalId("0084575948")).toBe(true);
+    expect(isValidNationalId("۰۰۸۴۵۷۵۹۴۸")).toBe(true);
+    expect(isValidNationalId("0084575949")).toBe(false);
+    expect(isValidNationalId("1111111111")).toBe(false);
+    expect(isValidNationalId("12345")).toBe(false);
+  });
+  it("normalizes and checks Sheba numbers", () => {
+    expect(normalizeSheba("IR27 0170 0000 0010 0324 2000 01")).toBe("IR270170000000100324200001");
+    expect(normalizeSheba("۲۷۰۱۷۰۰۰۰۰۰۰۱۰۰۳۲۴۲۰۰۰۰۱")).toBe("IR270170000000100324200001");
+    expect(normalizeSheba("IR280170000000100324200001")).toBeNull();
+  });
+  it("cleans written text but keeps digits and line breaks", () => {
+    expect(cleanFaText("  سيب   قرمز ۱۲ كيلويي \n\n\n\n باغ  ")).toBe("سیب قرمز ۱۲ کیلویی\n\nباغ");
   });
 });

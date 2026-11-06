@@ -53,34 +53,65 @@ export const AddressUpdateSchema = AddressCreateSchema.partial();
 
 const RialSchema = z.number().int().nonnegative().max(1_000_000_000_000);
 
-export const SellerApplySchema = z.object({
-  shopName: z.string().trim().min(2).max(60),
+const Text = (min: number, max: number, message?: string) => z.string().trim().min(min, message).max(max);
+const ShippingRateSchema = z.object({
+  method: z.enum(["SELLER_LOCAL", "POST", "TIPAX", "FREIGHT"]),
+  baseRial: RialSchema,
+  perKgRial: RialSchema,
+  freeOverRial: RialSchema.optional(),
+  maxWeightGrams: z.number().int().min(1_000).max(1_000_000),
+});
+
+/** Seller onboarding (kit: shop details and KYC → staff approval). */
+export const ShopApplySchema = z.object({
+  name: Text(2, 60, "نام غرفه را بنویسید"),
+  type: z.enum(["GROWER", "SHOP", "COOPERATIVE"]),
   cityId: CityIdSchema,
-  description: z.string().trim().max(500).default(""),
-  deliveryFeeRial: RialSchema.default(300_000),
+  ownerName: Text(2, 60),
+  handlingDays: z.number().int().min(0).max(7),
+  acceptanceSlaHours: z.number().int().min(1).max(48),
+  story: z.object({
+    title: Text(3, 80),
+    body: z.array(Text(10, 1500)).min(1).max(6),
+    practices: z.array(Text(2, 60)).max(8).default([]),
+    sinceYear: z.number().int().min(1300).max(1500),
+  }),
+  shipping: z
+    .array(ShippingRateSchema)
+    .min(1, "دست‌کم یک روش ارسال لازم است")
+    .max(4)
+    .refine((rates) => new Set(rates.map((r) => r.method)).size === rates.length, "هر روش ارسال یک بار"),
+  kyc: z.object({ nationalId: z.string().max(20), sheba: z.string().max(40) }),
 });
-export const SellerUpdateSchema = SellerApplySchema.partial().omit({ cityId: true });
-export const SellerRejectSchema = z.object({ reason: z.string().trim().min(3).max(300) });
+export const ShopUpdateSchema = ShopApplySchema.omit({ cityId: true, kyc: true, type: true }).partial();
 
-export const UnitSchema = z.enum(["KG", "PIECE", "BUNDLE", "BOX"]);
-const IsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "تاریخ باید YYYY-MM-DD باشد");
+const PackageSchema = z
+  .object({
+    label: Text(1, 40),
+    netGrams: z.number().int().min(100).max(100_000).optional(),
+    units: z.number().int().min(1).max(500).optional(),
+    priceRial: RialSchema.min(1_000),
+  })
+  .refine((p) => (p.netGrams === undefined) !== (p.units === undefined), "هر بسته یا وزن دارد یا تعداد");
 
-export const ProductCreateSchema = z.object({
-  categoryId: z.string().min(1),
-  name: z.string().trim().min(2).max(80),
-  description: z.string().trim().max(1000).default(""),
-  unit: UnitSchema,
-  priceRial: RialSchema.min(1),
-  stock: z.number().int().nonnegative().max(100_000),
-  minOrder: z.number().int().min(1).max(1000).default(1),
-  harvestDate: IsoDate,
+export const ListingCreateSchema = z.object({
+  produceTypeId: Text(1, 80),
+  title: Text(3, 80, "عنوان را بنویسید"),
+  variety: Text(1, 60).optional(),
+  description: Text(20, 2000, "توضیح محصول را کامل‌تر بنویسید"),
+  grade: z.enum(["PREMIUM", "GRADE_1", "GRADE_2", "PROCESSING"]),
+  originCityId: CityIdSchema.optional(),
   isOrganic: z.boolean().default(false),
-  seasonTags: z.array(z.string().trim().max(20)).max(8).default([]),
-  emoji: z.string().max(8).optional(),
-  publish: z.boolean().default(false),
+  harvestedAt: z.string().datetime({ offset: true, message: "تاریخ برداشت معتبر نیست" }),
+  stockBase: z.number().int().min(0).max(100_000_000),
+  packages: z.array(PackageSchema).min(1).max(5),
+  tags: z.array(Text(1, 30)).max(8).default([]),
+  isPreorder: z.boolean().default(false),
+  preorderDispatchFrom: z.string().datetime({ offset: true }).optional(),
 });
-export const ProductUpdateSchema = ProductCreateSchema.omit({ publish: true }).partial();
-export const StockUpdateSchema = z.object({ stock: z.number().int().nonnegative().max(100_000) });
+export const ListingUpdateSchema = ListingCreateSchema.omit({ produceTypeId: true }).partial();
+export const StockUpdateSchema = z.object({ stockBase: z.number().int().min(0).max(100_000_000) });
+export const PriceUpdateSchema = z.object({ prices: z.array(z.object({ packageId: Text(1, 100), priceRial: RialSchema.min(1_000) })).min(1).max(5) });
 
 export const ProductListQuerySchema = z.object({
   cityId: CityIdSchema.optional(),

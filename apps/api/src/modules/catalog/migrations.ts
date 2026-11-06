@@ -93,4 +93,37 @@ export const catalogMigrations: Migration[] = [
       create index listings_type on catalog.listings (produce_type_id);
     `,
   },
+  {
+    // seller onboarding (kit: phone OTP → shop details and KYC → staff approval → first listing) and moderation
+    name: "catalog/0002_onboarding_moderation",
+    sql: `
+      alter table catalog.shops drop constraint shops_status_check;
+      alter table catalog.shops add constraint shops_status_check check (status in ('PENDING_REVIEW', 'ACTIVE', 'SUSPENDED', 'REJECTED'));
+      alter table catalog.shops add column review_note text, add column updated_at timestamptz not null default now();
+      create unique index shops_owner on catalog.shops (owner_user_id) where owner_user_id is not null;
+
+      -- encrypted at rest; only the last four digits in clear
+      create table catalog.shop_kyc (
+        shop_id text primary key references catalog.shops(id) on delete cascade,
+        national_id_enc text not null,
+        sheba_enc text not null,
+        national_id_last4 text not null,
+        sheba_last4 text not null,
+        submitted_at timestamptz not null default now()
+      );
+
+      alter table catalog.listings add column moderation_note text, add column created_at timestamptz not null default now();
+
+      create table catalog.moderation_cases (
+        id uuid primary key,
+        listing_id text not null references catalog.listings(id) on delete cascade,
+        rule text not null,
+        excerpt text not null,
+        status text not null check (status in ('OPEN', 'CLOSED')),
+        opened_at timestamptz not null default now(),
+        closed_at timestamptz
+      );
+      create index moderation_open on catalog.moderation_cases (status, opened_at);
+    `,
+  },
 ];

@@ -28,7 +28,7 @@ interface TypeRow {
   needs_review: boolean;
 }
 
-interface ShopRow {
+export interface ShopRow {
   id: string;
   slug: string;
   name: string;
@@ -50,7 +50,7 @@ interface ShopRow {
   art: string;
 }
 
-interface ListingRow {
+export interface ListingRow {
   id: string;
   slug: string;
   shop_id: string;
@@ -91,7 +91,7 @@ const toType = (r: TypeRow): ProduceType => ({
   needsReview: r.needs_review,
 });
 
-const toShop = (r: ShopRow): Shop => ({
+export const toShop = (r: ShopRow): Shop => ({
   id: r.id,
   slug: r.slug,
   name: r.name,
@@ -113,7 +113,7 @@ const toShop = (r: ShopRow): Shop => ({
   art: r.art,
 });
 
-const toListing = (r: ListingRow): Listing => {
+export const toListing = (r: ListingRow): Listing => {
   const l: Listing = {
     id: r.id,
     slug: r.slug,

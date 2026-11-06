@@ -4,3 +4,4 @@ export * from "./money";
 export * from "./date";
 export * from "./amount";
 export * from "./weight";
+export * from "./iran";

@@ -67,7 +67,7 @@ export interface Shop {
   freshnessRatingAvg: number;
   cancellations90d: number;
   joinedYear: number;
-  status: "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
+  status: "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED" | "REJECTED";
   story: FarmStory;
   shipping: ShippingRate[];
   emoji: string;

@@ -34,6 +34,8 @@ export const apiConfigSchema = baseConfigSchema.extend({
   ORDER_TIMER_SEC: z.coerce.number().int().min(0).default(30),
 
   // catalog
+  /** 32-byte key (base64) that encrypts sellers' national ID and Sheba; a fixed dev key outside production */
+  KYC_KEY: z.string().optional(),
   /** import the demo catalog (packages/demo) into an empty database; on by default outside production */
   SEED_DEMO: flag,
 });
@@ -52,6 +54,7 @@ export function assertProductionConfig(c: ApiConfig): void {
   if (!c.DATABASE_URL) throw new Error("DATABASE_URL is required in production");
   if (!secureSessionCookies(c)) throw new Error("SESSION_COOKIE_SECURE must be enabled in production");
   if (c.SESSION_COOKIE_SAME_SITE === "none" && !secureSessionCookies(c)) throw new Error("SameSite=None session cookies require Secure");
+  if (!c.KYC_KEY || Buffer.from(c.KYC_KEY, "base64").length !== 32) throw new Error("KYC_KEY (32 bytes, base64) is required in production");
   if (c.PAYMENT_PROVIDER === "fake") throw new Error("PAYMENT_PROVIDER=fake is a test gateway; configure a real provider in production");
   if (c.SMS_PROVIDER === "console") throw new Error("SMS_PROVIDER=console would log sign-in codes; choose a real provider in production");
 }

@@ -7,7 +7,8 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 | Module | Schema | Status |
 |---|---|---|
 | identity: OTP sign-in, sessions, profile, addresses | `identity` | done |
-| catalog: categories, produce types, shops, listings; search, comparison, delivery quotes | `catalog` | read side done; seller writes next |
+| catalog: categories, produce types, shops, listings; search, comparison, delivery quotes; seller onboarding (encrypted KYC), listings, moderation | `catalog` | done |
+| audit: staff and system actions | `audit` | done |
 | cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done |
 | order: checkout, expiring reservations, per-shop orders | `ordering` | reservation done; payment/seller lifecycle next |
 | payment: escrow, ledger, payouts | `payment` | planned |
@@ -42,6 +43,7 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
 | `API_PUBLIC_URL` | `http://localhost:4000` | used in gateway callbacks |
 | `PAYMENT_PROVIDER` | `fake` | test gateway; refused in production |
 | `ORDER_TIMER_SEC` | `30` | `0` turns the order timers off |
+| `KYC_KEY` | dev key | 32 bytes, base64; required in production |
 | `SEED_DEMO` | on outside production | import the demo catalog into an empty database |
 | `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | `pretty` for local reading |
 
@@ -74,6 +76,11 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
   buyer confirms delivery, and after the produce's complaint window the escrow is released to the seller minus
   commission (most specific rule: shop, category, global). Refunds go to the buyer's wallet. Every movement is a
   balanced ledger transaction; `test/lifecycle.test.ts` checks that the books balance.
+- **Sellers** (kit journey): sign in → apply with shop details and KYC (national ID and Sheba checked, stored
+  AES-256-GCM encrypted with `KYC_KEY`, only the last four digits in clear) → staff approve (the user gets the
+  SELLER role) → listings go to staff review before buyers see them. Stock and price changes apply at once; a price
+  jump over 30% or an organic claim opens a review case. Listings past their freshness pause automatically.
+  Suspended shops disappear from the store. Staff and system actions are written to the audit log.
 - **Payment gateway**: `PAYMENT_PROVIDER=fake` serves a test gateway page from the API; a real PSP plugs in
   behind `PaymentProvider`. Cash on delivery is refused until its rules are decided (docs/domain.md Q7).
 - **Timers**: every `ORDER_TIMER_SEC` the API expires unpaid checkouts and unaccepted orders and settles

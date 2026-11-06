@@ -83,6 +83,13 @@ export class UsersService {
     });
   }
 
+  /** Adds a role (e.g. SELLER when staff approve a shop) inside the caller's transaction; no-op if present. */
+  async grantRole(sql: Sql, id: string, role: Role): Promise<void> {
+    const [row] = await sql.query<{ roles: Role[] }>("select roles from identity.users where id = $1 for update", [id]);
+    if (!row) throw notFound("کاربر");
+    if (!row.roles.includes(role)) await this.addRole(sql, id, role);
+  }
+
   private async addRole(sql: Sql, id: string, role: Role): Promise<UserDto> {
     const [row] = await sql.query<UserRow>(
       `update identity.users set roles = array_append(roles, $2), updated_at = now() where id = $1 returning ${USER_COLS}`,
