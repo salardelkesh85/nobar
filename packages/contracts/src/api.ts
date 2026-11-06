@@ -170,6 +170,16 @@ export const DisputeOpenSchema = z.object({
 export const DisputeAnswerSchema = z.object({ response: z.string().trim().min(5).max(1000), offerRial: RialAmount.optional() });
 export const DisputeResolveSchema = z.object({ refundRial: z.number().int().nonnegative().max(1_000_000_000_000), note: z.string().trim().min(3).max(500) });
 
+export const ReviewCreateSchema = z.object({
+  orderId: z.string().uuid("سفارش معتبر نیست"),
+  rating: z.number().int().min(1).max(5),
+  freshnessRating: z.number().int().min(1).max(5),
+  text: z.string().trim().min(10, "دیدگاه را کمی کامل‌تر بنویسید").max(1000),
+});
+export const QuestionCreateSchema = z.object({ question: z.string().trim().min(8, "پرسش را کامل‌تر بنویسید").max(300) });
+export const AnswerSchema = z.object({ answer: z.string().trim().min(2).max(1000) });
+export const ReplySchema = z.object({ reply: z.string().trim().min(2).max(1000) });
+
 export const ReasonSchema = z.object({ reason: z.string().trim().min(2).max(300) });
 export const OptionalReasonSchema = z.object({ reason: z.string().trim().max(300).optional() });
 

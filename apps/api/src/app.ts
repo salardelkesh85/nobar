@@ -17,6 +17,12 @@ import { OrderModule } from "./modules/order/order.module";
 import { orderMigrations } from "./modules/order/migrations";
 import { FulfilmentService } from "./modules/order/fulfilment.service";
 import { paymentMigrations } from "./modules/payment/migrations";
+import { notificationMigrations } from "./modules/notification/migrations";
+import { NotificationModule } from "./modules/notification/notification.module";
+import { NotificationService } from "./modules/notification/notification.service";
+import { reviewMigrations } from "./modules/review/migrations";
+import { ReviewModule } from "./modules/review/review.module";
+import { ReviewService } from "./modules/review/review.service";
 import { PaymentService } from "./modules/payment/payment.service";
 
 
@@ -29,7 +35,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
   return {
     name: "api",
     configSchema: apiConfigSchema,
-    migrations: [...identityMigrations, ...auditMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations, ...paymentMigrations],
+    migrations: [...identityMigrations, ...auditMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations, ...paymentMigrations, ...reviewMigrations, ...notificationMigrations],
     // the API verifies its own tokens with the identity module's keys (no JWKS round trip)
     async verifier({ config }) {
       assertProductionConfig(config);
@@ -38,16 +44,18 @@ export function apiService(): ServiceDefinition<ApiConfig> {
     },
     module: (deps) => ({
       module: ApiModule,
-      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), AuditModule, CatalogModule, CartModule, OrderModule],
+      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), AuditModule, CatalogModule, CartModule, OrderModule, ReviewModule, NotificationModule],
     }),
     configure: ({ app, deps }) => allowOrigins(app, deps.config.CORS_ORIGINS.split(",")),
     async onStart({ app, deps }) {
+      await app.get(NotificationService).subscribe(deps);
       if (seedDemoEnabled(deps.config)) {
         // the same sample catalog as the static demo site, so both show the same shops and listings
         await app.get(CatalogService).seedIfEmpty(async () => {
           const demo = await import("@nobar/demo");
           return { categories: demo.CATEGORIES, types: demo.PRODUCE_TYPES, shops: demo.SHOPS, listings: demo.LISTINGS };
         });
+        await app.get(ReviewService).seed((await import("@nobar/demo")).REVIEWS);
         const payments = app.get(PaymentService);
         if (!(await payments.hasCommissionRules())) {
           // the kit's commission table (packages/demo COMMISSION_RULES): 10% overall, citrus 9%, dried fruit and dates 12%

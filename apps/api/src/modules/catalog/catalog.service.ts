@@ -66,9 +66,19 @@ export class CatalogService {
   // ---------- stock (owned by catalog; other modules pass in their transaction and call
   // invalidate() after it commits, so the snapshot is never reloaded from uncommitted state)
 
+  /** The seller account of a shop (null for imported demo shops). */
+  shopOwner(shopId: string, sql?: Sql): Promise<string | null> {
+    return this.repo.ownerOf(shopId, sql);
+  }
+
   /** Shops whose seller account is this user (object-level checks in the seller endpoints). */
   shopIdsOwnedBy(userId: string, sql?: Sql): Promise<string[]> {
     return this.repo.shopIdsOwnedBy(userId, sql);
+  }
+
+  /** A review was published; the caller invalidates after its transaction commits. */
+  addShopRating(sql: Sql, shopId: string, rating: number, freshness: number): Promise<void> {
+    return this.repo.addShopRating(sql, shopId, rating, freshness);
   }
 
   /** Live stock of a listing, row-locked until the caller's transaction ends. */

@@ -100,8 +100,8 @@ export class UsersService {
     return user;
   }
 
-  async get(id: string): Promise<UserDto> {
-    const [row] = await this.db.query<UserRow>(`select ${USER_COLS} from identity.users where id = $1`, [id]);
+  async get(id: string, sql: Sql = this.db): Promise<UserDto> {
+    const [row] = await sql.query<UserRow>(`select ${USER_COLS} from identity.users where id = $1`, [id]);
     if (!row) throw notFound("کاربر");
     return toUser(row);
   }

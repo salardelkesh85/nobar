@@ -9,6 +9,8 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 | identity: OTP sign-in, sessions, profile, addresses | `identity` | done |
 | catalog: categories, produce types, shops, listings; search, comparison, delivery quotes; seller onboarding (encrypted KYC), listings, moderation | `catalog` | done |
 | audit: staff and system actions | `audit` | done |
+| review: reviews after delivery (staff-approved), product questions answered by the shop | `review` | done |
+| notification: in-app notices and SMS for order events (from the event bus) | `notification` | done |
 | cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done |
 | order: checkout, expiring reservations, per-shop orders | `ordering` | reservation done; payment/seller lifecycle next |
 | payment: escrow, ledger, payouts | `payment` | planned |
@@ -81,6 +83,10 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
   SELLER role) → listings go to staff review before buyers see them. Stock and price changes apply at once; a price
   jump over 30% or an organic claim opens a review case. Listings past their freshness pause automatically.
   Suspended shops disappear from the store. Staff and system actions are written to the audit log.
+- **Reviews**: only a buyer whose order arrived can review it, once per order line; staff approve before it is
+  shown and the shop's rating updates. Contact details in reviews and questions are flagged for staff.
+- **Notifications** consume order events from the bus through the inbox (each event once), write an in-app
+  notice and send an SMS for what needs action or moves money. SMS failures never undo the notice.
 - **Payment gateway**: `PAYMENT_PROVIDER=fake` serves a test gateway page from the API; a real PSP plugs in
   behind `PaymentProvider`. Cash on delivery is refused until its rules are decided (docs/domain.md Q7).
 - **Timers**: every `ORDER_TIMER_SEC` the API expires unpaid checkouts and unaccepted orders and settles

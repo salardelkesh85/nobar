@@ -103,4 +103,5 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 | Frontend (store, seller, admin) | Done | Static demo on GitHub Pages; rules in `packages/demo` with unit tests |
 | P2 identity | Done | `apps/api` identity module: OTP, rotating sessions, profile, addresses; 21 integration tests |
 | P3 catalog and shops | Done | Shared rules; catalog API; seller onboarding with encrypted KYC, listings, moderation, audit log |
+| Reviews, questions, notifications | Done | Reviews after delivery with staff approval; Q&A; in-app + SMS notices from order events |
 | Cart, checkout and escrow | Done | One payment per cart (as built by the owner); reservations, test gateway, ledger, shop-order lifecycle, disputes, payouts |

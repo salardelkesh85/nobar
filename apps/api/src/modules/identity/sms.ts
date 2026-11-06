@@ -4,13 +4,20 @@ import type { ApiConfig } from "../../config";
 /** SMS delivery behind an interface so providers can be swapped by configuration. */
 export interface SmsProvider {
   sendOtp(phone: string, code: string): Promise<void>;
+  /** order and account notices */
+  send(phone: string, text: string): Promise<void>;
 }
+
+const masked = (phone: string) => `${phone.slice(0, 6)}***${phone.slice(-2)}`;
 
 /** Development provider: writes the code to the log instead of sending an SMS. */
 export class ConsoleSmsProvider implements SmsProvider {
   constructor(private readonly log: Logger) {}
   async sendOtp(phone: string, code: string): Promise<void> {
-    this.log.info(`[sms:console] کد ورود نوبر برای ${phone.slice(0, 6)}***${phone.slice(-2)}: ${code}`);
+    this.log.info(`[sms:console] کد ورود نوبر برای ${masked(phone)}: ${code}`);
+  }
+  async send(phone: string, text: string): Promise<void> {
+    this.log.info(`[sms:console] ${masked(phone)}: ${text}`);
   }
 }
 
@@ -27,6 +34,14 @@ export class KavenegarSmsProvider implements SmsProvider {
     url.searchParams.set("receptor", receptor);
     url.searchParams.set("token", code);
     url.searchParams.set("template", this.template);
+    const res = await fetch(url, { method: "POST", signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error(`Kavenegar responded ${res.status}`);
+  }
+
+  async send(phone: string, text: string): Promise<void> {
+    const url = new URL(`https://api.kavenegar.com/v1/${encodeURIComponent(this.apiKey)}/sms/send.json`);
+    url.searchParams.set("receptor", phone.replace(/^\+98/, "0"));
+    url.searchParams.set("message", text);
     const res = await fetch(url, { method: "POST", signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`Kavenegar responded ${res.status}`);
   }

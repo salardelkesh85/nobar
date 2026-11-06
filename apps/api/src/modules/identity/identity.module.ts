@@ -24,7 +24,7 @@ export class IdentityModule {
         SessionsService,
         UsersService,
       ],
-      exports: [UsersService],
+      exports: [UsersService, SMS_PROVIDER],
     };
   }
 }

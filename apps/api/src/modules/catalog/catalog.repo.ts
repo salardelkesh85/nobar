@@ -159,8 +159,23 @@ export class CatalogRepo {
     };
   }
 
+  async ownerOf(shopId: string, sql: Sql = this.db): Promise<string | null> {
+    const [row] = await sql.query<{ owner_user_id: string | null }>("select owner_user_id from catalog.shops where id = $1", [shopId]);
+    return row?.owner_user_id ?? null;
+  }
+
   async shopIdsOwnedBy(userId: string, sql: Sql = this.db): Promise<string[]> {
     return (await sql.query<{ id: string }>("select id from catalog.shops where owner_user_id = $1 order by position", [userId])).map((r) => r.id);
+  }
+
+  /** One more published review: running averages of the shop's overall and freshness ratings. */
+  async addShopRating(sql: Sql, shopId: string, rating: number, freshness: number): Promise<void> {
+    await sql.query(
+      `update catalog.shops set rating_avg = (rating_avg * rating_count + $2) / (rating_count + 1),
+         freshness_rating_avg = (freshness_rating_avg * rating_count + $3) / (rating_count + 1), rating_count = rating_count + 1, updated_at = now()
+       where id = $1`,
+      [shopId, rating, freshness],
+    );
   }
 
   /** Row-locks a listing inside the caller's transaction so concurrent checkouts see stock one at a time. */
