@@ -227,3 +227,325 @@ paths:
       summary: Autocomplete over produce types
       parameters: [{ name: q, in: query, schema: { type: string } }]
       responses: { "200": { description: Produce types } }
+  # ---------- cart, checkout, orders, sellers, staff, reviews, notifications (errors: Problem Details)
+  /v1/catalog/produce-types/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      security: []
+      summary: "One produce type with season and market statistics"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/origins/{city}:
+    parameters: [{ name: city, in: path, required: true, schema: { type: string } }]
+    get:
+      security: []
+      summary: "Listings from one origin city deliverable to `dest`"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/cart:
+    get:
+      summary: "Server cart, revalidated (prices, stock, delivery to `dest`) on every read"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+    delete:
+      summary: "Empty the cart"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/cart/items:
+    post:
+      summary: "Add a package of a listing to the cart"
+      description: "Requires Idempotency-Key."
+      parameters: [{ name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 100 } }]
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+    patch:
+      summary: "Set the quantity of a cart line (0 removes it)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/cart/items/{listingId}/{packageId}:
+    parameters: [{ name: listingId, in: path, required: true, schema: { type: string } }, { name: packageId, in: path, required: true, schema: { type: string } }]
+    delete:
+      summary: "Remove a cart line"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/checkouts:
+    post:
+      summary: "Reserve stock for 10 minutes and create one order per shop (body: addressId, paymentMethod GATEWAY, optional shipping method per shop)"
+      description: "Requires Idempotency-Key."
+      parameters: [{ name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 100 } }]
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/checkouts/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: "Checkout with its shop orders"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/checkouts/{id}/pay:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Start a gateway payment; returns redirectUrl"
+      description: "Requires Idempotency-Key."
+      parameters: [{ name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 100 } }]
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/payments/callback:
+    get:
+      security: []
+      summary: "Gateway return (Authority, Status); verifies, books escrow once, redirects to the store"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/payments/fake/{authority}:
+    parameters: [{ name: authority, in: path, required: true, schema: { type: string } }]
+    get:
+      security: []
+      summary: "Test gateway page (PAYMENT_PROVIDER=fake only)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/me/wallet:
+    get:
+      summary: "Wallet balance and recent entries (refunds land here)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/orders:
+    get:
+      summary: "My shop orders"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/orders/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: "One of my orders, by id or code"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/orders/{id}/cancel:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Cancel before the shop accepts (full refund to wallet)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/orders/{id}/delivered:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Confirm delivery; starts the complaint window"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/orders/{id}/dispute:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Report a problem (shipped, or delivered within the complaint window)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/shop:
+    get:
+      summary: "My shop, review note and masked KYC"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+    post:
+      summary: "Apply for a shop with KYC (or re-apply after rejection)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+    patch:
+      summary: "Edit shop details, story, shipping"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/listings:
+    get:
+      summary: "My listings with freshness and moderation notes"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+    post:
+      summary: "New listing (waits for staff review)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/listings/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    patch:
+      summary: "Edit a listing (back to review)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/listings/{id}/stock:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    patch:
+      summary: "Set stock (grams or units)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/listings/{id}/prices:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    patch:
+      summary: "Set package prices; a jump over 30% opens a review case"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/listings/{id}/pause:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Take a listing off sale"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/listings/{id}/resume:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Back on sale (or to review if staff paused it)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/orders:
+    get:
+      summary: "Orders of my shops (optional status filter)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/orders/{id}/accept:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Accept within the shop"s SLA"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/orders/{id}/reject:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Reject (full refund to the buyer, stock back)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/orders/{id}/ship:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Mark shipped (tracking code unless own courier)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/orders/{id}/dispute/answer:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Answer a complaint, optionally offering an amount"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/balance:
+    get:
+      summary: "Settled balance and payouts per shop"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/reviews:
+    get:
+      summary: "Reviews of my shops"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/reviews/{id}/reply:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Reply to a published review"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/questions:
+    get:
+      summary: "Questions about my listings"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/questions/{id}/answer:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Answer a question"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/listings/{id}/reviews:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      security: []
+      summary: "Published reviews of a listing"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+    post:
+      summary: "Review a delivered order line (waits for staff)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/listings/{id}/questions:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      security: []
+      summary: "Answered questions of a listing"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+    post:
+      summary: "Ask the shop a question"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/me/questions:
+    get:
+      summary: "My questions"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/me/notifications:
+    get:
+      summary: "My notifications and unread count"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/me/notifications/{id}/read:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Mark one (or `all`) read"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/kyc:
+    get:
+      summary: "Shops waiting for approval (KYC masked)"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/shops/{id}/approve:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Approve a shop (owner becomes SELLER)"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/shops/{id}/reject:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Reject an application with a reason"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/shops/{id}/suspend:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Suspend a shop (hidden from the store)"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/moderation:
+    get:
+      summary: "Listings waiting for review and open rule hits"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/listings/{id}/approve:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Publish a listing"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/listings/{id}/reject:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Reject a listing with a reason"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/moderation/{id}/close:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Close a rule hit"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/orders:
+    get:
+      summary: "All shop orders (optional status filter)"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/orders/{id}/delivered:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Record delivery on the buyer"s behalf"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/orders/{id}/dispute/resolve:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Decide a complaint: refund amount (0 rejects) and note"
+      description: "ADMIN role. Requires Idempotency-Key."
+      parameters: [{ name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 100 } }]
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/finance:
+    get:
+      summary: "Ledger totals: escrow, wallets, seller balances, commission, paid out, received"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/payouts:
+    post:
+      summary: "Pay out every positive seller balance"
+      description: "ADMIN role. Requires Idempotency-Key."
+      parameters: [{ name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 100 } }]
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/commission-rules:
+    get:
+      summary: "Commission rules"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+    put:
+      summary: "Create or change a rule (GLOBAL, CATEGORY or SHOP, basis points)"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/reviews:
+    get:
+      summary: "Reviews waiting for approval and flagged questions"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/reviews/{id}/approve:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Publish a review (updates the shop rating)"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/reviews/{id}/reject:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Reject a review with a reason"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/questions/{id}/hide:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Hide a question"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/audit:
+    get:
+      summary: "Audit log of staff and system actions"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
