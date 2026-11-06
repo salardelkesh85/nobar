@@ -1,17 +1,16 @@
 "use client";
 
-import { freshnessOf, itemsTotal, packageGrams, PRICE_POSITION_FA, pricePosition, sellerNet, shopById } from "@nobar/demo";
+import { freshnessOf, itemsTotal, packageGrams, PRICE_POSITION_FA, pricePosition, sellerNet } from "@nobar/demo";
 import { formatFaNumber } from "@nobar/fa";
 import { Badge, ButtonLink, Card, FreshnessBadge, Skeleton, Stat, Toman } from "@nobar/ui";
 import { AlarmClock, Camera, ChevronLeft, Hourglass, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { SHOP_ID, useSeller } from "@/lib/state";
+import { useSeller } from "@/lib/state";
 import { timeLeft, useNow } from "@/lib/time";
 
 export default function Dashboard() {
-  const { ready, orders, listings } = useSeller();
+  const { ready, orders, listings, shop } = useSeller();
   const now = useNow();
-  const shop = shopById(SHOP_ID)!;
   if (!ready) return <Skeleton className="h-96 w-full" />;
 
   const awaiting = orders.filter((o) => o.status === "AWAITING_ACCEPTANCE");

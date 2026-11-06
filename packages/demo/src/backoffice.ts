@@ -47,6 +47,10 @@ export interface ShopOrder {
   deliveredAt?: string;
   complaintEndsAt?: string;
   payoutId?: string;
+  /** the API's exact commission (per-line rules, partial refunds); demo orders use commissionBps */
+  commissionRial?: number;
+  /** money already returned to the buyer */
+  refundedRial?: number;
 }
 
 function line(listingId: string, pkgIndex: number, quantity: number): OrderLine {
@@ -57,8 +61,8 @@ function line(listingId: string, pkgIndex: number, quantity: number): OrderLine 
 }
 
 export const itemsTotal = (o: Pick<ShopOrder, "lines">): number => o.lines.reduce((s, l) => s + l.unitPriceRial * l.quantity, 0);
-export const commissionOf = (o: ShopOrder): number => Math.floor((itemsTotal(o) * o.commissionBps + 5_000) / 10_000);
-export const sellerNet = (o: ShopOrder): number => itemsTotal(o) + o.shippingRial - commissionOf(o);
+export const commissionOf = (o: ShopOrder): number => o.commissionRial ?? Math.floor((itemsTotal(o) * o.commissionBps + 5_000) / 10_000);
+export const sellerNet = (o: ShopOrder): number => itemsTotal(o) + o.shippingRial - (o.refundedRial ?? 0) - commissionOf(o);
 
 const T = (t: number) => t * 10;
 

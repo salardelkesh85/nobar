@@ -52,8 +52,7 @@ function ProductRow({ id }: { id: string }) {
       parsed[p.id] = toman * 10;
     }
     const kg = Number(toEnDigits(stock).replace(/[^\d]/g, ""));
-    updateListing(l.id, { prices: parsed, stockBase: kg * 1000 });
-    showToast("ذخیره شد.");
+    void Promise.resolve(updateListing(l.id, { prices: parsed, stockBase: kg * 1000 })).then((ok) => ok && showToast("ذخیره شد."));
   };
 
   return (
@@ -93,7 +92,7 @@ function ProductRow({ id }: { id: string }) {
           <Save className="size-4" aria-hidden />
           ذخیره
         </Button>
-        <Button variant="secondary" onClick={() => { updateListing(l.id, { paused: !l.paused }); showToast(l.paused ? "دوباره فعال شد." : "فروش متوقف شد."); }}>
+        <Button variant="secondary" onClick={async () => { if (await updateListing(l.id, { paused: !l.paused })) showToast(l.paused ? "دوباره فعال شد." : "فروش متوقف شد."); }}>
           {l.paused ? "فعال کردن" : "توقف فروش"}
         </Button>
       </div>

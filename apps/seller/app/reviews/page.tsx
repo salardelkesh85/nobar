@@ -3,9 +3,15 @@
 import { DISPUTE_REASON_FA, DISPUTES, listingById, reviewsForShop } from "@nobar/demo";
 import { Badge, Button, Card, RatingStars, RelativeDay, Textarea, Toman } from "@nobar/ui";
 import { useState } from "react";
+import { ApiReviews } from "@/components/api-reviews";
 import { SHOP_ID, useSeller } from "@/lib/state";
 
 export default function ReviewsPage() {
+  const { apiMode } = useSeller();
+  return apiMode ? <ApiReviews /> : <DemoReviews />;
+}
+
+function DemoReviews() {
   const { showToast } = useSeller();
   const reviews = reviewsForShop(SHOP_ID);
   const disputes = DISPUTES.filter((d) => d.shopId === SHOP_ID);

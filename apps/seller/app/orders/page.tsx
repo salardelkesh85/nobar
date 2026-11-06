@@ -58,7 +58,7 @@ export default function OrdersPage() {
 }
 
 function OrderCard({ order: o }: { order: ShopOrder }) {
-  const { updateOrder, showToast } = useSeller();
+  const { updateOrder, showToast, apiMode } = useSeller();
   const now = useNow();
   const [tracking, setTracking] = useState("");
   const [confirmReject, setConfirmReject] = useState(false);
@@ -104,14 +104,14 @@ function OrderCard({ order: o }: { order: ShopOrder }) {
           {confirmReject ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm">رد سفارش، پول را به خریدار برمی‌گرداند و در امتیاز لغو شما ثبت می‌شود. مطمئنید؟</span>
-              <Button variant="danger" onClick={() => { updateOrder(o.code, { status: "REJECTED" }); showToast("سفارش رد شد؛ مبلغ به خریدار برمی‌گردد."); }}>
+              <Button variant="danger" onClick={async () => { if (await updateOrder(o.code, { status: "REJECTED" })) showToast("سفارش رد شد؛ مبلغ به خریدار برمی‌گردد."); }}>
                 بله، رد کن
               </Button>
               <Button variant="ghost" onClick={() => setConfirmReject(false)}>انصراف</Button>
             </div>
           ) : (
             <div className="flex gap-2">
-              <Button size="lg" className="flex-1" onClick={() => { updateOrder(o.code, { status: "ACCEPTED" }); showToast("سفارش تأیید شد. خریدار خبردار شد."); }}>
+              <Button size="lg" className="flex-1" onClick={async () => { if (await updateOrder(o.code, { status: "ACCEPTED" })) showToast("سفارش تأیید شد. خریدار خبردار شد."); }}>
                 <Check className="size-5" aria-hidden />
                 تأیید سفارش
               </Button>
@@ -130,8 +130,9 @@ function OrderCard({ order: o }: { order: ShopOrder }) {
           onSubmit={(e) => {
             e.preventDefault();
             if (needsTracking && tracking.trim().length < 4) return showToast("کد رهگیری مرسوله را وارد کنید.");
-            updateOrder(o.code, { status: "SHIPPED", trackingCode: tracking.trim() || undefined, shippedAt: new Date().toISOString() });
-            showToast("ارسال ثبت شد. خریدار کد رهگیری را می‌بیند.");
+            void Promise.resolve(updateOrder(o.code, { status: "SHIPPED", trackingCode: tracking.trim() || undefined, shippedAt: new Date().toISOString() })).then((ok) => {
+              if (ok) showToast("ارسال ثبت شد. خریدار کد رهگیری را می‌بیند.");
+            });
           }}
         >
           {needsTracking ? (
@@ -147,7 +148,7 @@ function OrderCard({ order: o }: { order: ShopOrder }) {
         </form>
       ) : null}
 
-      {o.status === "SHIPPED" && o.method === "SELLER_LOCAL" ? (
+      {o.status === "SHIPPED" && o.method === "SELLER_LOCAL" && !apiMode ? (
         <div className="border-t border-line px-4 py-4">
           <Button onClick={() => { updateOrder(o.code, { status: "DELIVERED", deliveredAt: new Date().toISOString() }); showToast("تحویل ثبت شد."); }}>
             <PackageCheck className="size-5" aria-hidden />

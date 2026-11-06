@@ -1,21 +1,21 @@
 "use client";
 
-import { commissionOf, itemsTotal, PAYOUTS, sellerNet, SHOP_ORDER_STATUS_FA } from "@nobar/demo";
+import { commissionOf, itemsTotal, sellerNet, SHOP_ORDER_STATUS_FA } from "@nobar/demo";
 import { formatFaNumber } from "@nobar/fa";
 import { Badge, Card, JalaliDate, Skeleton, Stat, Toman } from "@nobar/ui";
 import { Info } from "lucide-react";
-import { SHOP_ID, useSeller } from "@/lib/state";
+import { useSeller } from "@/lib/state";
 
 const PAYOUT_FA = { SCHEDULED: "زمان‌بندی‌شده", PAID: "واریز شد", FAILED: "ناموفق" } as const;
 
 export default function PayoutsPage() {
-  const { ready, orders } = useSeller();
+  const { ready, orders, payouts, balanceRial } = useSeller();
   if (!ready) return <Skeleton className="h-96 w-full" />;
   const inEscrow = orders.filter((o) => ["ACCEPTED", "SHIPPED", "DELIVERED", "DISPUTED", "AWAITING_ACCEPTANCE"].includes(o.status));
   const available = orders.filter((o) => o.status === "COMPLETED" && !o.payoutId);
-  const payouts = PAYOUTS.filter((p) => p.shopId === SHOP_ID);
   const next = payouts.find((p) => p.status === "SCHEDULED");
-  const nextAmount = available.reduce((s, o) => s + sellerNet(o), 0);
+  // API: completed orders are already in the shop's settled balance
+  const nextAmount = balanceRial ?? available.reduce((s, o) => s + sellerNet(o), 0);
 
   return (
     <div className="space-y-5">

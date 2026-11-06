@@ -12,14 +12,15 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 | review: reviews after delivery (staff-approved), product questions answered by the shop | `review` | done |
 | notification: in-app notices and SMS for order events (from the event bus) | `notification` | done |
 | cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done |
-| order: checkout, expiring reservations, per-shop orders | `ordering` | reservation done; payment/seller lifecycle next |
-| payment: escrow, ledger, payouts | `payment` | planned |
+| order: checkout, expiring reservations, per-shop orders, lifecycle, disputes | `ordering` | done |
+| payment: test gateway, double-entry ledger (escrow, wallets, seller balances), commission, payouts | `payment` | done |
 
 A module touches only its own schema; other modules use its exported service or its events.
 
 ## Run locally (no Docker needed)
 
 ```bash
+cp apps/api/.env.example apps/api/.env   # optional: admin phone, pretty logs
 pnpm dev:api          # http://localhost:4000 — embedded PostgreSQL (PGlite) under apps/api/.data
 pnpm --filter @nobar/api test
 ```

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Nobar backend: one NestJS app with a module per bounded context (ADR 0008)",
   "scripts": {
-    "dev": "tsup --watch --onSuccess \"node --enable-source-maps dist/main.js\"",
+    "dev": "tsup --watch --onSuccess \"node --env-file-if-exists=.env --enable-source-maps dist/main.js\"",
     "build": "tsup",
     "start": "node --enable-source-maps dist/main.js",
     "typecheck": "tsc --noEmit",

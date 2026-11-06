@@ -5,7 +5,7 @@ import { formatToman, toEnDigits } from "@nobar/fa";
 import { Button, Card, Field, Input, Select, Textarea } from "@nobar/ui";
 import { Camera, CircleCheck, ImagePlus, Mic, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useSeller } from "@/lib/state";
+import { errorText, useSeller } from "@/lib/state";
 
 interface Draft {
   produceTypeId: string;
@@ -15,6 +15,8 @@ interface Draft {
   harvestedAt: string;
   description: string;
   organic: boolean;
+  /** kilos on hand (stock is kept in grams) */
+  stockKg: string;
   packages: Array<{ label: string; kg: string; price: string }>;
 }
 
@@ -26,12 +28,14 @@ const EMPTY: Draft = {
   harvestedAt: "",
   description: "",
   organic: false,
+  stockKg: "",
   packages: [{ label: "کارتن ۵ کیلویی", kg: "5", price: "" }],
 };
 const num = (s: string) => Number(toEnDigits(s).replace(/[^\d.]/g, ""));
 
 export default function NewProductPage() {
-  const { showToast } = useSeller();
+  const { showToast, apiMode, client, reload } = useSeller();
+  const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [photos, setPhotos] = useState<string[]>([]);
   const [sent, setSent] = useState(false);
@@ -75,8 +79,35 @@ export default function NewProductPage() {
         if (photos.length < 2) return showToast("دست‌کم دو عکس واقعی از محصول لازم است.");
         if (!draft.title.trim() || !draft.harvestedAt) return showToast("عنوان و تاریخ برداشت را بنویسید.");
         if (draft.packages.some((p) => !num(p.price) || !num(p.kg))) return showToast("وزن و قیمت هر بسته را کامل کنید.");
-        localStorage.removeItem("seller_draft");
-        setSent(true);
+        if (apiMode && !num(draft.stockKg)) return showToast("موجودی را به کیلو بنویسید.");
+        const done = () => {
+          localStorage.removeItem("seller_draft");
+          setSent(true);
+        };
+        if (!apiMode) return done();
+        setBusy(true);
+        void client
+          .call("seller/listings", {
+            method: "POST",
+            body: {
+              produceTypeId: draft.produceTypeId,
+              title: draft.title.trim(),
+              ...(draft.variety.trim() ? { variety: draft.variety.trim() } : {}),
+              description: draft.description.trim(),
+              grade: draft.grade,
+              isOrganic: draft.organic,
+              // the date picker gives a Tehran calendar day; morning harvest
+              harvestedAt: new Date(`${draft.harvestedAt}T07:00:00+03:30`).toISOString(),
+              stockBase: Math.round(num(draft.stockKg) * 1000),
+              packages: draft.packages.map((p) => ({ label: p.label.trim(), netGrams: Math.round(num(p.kg) * 1000), priceRial: num(p.price) * 10 })),
+            },
+          })
+          .then(async () => {
+            done();
+            await reload();
+          })
+          .catch((err: unknown) => showToast(errorText(err)))
+          .finally(() => setBusy(false));
       }}
     >
       <div>
@@ -159,6 +190,9 @@ export default function NewProductPage() {
           <Field label="تاریخ برداشت" htmlFor="harvest" hint="تازه‌سنج از همین حساب می‌شود">
             <Input id="harvest" type="date" value={draft.harvestedAt} onChange={(e) => set("harvestedAt", e.target.value)} />
           </Field>
+          <Field label="موجودی (کیلو)" htmlFor="stock" hint="هر صبح در «محصولات» به‌روز کنید">
+            <Input id="stock" inputMode="decimal" value={draft.stockKg ?? ""} onChange={(e) => set("stockKg", e.target.value)} />
+          </Field>
         </div>
         <Field label="توضیح کوتاه" htmlFor="desc">
           <Textarea id="desc" rows={3} value={draft.description} onChange={(e) => set("description", e.target.value)} />
@@ -206,7 +240,7 @@ export default function NewProductPage() {
         ) : null}
       </Card>
 
-      <Button type="submit" size="lg" className="w-full">
+      <Button type="submit" size="lg" className="w-full" disabled={busy}>
         فرستادن برای بررسی
       </Button>
     </form>

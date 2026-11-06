@@ -1,6 +1,5 @@
 "use client";
 
-import { shopById } from "@nobar/demo";
 import { toFaDigits } from "@nobar/fa";
 import { cn, Logo } from "@nobar/ui";
 import { Photo } from "./photo";
@@ -17,7 +16,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { SHOP_ID, useSeller } from "@/lib/state";
+import { SellerGate } from "./seller-gate";
+import { useSeller } from "@/lib/state";
 
 const NAV = [
   { href: "/", label: "پیشخوان", icon: LayoutDashboard, mobile: false },
@@ -31,11 +31,10 @@ const NAV = [
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
-  const { orders, toast } = useSeller();
+  const { orders, toast, shop, apiMode, stage } = useSeller();
   const pending = orders.filter(
     (o) => o.status === "AWAITING_ACCEPTANCE",
   ).length;
-  const shop = shopById(SHOP_ID)!;
   const isActive = (href: string) =>
     href === "/"
       ? path === "/"
@@ -102,9 +101,11 @@ export function Shell({ children }: { children: ReactNode }) {
               {NAV.find((n) => isActive(n.href))?.label ?? "مدیریت غرفه"}
             </strong>
           </div>
-          <span className="studio-demo-badge">
-            <span /> محیط نمایشی
-          </span>
+          {apiMode ? null : (
+            <span className="studio-demo-badge">
+              <span /> محیط نمایشی
+            </span>
+          )}
           <a
             href={process.env.NEXT_PUBLIC_STORE_URL ?? "http://localhost:3000/"}
           >
@@ -115,7 +116,7 @@ export function Shell({ children }: { children: ReactNode }) {
           id="main"
           className="studio-workspace-main mx-auto max-w-5xl px-4 pb-28 pt-5 md:pb-10"
         >
-          {children}
+          {apiMode && stage !== "active" ? stage === "loading" ? null : <SellerGate /> : children}
         </main>
       </div>
 

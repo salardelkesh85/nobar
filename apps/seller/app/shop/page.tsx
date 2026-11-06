@@ -1,17 +1,16 @@
 "use client";
 
-import { cityName, METHOD_FA, shopById, SHOP_TYPE_FA } from "@nobar/demo";
+import { cityName, METHOD_FA, SHOP_TYPE_FA } from "@nobar/demo";
 import { formatFaNumber, formatToman } from "@nobar/fa";
 import { Badge, Button, Card, cn, Field, Input, Select, Textarea } from "@nobar/ui";
 import { BadgeCheck, ExternalLink } from "lucide-react";
 import { useState } from "react";
-import { SHOP_ID, useSeller } from "@/lib/state";
+import { errorText, useSeller } from "@/lib/state";
 
 const DAYS = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
 
 export default function ShopSettingsPage() {
-  const shop = shopById(SHOP_ID)!;
-  const { showToast } = useSeller();
+  const { showToast, shop, apiMode, client, reload } = useSeller();
   const [story, setStory] = useState({ title: shop.story.title, body: shop.story.body.join("\n\n"), practices: shop.story.practices.join("، ") });
   const [days, setDays] = useState([true, true, true, true, true, true, false]);
 
@@ -44,7 +43,30 @@ export default function ShopSettingsPage() {
         <Field label="روش کار (با ویرگول جدا کنید)" htmlFor="sp">
           <Input id="sp" value={story.practices} onChange={(e) => setStory((s) => ({ ...s, practices: e.target.value }))} />
         </Field>
-        <Button onClick={() => showToast("باغ‌نامه ذخیره شد و پس از بررسی نمایش داده می‌شود.")}>ذخیره‌ی باغ‌نامه</Button>
+        <Button
+          onClick={async () => {
+            if (!apiMode) return showToast("باغ‌نامه ذخیره شد و پس از بررسی نمایش داده می‌شود.");
+            try {
+              await client.call("seller/shop", {
+                method: "PATCH",
+                body: {
+                  story: {
+                    title: story.title,
+                    body: story.body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean),
+                    practices: story.practices.split(/[،,]/).map((p) => p.trim()).filter(Boolean),
+                    sinceYear: shop.story.sinceYear,
+                  },
+                },
+              });
+              await reload();
+              showToast("باغ‌نامه ذخیره شد.");
+            } catch (e) {
+              showToast(errorText(e));
+            }
+          }}
+        >
+          ذخیره‌ی باغ‌نامه
+        </Button>
       </Card>
 
       <Card className="space-y-4 p-5">
