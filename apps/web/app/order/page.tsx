@@ -10,6 +10,7 @@ import { DisputeForm } from "@/components/dispute-form";
 import { Suspense, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import { Photo } from "@/components/photo";
+import { ApiOrderPage } from "@/components/api-orders";
 
 const FLOW: ShopOrderStatus[] = ["AWAITING_ACCEPTANCE", "ACCEPTED", "SHIPPED", "DELIVERED", "COMPLETED"];
 const STEP_FA: Record<string, string> = {
@@ -20,6 +21,14 @@ const STEP_FA: Record<string, string> = {
   COMPLETED: "پایان مهلت شکایت",
 };
 const KEY = "nobar_order_status";
+
+/** API mode: orders come from the server (back from the gateway with ?checkout=, or ?id= from a notification). */
+function OrderSwitch() {
+  const params = useSearchParams();
+  const { apiMode } = useStore();
+  if (apiMode) return <ApiOrderPage checkoutId={params.get("checkout")} orderId={params.get("id")} payment={params.get("payment")} />;
+  return <OrderView />;
+}
 
 function OrderView() {
   const params = useSearchParams();
@@ -190,7 +199,7 @@ function OrderView() {
 export default function OrderPage() {
   return (
     <Suspense>
-      <OrderView />
+      <OrderSwitch />
     </Suspense>
   );
 }

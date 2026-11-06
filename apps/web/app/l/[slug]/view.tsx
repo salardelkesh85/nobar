@@ -19,6 +19,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { BuyBox, CompareToggle, FavoriteToggle } from "@/components/actions";
+import { ApiQandA, ApiReviewForm, useListingReviews } from "@/components/api-reviews";
 import { Gallery, QandA, RatingSummary, ReviewForm, SectionTabs, ShareButton, StickyBuyBar } from "@/components/product-extras";
 import type { BannerPhoto } from "@/lib/photos";
 import { ListingRail } from "@/components/listing-card";
@@ -36,13 +37,14 @@ export function ListingView({ id }: { id: string }) {
   const { dest } = useStore();
   const detail = useCatalogListing(id, dest);
   const similarResult = useCatalogSearch({ dest, produceType: detail.data?.type.id });
+  const apiReviews = useListingReviews(detail.data?.listing.id ?? id, detail.apiMode);
   if (detail.loading || similarResult.loading) return <CatalogLoading label="محصول و شرایط ارسال" />;
   if (detail.error) return <CatalogFailure message={detail.error} retry={detail.retry} />;
   if (similarResult.error) return <CatalogFailure message={similarResult.error} retry={similarResult.retry} />;
   if (!detail.data) notFound();
   const { listing: l, shop, type: pt, category: cat, freshness: fresh, delivery: quote, marketStat: stat, pricePosition: position } = detail.data;
   const first = l.packages[0]!;
-  const reviews = detail.apiMode ? [] : reviewsForListing(l.id);
+  const reviews = detail.apiMode ? apiReviews : reviewsForListing(l.id);
   const perKg = minPricePerKg(l);
   const similar = similarResult.result.hits.filter((hit) => hit.type.id === pt.id && hit.listing.id !== l.id);
   const landedPerKg = quote.best ? pricePerKg(first.priceRial + quote.best.costRial, packageGrams(first)) : null;
@@ -220,7 +222,7 @@ export function ListingView({ id }: { id: string }) {
             <RatingSummary reviews={reviews} fallback={shop.ratingAvg} />
           </div>
           <div className="mb-5">
-            <ReviewForm listingId={l.id} />
+            {detail.apiMode ? <ApiReviewForm listingId={l.id} /> : <ReviewForm listingId={l.id} />}
           </div>
           {reviews.length ? (
             <ul className="divide-y divide-line">
@@ -249,7 +251,7 @@ export function ListingView({ id }: { id: string }) {
         </section>
         <section id="questions" className="scroll-mt-48 rounded-card border border-line bg-surface p-5">
           <h2 className="mb-2 text-lg font-extrabold">پرسش و پاسخ</h2>
-          <QandA listing={l} shopName={shop.name} />
+          {detail.apiMode ? <ApiQandA listingId={l.id} shopName={shop.name} /> : <QandA listing={l} shopName={shop.name} />}
         </section>
         </div>
 

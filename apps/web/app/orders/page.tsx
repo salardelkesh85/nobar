@@ -8,12 +8,18 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AccountShell } from "@/components/account-shell";
 import { Photo } from "@/components/photo";
+import { ApiOrdersList } from "@/components/api-orders";
 import { read, useStore, type PlacedOrder } from "@/lib/store";
 
 type Tab = "current" | "done";
 const DONE = ["COMPLETED", "REFUNDED", "REJECTED", "CANCELLED", "EXPIRED"];
 
 export default function OrdersPage() {
+  const { apiMode } = useStore();
+  return apiMode ? <ApiOrdersList /> : <DemoOrders />;
+}
+
+function DemoOrders() {
   const { ready, orders } = useStore();
   const [status, setStatus] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<Tab>("current");

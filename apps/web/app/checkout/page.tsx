@@ -9,6 +9,7 @@ import Link from "next/link";
 import { AddressForm, emptyAddress } from "@/components/address-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiErrorMessage, newIdempotencyKey } from "@/lib/api-commerce";
 import { useCartGroups } from "@/lib/cart";
 import { useStore } from "@/lib/store";
 import { CheckoutSteps } from "@/components/checkout-steps";
@@ -21,14 +22,16 @@ const code = () => {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { ready, dest, clearCart, addOrder, addresses, saveAddress, user, apiMode, showToast } = useStore();
-  const { groups } = useCartGroups();
+  const { ready, dest, clearCart, addOrder, addresses, saveAddress, user, apiMode, api, showToast } = useStore();
+  const { groups, loading } = useCartGroups();
   const [methods, setMethods] = useState<Record<string, ShippingMethodCode>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [paying, setPaying] = useState(false);
+  // one key per visit: a double click or a retry after a network error reuses the same checkout
+  const [keys] = useState(() => ({ checkout: newIdempotencyKey(), pay: newIdempotencyKey() }));
 
-  if (!ready) return <Skeleton className="h-64 w-full" />;
+  if (!ready || loading) return <Skeleton className="h-64 w-full" />;
   if (!groups.length)
     return <EmptyState icon={<ShoppingBasket className="size-10" />} title="سبدتان خالی است" action={<ButtonLink href="/">بازگشت به فروشگاه</ButtonLink>} />;
 
@@ -51,6 +54,25 @@ export default function CheckoutPage() {
       return;
     }
     setPaying(true);
+    if (apiMode) {
+      // API: reserve stock and create one order per shop, then go to the gateway; the API verifies the payment
+      const shippingByShop = Object.fromEntries(groups.map((g) => [g.shop.id, chosen(g.shop.id)!.method]));
+      void (async () => {
+        try {
+          const checkout = await api.call<{ id: string }>("checkouts", {
+            method: "POST",
+            body: { addressId: address.id, paymentMethod: "GATEWAY", shipping: shippingByShop },
+            idempotencyKey: keys.checkout,
+          });
+          const started = await api.call<{ redirectUrl: string }>(`checkouts/${checkout.id}/pay`, { method: "POST", idempotencyKey: keys.pay });
+          window.location.assign(started.redirectUrl);
+        } catch (e) {
+          setPaying(false);
+          showToast(apiErrorMessage(e));
+        }
+      })();
+      return;
+    }
     // Demo payment: the real flow redirects to the PSP and verifies server-side (docs/01 §8.1).
     window.setTimeout(() => {
       const c = code();
@@ -172,8 +194,8 @@ export default function CheckoutPage() {
           <div className="flex items-center gap-3 rounded-control border border-brand bg-brand-soft p-3">
             <CreditCard className="size-6 text-brand" aria-hidden />
             <div>
-              <p className="font-bold">درگاه پرداخت (نمایشی)</p>
-              <p className="text-xs text-ink-soft">در نسخه‌ی واقعی به درگاه بانکی منتقل می‌شوید؛ اینجا پرداخت شبیه‌سازی می‌شود.</p>
+              <p className="font-bold">{apiMode ? "درگاه پرداخت" : "درگاه پرداخت (نمایشی)"}</p>
+              <p className="text-xs text-ink-soft">{apiMode ? "برای پرداخت به درگاه بانکی منتقل می‌شوید و بعد به نوبر برمی‌گردید." : "در نسخه‌ی واقعی به درگاه بانکی منتقل می‌شوید؛ اینجا پرداخت شبیه‌سازی می‌شود."}</p>
             </div>
             <Check className="ms-auto size-5 text-brand" aria-hidden />
           </div>

@@ -1,20 +1,28 @@
 "use client";
 
 import { DISPUTE_REASON_FA, type DisputeReason } from "@nobar/demo";
-import { toFaDigits } from "@nobar/fa";
-import { Button, cn, Field, Textarea } from "@nobar/ui";
+import { formatToman, toEnDigits, toFaDigits } from "@nobar/fa";
+import { Button, cn, Field, Input, Textarea } from "@nobar/ui";
 import { Camera, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 // Reasons that need photo evidence (docs/02 §14 disputes.policies).
 const NEEDS_PHOTO: DisputeReason[] = ["SPOILED", "DAMAGED", "UNDERWEIGHT", "WRONG_ITEM"];
 
-/** Buyer's complaint for one shop order, within the complaint window. */
-export function DisputeForm({ onSubmit, onCancel }: { onSubmit: (summary: string) => void; onCancel: () => void }) {
+export interface DisputeInput {
+  reason: DisputeReason;
+  description: string;
+  requested: "FULL_REFUND" | "PARTIAL_REFUND";
+  requestedRial?: number;
+}
+
+/** Buyer's complaint for one shop order, within the complaint window. `maxRial` asks for the amount of a partial refund. */
+export function DisputeForm({ onSubmit, onCancel, maxRial }: { onSubmit: (summary: string, input: DisputeInput) => void | Promise<void>; onCancel: () => void; maxRial?: number }) {
   const [reason, setReason] = useState<DisputeReason>("SPOILED");
   const [text, setText] = useState("");
   const [refund, setRefund] = useState<"FULL_REFUND" | "PARTIAL_REFUND">("PARTIAL_REFUND");
   const [photos, setPhotos] = useState<string[]>([]);
+  const [toman, setToman] = useState("");
   const [error, setError] = useState("");
   const file = useRef<HTMLInputElement>(null);
 
@@ -25,7 +33,14 @@ export function DisputeForm({ onSubmit, onCancel }: { onSubmit: (summary: string
         e.preventDefault();
         if (NEEDS_PHOTO.includes(reason) && photos.length === 0) return setError("برای این مورد دست‌کم یک عکس لازم است.");
         if (text.trim().length < 10) return setError("کمی بیشتر توضیح دهید.");
-        onSubmit(`${DISPUTE_REASON_FA[reason]} · ${refund === "FULL_REFUND" ? "بازپرداخت کامل" : "بازپرداخت بخشی"}`);
+        const requestedRial = Number(toEnDigits(toman).replace(/\D/g, "")) * 10;
+        if (maxRial !== undefined && refund === "PARTIAL_REFUND" && (!requestedRial || requestedRial > maxRial)) return setError(`مبلغ را بنویسید (حداکثر ${formatToman(maxRial)}).`);
+        void onSubmit(`${DISPUTE_REASON_FA[reason]} · ${refund === "FULL_REFUND" ? "بازپرداخت کامل" : "بازپرداخت بخشی"}`, {
+          reason,
+          description: text.trim(),
+          requested: refund,
+          ...(refund === "PARTIAL_REFUND" && requestedRial ? { requestedRial } : {}),
+        });
       }}
     >
       <fieldset>
@@ -91,6 +106,11 @@ export function DisputeForm({ onSubmit, onCancel }: { onSubmit: (summary: string
           </label>
         ))}
       </fieldset>
+      {maxRial !== undefined && refund === "PARTIAL_REFUND" ? (
+        <Field label="مبلغ درخواستی (تومان)" htmlFor="dispute-amount" hint={`حداکثر ${formatToman(maxRial)}`}>
+          <Input id="dispute-amount" inputMode="numeric" dir="ltr" className="text-end sm:max-w-56" value={toman} onChange={(e) => setToman(e.target.value)} />
+        </Field>
+      ) : null}
       {error ? <p className="text-sm text-danger">{error}</p> : null}
       <p className="text-xs leading-6 text-ink-soft">غرفه‌دار ۱۲ ساعت فرصت پاسخ دارد. اگر توافق نشد، کارشناس نوبر داوری می‌کند. بازپرداخت به کیف پول انجام می‌شود.</p>
       <div className="flex gap-2">

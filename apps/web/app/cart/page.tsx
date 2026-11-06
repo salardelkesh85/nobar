@@ -1,6 +1,6 @@
 "use client";
 
-import { cityName, etaPhrase, produceTypeById, REASON_FA } from "@nobar/demo";
+import { cityName, etaPhrase, produceTypeById } from "@nobar/demo";
 import { Badge, ButtonLink, Card, EmptyState, Skeleton, Toman, Weight } from "@nobar/ui";
 import { ShieldCheck, ShoppingBasket, Store, Trash2, Truck } from "lucide-react";
 import Link from "next/link";
@@ -43,9 +43,9 @@ function Suggestions({ dest, exclude, title }: { dest: string; exclude: string[]
 
 export default function CartPage() {
   const { ready, dest, setQty } = useStore();
-  const { groups } = useCartGroups();
+  const { groups, loading } = useCartGroups();
 
-  if (!ready) return <Skeleton className="h-64 w-full" />;
+  if (!ready || loading) return <Skeleton className="h-64 w-full" />;
   if (!groups.length)
     return (
       <div className="space-y-4">
@@ -102,7 +102,7 @@ export default function CartPage() {
                           {line.listing.title}
                         </Link>
                         <p className="text-sm text-ink-soft">{line.pkg.label}</p>
-                        {b ? <Badge tone="danger">{REASON_FA[b.reason]}</Badge> : null}
+                        {b ? <Badge tone="danger">{b.reasonFa}</Badge> : null}
                         <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
                           <Stepper value={line.qty} onChange={(v) => setQty(line.listing.id, line.pkg.id, v)} min={1} label={`تعداد ${line.pkg.label}`} />
                           <Toman rial={line.pkg.priceRial * line.qty} className="font-extrabold" />

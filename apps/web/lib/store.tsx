@@ -2,6 +2,7 @@
 
 import { cityById, DEFAULT_DESTINATION } from "@nobar/demo";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { apiErrorMessage, type CartGroup, useApiCart } from "./api-commerce";
 import { useApiIdentity } from "./api-identity";
 import { DEST_COOKIE } from "./constants";
 
@@ -39,6 +40,11 @@ export interface User {
 
 interface Store {
   apiMode: boolean;
+  /** signed-in API client (API mode); cart, checkout and orders go through it */
+  api: ReturnType<typeof useApiIdentity>["client"];
+  /** API mode: the server's revalidated cart groups (demo mode computes them in lib/cart.ts) */
+  serverCart: CartGroup[];
+  serverCartLoaded: boolean;
   requestOtp: ReturnType<typeof useApiIdentity>["requestOtp"];
   verifyCode: ReturnType<typeof useApiIdentity>["verifyCode"];
   completeSignIn: ReturnType<typeof useApiIdentity>["completeSignIn"];
@@ -46,7 +52,7 @@ interface Store {
   dest: string;
   setDest: (cityId: string) => void;
   cart: CartItem[];
-  addToCart: (item: CartItem) => void;
+  addToCart: (item: CartItem) => void | Promise<void>;
   setQty: (listingId: string, packageId: string, qty: number) => void;
   clearCart: () => void;
   compare: string[];
@@ -122,6 +128,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const identity = useApiIdentity();
   const [ready, setReady] = useState(false);
   const [dest, setDestState] = useState(DEFAULT_DESTINATION);
+  const serverCart = useApiCart(identity.client, identity.apiMode && !!identity.user, dest);
   const [cart, updateCartRaw, loadCart] = usePersisted<CartItem[]>("nobar_cart", []);
   const [compare, updateCompare, loadCompare] = usePersisted<string[]>("nobar_compare", []);
   const [orders, updateOrders, loadOrders] = usePersisted<PlacedOrder[]>("nobar_orders", []);
@@ -169,15 +176,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       completeSignIn: identity.completeSignIn,
       dest,
       setDest,
-      cart,
-      addToCart: (item) =>
-        updateCart((c) => {
-          const found = c.find((x) => x.listingId === item.listingId && x.packageId === item.packageId);
-          return found ? c.map((x) => (x === found ? { ...x, qty: x.qty + item.qty } : x)) : [...c, item];
-        }),
-      setQty: (listingId, packageId, qty) =>
-        updateCart((c) => c.map((x) => (x.listingId === listingId && x.packageId === packageId ? { ...x, qty } : x))),
-      clearCart: () => updateCart(() => []),
+      api: identity.client,
+      serverCart: serverCart.groups,
+      serverCartLoaded: serverCart.loaded,
+      cart: identity.apiMode ? serverCart.items : cart,
+      addToCart: async (item) => {
+        if (!identity.apiMode) {
+          updateCart((c) => {
+            const found = c.find((x) => x.listingId === item.listingId && x.packageId === item.packageId);
+            return found ? c.map((x) => (x === found ? { ...x, qty: x.qty + item.qty } : x)) : [...c, item];
+          });
+          return;
+        }
+        // API mode keeps the cart on the server, so it needs an account
+        if (!identity.user) {
+          const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+          window.location.assign(`${base}/login/?next=${encodeURIComponent(window.location.pathname.slice(base.length) || "/")}`);
+          return;
+        }
+        await serverCart.add(item).catch((e: unknown) => showToast(apiErrorMessage(e)));
+      },
+      setQty: (listingId, packageId, qty) => {
+        if (identity.apiMode) {
+          void serverCart.set(listingId, packageId, qty).catch((e: unknown) => showToast(apiErrorMessage(e)));
+          return;
+        }
+        updateCart((c) => c.map((x) => (x.listingId === listingId && x.packageId === packageId ? { ...x, qty } : x)));
+      },
+      clearCart: () => {
+        if (identity.apiMode) void serverCart.clear().catch((e: unknown) => showToast(apiErrorMessage(e)));
+        else updateCart(() => []);
+      },
       compare,
       toggleCompare: (id) => updateCompare((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id].slice(-4))),
       clearCompare: () => updateCompare(() => []),
@@ -216,7 +245,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toast,
       showToast,
     }),
-    [identity, ready, dest, setDest, cart, updateCart, compare, updateCompare, orders, updateOrders, user, updateUser, favorites, updateFavorites, addresses, updateAddresses, recentSearches, updateRecent, theme, simple, toast, showToast],
+    [identity, serverCart, ready, dest, setDest, cart, updateCart, compare, updateCompare, orders, updateOrders, user, updateUser, favorites, updateFavorites, addresses, updateAddresses, recentSearches, updateRecent, theme, simple, toast, showToast],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

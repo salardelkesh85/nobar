@@ -5,7 +5,8 @@ import type { Address, User } from "./store";
 import { API_URL } from "./api-config";
 
 export const identityError = (error: unknown) => error instanceof IdentityApiError
-  ? error.status === 401 ? "نشست پایان یافته یا کد ورود معتبر نیست؛ دوباره وارد شوید."
+  ? error.code && error.status < 500 ? error.message
+    : error.status === 401 ? "نشست پایان یافته یا کد ورود معتبر نیست؛ دوباره وارد شوید."
     : error.status === 429 ? "تعداد درخواست‌ها زیاد است؛ کمی بعد دوباره تلاش کنید."
     : error.status === 400 ? "اطلاعات واردشده معتبر نیست؛ دوباره بررسی کنید."
     : "ذخیره یا دریافت اطلاعات انجام نشد؛ دوباره تلاش کنید."
@@ -52,7 +53,7 @@ export function useApiIdentity() {
     }
   }
   return {
-    apiMode: Boolean(API_URL), ready, user, addresses,
+    apiMode: Boolean(API_URL), ready, user, addresses, client,
     requestOtp: (phone: string) => client.requestOtp(phone),
     verifyCode: async (phone: string, code: string) => {
       epoch.current++; setUser(null); setAddresses([]);
