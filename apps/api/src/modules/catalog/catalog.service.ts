@@ -66,6 +66,11 @@ export class CatalogService {
   // ---------- stock (owned by catalog; other modules pass in their transaction and call
   // invalidate() after it commits, so the snapshot is never reloaded from uncommitted state)
 
+  /** Shops whose seller account is this user (object-level checks in the seller endpoints). */
+  shopIdsOwnedBy(userId: string, sql?: Sql): Promise<string[]> {
+    return this.repo.shopIdsOwnedBy(userId, sql);
+  }
+
   /** Live stock of a listing, row-locked until the caller's transaction ends. */
   lockStock(sql: Sql, listingId: string) {
     return this.repo.lockStock(sql, listingId);
@@ -81,8 +86,13 @@ export class CatalogService {
     return this.repo.returnStock(sql, listingId, base);
   }
 
-  async market(): Promise<Market> {
-    if (this.snapshot && Date.now() - this.snapshot.at < SNAPSHOT_TTL_MS) return this.snapshot.market;
+  /**
+   * The current catalog snapshot. Inside another module's transaction pass `{ stale: true }` (after
+   * loading it once before the transaction): it then never reads the database, which on single-connection
+   * PGlite would wait for that same transaction.
+   */
+  async market(opts: { stale?: boolean } = {}): Promise<Market> {
+    if (this.snapshot && (opts.stale || Date.now() - this.snapshot.at < SNAPSHOT_TTL_MS)) return this.snapshot.market;
     this.loading ??= this.repo
       .load()
       .then((data) => {

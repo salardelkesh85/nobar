@@ -25,6 +25,14 @@ export const apiConfigSchema = baseConfigSchema.extend({
   KAVENEGAR_API_KEY: z.string().optional(),
   KAVENEGAR_TEMPLATE: z.string().default("nobar-otp"),
 
+  /** public address of this API (gateway callbacks and the test gateway page) */
+  API_PUBLIC_URL: z.string().url().default("http://localhost:4000"),
+  /** "fake" is the built-in test gateway; a real provider (ZarinPal) plugs in behind the same interface */
+  PAYMENT_PROVIDER: z.enum(["fake"]).default("fake"),
+
+  /** how often order deadlines are checked (0 turns the timer off, e.g. in tests) */
+  ORDER_TIMER_SEC: z.coerce.number().int().min(0).default(30),
+
   // catalog
   /** import the demo catalog (packages/demo) into an empty database; on by default outside production */
   SEED_DEMO: flag,
@@ -44,5 +52,6 @@ export function assertProductionConfig(c: ApiConfig): void {
   if (!c.DATABASE_URL) throw new Error("DATABASE_URL is required in production");
   if (!secureSessionCookies(c)) throw new Error("SESSION_COOKIE_SECURE must be enabled in production");
   if (c.SESSION_COOKIE_SAME_SITE === "none" && !secureSessionCookies(c)) throw new Error("SameSite=None session cookies require Secure");
+  if (c.PAYMENT_PROVIDER === "fake") throw new Error("PAYMENT_PROVIDER=fake is a test gateway; configure a real provider in production");
   if (c.SMS_PROVIDER === "console") throw new Error("SMS_PROVIDER=console would log sign-in codes; choose a real provider in production");
 }

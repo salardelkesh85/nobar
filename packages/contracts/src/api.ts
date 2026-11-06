@@ -128,6 +128,17 @@ export const CheckoutCreateSchema = z.object({
   shipping: z.record(z.string().min(1).max(100), ShippingMethodSchema).default({}),
 });
 
+const RialAmount = z.number().int().positive().max(1_000_000_000_000);
+export const ShipSchema = z.object({ trackingCode: z.string().trim().min(3).max(60).optional() });
+export const DisputeOpenSchema = z.object({
+  reason: z.enum(["SPOILED", "DAMAGED", "UNDERWEIGHT", "WRONG_ITEM", "NOT_DELIVERED", "OTHER"]),
+  description: z.string().trim().min(10, "مشکل را کمی کامل‌تر بنویسید").max(1000),
+  requested: z.enum(["FULL_REFUND", "PARTIAL_REFUND"]),
+  requestedRial: RialAmount.optional(),
+});
+export const DisputeAnswerSchema = z.object({ response: z.string().trim().min(5).max(1000), offerRial: RialAmount.optional() });
+export const DisputeResolveSchema = z.object({ refundRial: z.number().int().nonnegative().max(1_000_000_000_000), note: z.string().trim().min(3).max(500) });
+
 export const ReasonSchema = z.object({ reason: z.string().trim().min(2).max(300) });
 export const OptionalReasonSchema = z.object({ reason: z.string().trim().max(300).optional() });
 

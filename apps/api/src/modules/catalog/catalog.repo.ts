@@ -159,6 +159,10 @@ export class CatalogRepo {
     };
   }
 
+  async shopIdsOwnedBy(userId: string, sql: Sql = this.db): Promise<string[]> {
+    return (await sql.query<{ id: string }>("select id from catalog.shops where owner_user_id = $1 order by position", [userId])).map((r) => r.id);
+  }
+
   /** Row-locks a listing inside the caller's transaction so concurrent checkouts see stock one at a time. */
   async lockStock(sql: Sql, listingId: string): Promise<{ stockBase: number; status: Listing["status"] } | null> {
     const [row] = await sql.query<{ stock_base: number; status: Listing["status"] }>("select stock_base, status from catalog.listings where id = $1 for update", [listingId]);

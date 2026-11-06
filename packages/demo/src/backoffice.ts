@@ -1,31 +1,11 @@
 // Demo orders, disputes, KYC, moderation, payouts and audit rows for the seller and admin panels.
+import { type DisputeReason, ORDER_STATUS_FA, type OrderStatus } from "@nobar/contracts";
 import { daysAgo, hoursAgo, hoursFromNow } from "./clock";
 import { listingById } from "./listings";
 
-export type ShopOrderStatus =
-  | "AWAITING_ACCEPTANCE"
-  | "ACCEPTED"
-  | "SHIPPED"
-  | "DELIVERED"
-  | "DISPUTED"
-  | "COMPLETED"
-  | "REJECTED"
-  | "EXPIRED"
-  | "CANCELLED"
-  | "REFUNDED";
+export type ShopOrderStatus = Exclude<OrderStatus, "PENDING_PAYMENT">;
 
-export const SHOP_ORDER_STATUS_FA: Record<ShopOrderStatus, string> = {
-  AWAITING_ACCEPTANCE: "در انتظار تأیید غرفه",
-  ACCEPTED: "تأیید شد، در حال آماده‌سازی",
-  SHIPPED: "ارسال شد",
-  DELIVERED: "تحویل شد",
-  DISPUTED: "در حال بررسی شکایت",
-  COMPLETED: "تکمیل شد",
-  REJECTED: "رد شد",
-  EXPIRED: "منقضی شد",
-  CANCELLED: "لغو شد",
-  REFUNDED: "بازپرداخت شد",
-};
+export const SHOP_ORDER_STATUS_FA: Record<ShopOrderStatus, string> = ORDER_STATUS_FA;
 
 export const SHOP_ORDER_TONE: Record<ShopOrderStatus, "brand" | "nobar" | "saffron" | "neutral" | "danger" | "solid"> = {
   AWAITING_ACCEPTANCE: "saffron",
@@ -101,15 +81,7 @@ export const SHOP_ORDERS: ShopOrder[] = [
   { code: "NB-5S3E-88AA", shopId: "s3", buyerName: "محمد ن.", buyerPhoneMasked: "0937***4512", destCityId: "tehran", placedAt: daysAgo(6, 12), status: "COMPLETED", lines: [line("l301", 1, 2)], shippingRial: T(210_000), method: "FREIGHT", commissionBps: 1000, deliveredAt: daysAgo(3, 12) },
 ];
 
-export type DisputeReason = "SPOILED" | "DAMAGED" | "UNDERWEIGHT" | "WRONG_ITEM" | "NOT_DELIVERED" | "OTHER";
-export const DISPUTE_REASON_FA: Record<DisputeReason, string> = {
-  SPOILED: "خراب یا گندیده",
-  DAMAGED: "آسیب‌دیده در ارسال",
-  UNDERWEIGHT: "کم‌وزن",
-  WRONG_ITEM: "اشتباه ارسال شده",
-  NOT_DELIVERED: "نرسیده",
-  OTHER: "سایر",
-};
+export { DISPUTE_REASON_FA, type DisputeReason } from "@nobar/contracts";
 
 export interface Dispute {
   id: string;

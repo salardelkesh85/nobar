@@ -109,7 +109,7 @@ describe("transactional checkout reservations", () => {
     const session = await signIn();
     const addressId = await address(session.cookie);
     await add(session.cookie, "checkout-expire-cart");
-    const created = await call("POST", "/v1/checkouts", { addressId, paymentMethod: "COD" }, session.cookie, { "idempotency-key": "checkout-expire-0001" });
+    const created = await call("POST", "/v1/checkouts", { addressId, paymentMethod: "GATEWAY" }, session.cookie, { "idempotency-key": "checkout-expire-0001" });
     await api.deps.db.query("update ordering.checkouts set expires_at = now() - interval '1 second' where id = $1", [created.body.id]);
     await api.deps.db.query("update ordering.stock_reservations set expires_at = now() - interval '1 second' where checkout_id = $1", [created.body.id]);
     const loaded = await call("GET", `/v1/checkouts/${created.body.id}`, undefined, session.cookie);
@@ -156,5 +156,13 @@ describe("transactional checkout reservations", () => {
     const created = await call("POST", "/v1/checkouts", { addressId, paymentMethod: "GATEWAY" }, a.cookie, { "idempotency-key": "checkout-foreign-0001" });
     expect((await call("GET", `/v1/checkouts/${created.body.id}`, undefined, b.cookie)).status).toBe(404);
     expect((await call("GET", "/v1/checkouts/not-a-uuid", undefined, a.cookie)).status).toBe(404);
+  });
+  it("does not offer cash on delivery yet", async () => {
+    const session = await signIn();
+    const addressId = await address(session.cookie);
+    await add(session.cookie, "checkout-cod-cart");
+    const created = await call("POST", "/v1/checkouts", { addressId, paymentMethod: "COD" }, session.cookie, { "idempotency-key": "checkout-cod-0001" });
+    expect(created.status).toBe(422);
+    expect(created.body.code).toBe("COD_NOT_AVAILABLE");
   });
 });

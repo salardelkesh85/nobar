@@ -103,4 +103,4 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 | Frontend (store, seller, admin) | Done | Static demo on GitHub Pages; rules in `packages/demo` with unit tests |
 | P2 identity | Done | `apps/api` identity module: OTP, rotating sessions, profile, addresses; 21 integration tests |
 | P3 catalog and shops | In progress | Rules shared in `packages/domain`; catalog read API done (search, compare, delivery); seller writes next |
-| Checkout and escrow | Waiting | Needs the owner's answer to Q1 (one payment per cart or per seller) |
+| Cart, checkout and escrow | Done | One payment per cart (as built by the owner); reservations, test gateway, ledger, shop-order lifecycle, disputes, payouts |

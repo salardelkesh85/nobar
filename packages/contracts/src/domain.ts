@@ -9,13 +9,17 @@ export const UNIT_FA_SHORT: Record<Unit, string> = { KG: "کیلو", PIECE: "ع�
 
 export type ProductStatus = "DRAFT" | "ACTIVE" | "OUT_OF_STOCK" | "ARCHIVED";
 export type SellerStatus = "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+/** Shop order lifecycle (docs/02 of the kit): one order per shop inside a checkout. */
 export type OrderStatus =
   | "PENDING_PAYMENT"
-  | "PLACED"
-  | "SELLER_ACCEPTED"
-  | "PREPARING"
-  | "OUT_FOR_DELIVERY"
+  | "AWAITING_ACCEPTANCE"
+  | "ACCEPTED"
+  | "SHIPPED"
   | "DELIVERED"
+  | "DISPUTED"
+  | "COMPLETED"
+  | "REJECTED"
+  | "EXPIRED"
   | "CANCELLED"
   | "REFUNDED";
 export type CheckoutStatus = "PENDING_PAYMENT" | "PAID" | "FAILED";
@@ -24,11 +28,14 @@ export type PaymentStatus = "INITIATED" | "SUCCEEDED" | "FAILED" | "EXPIRED" | "
 
 export const ORDER_STATUS_FA: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "در انتظار پرداخت",
-  PLACED: "ثبت‌شده، در انتظار تأیید فروشنده",
-  SELLER_ACCEPTED: "تأیید فروشنده",
-  PREPARING: "در حال آماده‌سازی",
-  OUT_FOR_DELIVERY: "ارسال شد",
+  AWAITING_ACCEPTANCE: "در انتظار تأیید غرفه",
+  ACCEPTED: "تأیید شد، در حال آماده‌سازی",
+  SHIPPED: "ارسال شد",
   DELIVERED: "تحویل شد",
+  DISPUTED: "در حال بررسی شکایت",
+  COMPLETED: "تکمیل شد",
+  REJECTED: "رد شد",
+  EXPIRED: "منقضی شد",
   CANCELLED: "لغو شد",
   REFUNDED: "بازپرداخت شد",
 };
@@ -160,10 +167,10 @@ export interface AddressDto {
 }
 
 export interface OrderItemDto {
-  productId: string;
-  name: string;
-  emoji: string;
-  unit: Unit;
+  listingId: string;
+  packageId: string;
+  title: string;
+  packageLabel: string;
   qty: number;
   unitPriceRial: number;
   lineTotalRial: number;
@@ -171,27 +178,64 @@ export interface OrderItemDto {
 
 export interface OrderTimelineDto {
   status: OrderStatus;
-  at: string;
+  actor: "BUYER" | "SELLER" | "ADMIN" | "SYSTEM";
   note: string | null;
+  at: string;
 }
 
+export type DisputeReason = "SPOILED" | "DAMAGED" | "UNDERWEIGHT" | "WRONG_ITEM" | "NOT_DELIVERED" | "OTHER";
+export const DISPUTE_REASON_FA: Record<DisputeReason, string> = {
+  SPOILED: "خراب یا گندیده",
+  DAMAGED: "آسیب‌دیده در ارسال",
+  UNDERWEIGHT: "کم‌وزن",
+  WRONG_ITEM: "اشتباه ارسال شده",
+  NOT_DELIVERED: "نرسیده",
+  OTHER: "سایر",
+};
+
+export interface DisputeDto {
+  id: string;
+  reason: DisputeReason;
+  description: string;
+  requested: "FULL_REFUND" | "PARTIAL_REFUND";
+  requestedRial: number;
+  status: "AWAITING_SELLER" | "AWAITING_STAFF" | "RESOLVED" | "REJECTED";
+  sellerResponse: string | null;
+  sellerOfferRial: number | null;
+  refundRial: number | null;
+  resolutionNote: string | null;
+  openedAt: string;
+  resolvedAt: string | null;
+}
+
+/** One shop's part of a checkout. */
 export interface OrderDto {
   id: string;
+  code: string;
   checkoutId: string;
   buyerId: string;
-  sellerId: string;
-  sellerName: string;
-  cityId: string;
+  shopId: string;
+  shopName: string;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
+  shippingMethod: string | null;
+  address: AddressDto;
+  items: OrderItemDto[];
   itemsTotalRial: number;
   deliveryFeeRial: number;
   totalRial: number;
-  address: AddressDto;
-  items: OrderItemDto[];
-  timeline: OrderTimelineDto[];
-  sellerAcceptDeadline: string | null;
+  /** Nobar's commission on items (shown to the seller) */
+  commissionRial: number | null;
+  refundedRial: number;
+  acceptDeadline: string | null;
+  etaTo: string | null;
+  trackingCode: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  complaintEndsAt: string | null;
   cancelReason: string | null;
+  timeline: OrderTimelineDto[];
+  dispute: DisputeDto | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -203,6 +247,8 @@ export interface CheckoutDto {
   totalRial: number;
   orders: OrderDto[];
   redirectUrl: string | null;
+  /** stock stays reserved until then; unpaid checkouts are cancelled afterwards */
+  expiresAt: string;
   createdAt: string;
 }
 

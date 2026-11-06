@@ -39,6 +39,9 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
 | `JWT_PRIVATE_JWK` | generated in dev | ES256 private key (JSON); required in production |
 | `ACCESS_TTL_SEC` / `REFRESH_TTL_DAYS` | `900` / `30` | |
 | `SMS_PROVIDER` | `console` | `kavenegar` in production (`KAVENEGAR_API_KEY`, `KAVENEGAR_TEMPLATE`) |
+| `API_PUBLIC_URL` | `http://localhost:4000` | used in gateway callbacks |
+| `PAYMENT_PROVIDER` | `fake` | test gateway; refused in production |
+| `ORDER_TIMER_SEC` | `30` | `0` turns the order timers off |
 | `SEED_DEMO` | on outside production | import the demo catalog into an empty database |
 | `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | `pretty` for local reading |
 
@@ -65,6 +68,16 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
   refreshes it after writes; search can move to OpenSearch later behind the same endpoints.
 - **Demo catalog**: with `SEED_DEMO` on (default outside production) an empty database gets the
   `packages/demo` catalog on start.
+- **Checkout and money** (kit docs/02): one payment per checkout, split into one order per shop. Stock is
+  reserved for 10 minutes and sold when the gateway payment is verified; the money sits in escrow. The seller
+  accepts within the shop's SLA (otherwise the order expires and is refunded), ships with a tracking code, the
+  buyer confirms delivery, and after the produce's complaint window the escrow is released to the seller minus
+  commission (most specific rule: shop, category, global). Refunds go to the buyer's wallet. Every movement is a
+  balanced ledger transaction; `test/lifecycle.test.ts` checks that the books balance.
+- **Payment gateway**: `PAYMENT_PROVIDER=fake` serves a test gateway page from the API; a real PSP plugs in
+  behind `PaymentProvider`. Cash on delivery is refused until its rules are decided (docs/domain.md Q7).
+- **Timers**: every `ORDER_TIMER_SEC` the API expires unpaid checkouts and unaccepted orders and settles
+  orders whose complaint window ended.
 - **Events**: `user.registered` and `user.updated` are written to the outbox in the same transaction as the change.
 
 ## Container
