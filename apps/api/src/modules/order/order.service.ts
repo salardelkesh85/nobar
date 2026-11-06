@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { conflict, type Database, type Logger, notFound, type Sql, TOKENS } from "@nobar/common";
-import { type AddressDto, type CheckoutDto, type OrderDto, uuidv7 } from "@nobar/contracts";
+import { type AddressDto, type CheckoutDto, isUuid, type OrderDto, uuidv7 } from "@nobar/contracts";
+import type { ShippingMethodCode } from "@nobar/domain";
 import { CITIES } from "@nobar/contracts/cities";
 import { CartService, type CartGroupView, type CartView } from "../cart/cart.service";
 import { CatalogService } from "../catalog/catalog.service";
@@ -26,7 +27,13 @@ export class OrderService {
   async releaseExpired(): Promise<void> {
     await this.db.tx(async (sql) => {
       await sql.query("update ordering.stock_reservations set released_at = now() where released_at is null and expires_at <= now()", []);
-      await sql.query("update ordering.checkouts set status = 'FAILED', updated_at = now() where status = 'PENDING_PAYMENT' and expires_at <= now()", []);
+      const expired = await sql.query<{ id: string }>(
+        "update ordering.checkouts set status = 'FAILED', updated_at = now() where status = 'PENDING_PAYMENT' and expires_at <= now() returning id",
+        [],
+      );
+      if (expired.length) {
+        await sql.query("update ordering.orders set status = 'CANCELLED', updated_at = now() where checkout_id = any($1::uuid[]) and status = 'PENDING_PAYMENT'", [expired.map((c) => c.id)]);
+      }
     });
   }
 
@@ -34,11 +41,22 @@ export class OrderService {
     return pkg.netGrams ?? pkg.units ?? 1;
   }
 
-  private async reserveGroup(sql: Sql, checkoutId: string, userId: string, address: AddressDto, paymentMethod: "GATEWAY" | "COD", group: CartGroupView, expiresAt: string): Promise<StoredOrder> {
+  private async reserveGroup(
+    sql: Sql,
+    checkoutId: string,
+    userId: string,
+    address: AddressDto,
+    paymentMethod: "GATEWAY" | "COD",
+    group: CartGroupView,
+    expiresAt: string,
+    method: ShippingMethodCode | undefined,
+  ): Promise<StoredOrder> {
     const orderId = uuidv7();
     const createdAt = isoNow();
-    const delivery = group.options[0];
-    if (!delivery) throw conflict("CART_NOT_DELIVERABLE", "یکی از غرفه‌ها برای این شهر قابل ارسال نیست");
+    if (!group.options.length) throw conflict("CART_NOT_DELIVERABLE", "یکی از غرفه‌ها برای این شهر قابل ارسال نیست");
+    // the buyer picks a method per shop on the checkout page; without a choice the cheapest one is used
+    const delivery = method ? group.options.find((o) => o.method === method) : group.options[0];
+    if (!delivery) throw conflict("SHIPPING_METHOD_UNAVAILABLE", `روش ارسال انتخاب‌شده برای «${group.shop.name}» در دسترس نیست`);
     const market = await this.catalog.market();
     const items = group.lines.map((line) => ({
       productId: line.listing.id,
@@ -56,13 +74,13 @@ export class OrderService {
     );
     for (const line of group.lines) {
       const requiredBase = this.baseUnits(line.pkg) * line.qty;
-      const [listing] = await sql.query<{ stock_base: number; status: string }>("select stock_base, status from catalog.listings where id = $1 for update", [line.listing.id]);
+      const listing = await this.catalog.lockStock(sql, line.listing.id);
       if (!listing || listing.status !== "PUBLISHED") throw conflict("OUT_OF_STOCK", "یکی از محصولات دیگر موجود نیست");
       const [reserved] = await sql.query<{ quantity: number }>(
         "select coalesce(sum(quantity_base), 0)::int as quantity from ordering.stock_reservations where listing_id = $1 and released_at is null and expires_at > now()",
         [line.listing.id],
       );
-      if (Number(listing.stock_base) - Number(reserved?.quantity ?? 0) < requiredBase) throw conflict("INSUFFICIENT_STOCK", `موجودی «${line.listing.title}» برای این تعداد کافی نیست`);
+      if (listing.stockBase - Number(reserved?.quantity ?? 0) < requiredBase) throw conflict("INSUFFICIENT_STOCK", `موجودی «${line.listing.title}» برای این تعداد کافی نیست`);
       await sql.query(
         "insert into ordering.stock_reservations (id, checkout_id, listing_id, package_id, quantity_base, qty_packages, expires_at) values ($1, $2, $3, $4, $5, $6, $7)",
         [uuidv7(), checkoutId, line.listing.id, line.pkg.id, requiredBase, line.qty, expiresAt],
@@ -94,7 +112,7 @@ export class OrderService {
     };
   }
 
-  async create(userId: string, addressId: string, paymentMethod: "GATEWAY" | "COD"): Promise<CheckoutResponse> {
+  async create(userId: string, addressId: string, paymentMethod: "GATEWAY" | "COD", shipping: Record<string, ShippingMethodCode> = {}): Promise<CheckoutResponse> {
     await this.releaseExpired();
     const address = await this.users.address(userId, addressId);
     const city = CITIES.find((item) => item.id === address.cityId);
@@ -112,7 +130,7 @@ export class OrderService {
          values ($1, $2, $3, 'PENDING_PAYMENT', $4, 0, $5)`,
         [checkoutId, userId, paymentMethod, JSON.stringify(address), expiresAt],
       );
-      for (const group of cart.groups) orders.push(await this.reserveGroup(sql, checkoutId, userId, address, paymentMethod, group, expiresAt));
+      for (const group of cart.groups) orders.push(await this.reserveGroup(sql, checkoutId, userId, address, paymentMethod, group, expiresAt, shipping[group.shop.id]));
       const totalRial = orders.reduce((sum, order) => sum + order.totalRial, 0);
       const result: CheckoutResponse = { id: checkoutId, status: "PENDING_PAYMENT", paymentMethod, totalRial, orders, redirectUrl: null, createdAt };
       await sql.query("update ordering.checkouts set total_rial = $2, response = $3, updated_at = now() where id = $1", [checkoutId, totalRial, JSON.stringify(result)]);
@@ -125,9 +143,13 @@ export class OrderService {
   }
 
   async get(userId: string, id: string): Promise<CheckoutResponse> {
+    if (!isUuid(id)) throw notFound("پرداخت");
     await this.releaseExpired();
     const [row] = await this.db.query<{ status: CheckoutResponse["status"]; response: CheckoutResponse | null }>("select status, response from ordering.checkouts where id = $1 and user_id = $2", [id, userId]);
-    if (!row?.response) throw notFound("checkout");
-    return { ...row.response, status: row.status };
+    if (!row?.response) throw notFound("پرداخت");
+    const statuses = new Map(
+      (await this.db.query<{ id: string; status: StoredOrder["status"] }>("select id, status from ordering.orders where checkout_id = $1", [id])).map((o) => [o.id, o.status]),
+    );
+    return { ...row.response, status: row.status, orders: row.response.orders.map((o) => ({ ...o, status: statuses.get(o.id) ?? o.status })) };
   }
 }

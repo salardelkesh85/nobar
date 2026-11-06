@@ -120,7 +120,13 @@ export const CheckoutSchema = z.object({
   address: z.object({ cityId: CityIdSchema, text: z.string().trim().min(5).max(300), label: z.string().trim().max(40).optional() }),
   paymentMethod: z.enum(["GATEWAY", "COD"]),
 });
-export const CheckoutCreateSchema = z.object({ addressId: z.string().uuid("شناسهٔ آدرس معتبر نیست"), paymentMethod: z.enum(["GATEWAY", "COD"]) });
+export const ShippingMethodSchema = z.enum(["SELLER_LOCAL", "POST", "TIPAX", "FREIGHT"]);
+export const CheckoutCreateSchema = z.object({
+  addressId: z.string().uuid("شناسهٔ آدرس معتبر نیست"),
+  paymentMethod: z.enum(["GATEWAY", "COD"]),
+  /** shipping method chosen per shop id; shops left out get their cheapest method */
+  shipping: z.record(z.string().min(1).max(100), ShippingMethodSchema).default({}),
+});
 
 export const ReasonSchema = z.object({ reason: z.string().trim().min(2).max(300) });
 export const OptionalReasonSchema = z.object({ reason: z.string().trim().max(300).optional() });

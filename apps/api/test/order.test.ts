@@ -116,4 +116,45 @@ describe("transactional checkout reservations", () => {
     expect(loaded.body.status).toBe("FAILED");
     expect((await api.deps.db.query<{ n: number }>("select count(*)::int as n from ordering.stock_reservations where checkout_id = $1 and released_at is not null", [created.body.id]))[0]!.n).toBe(1);
   });
+  it("charges the shipping method the buyer chose for each shop", async () => {
+    const options = demo.quoteDelivery(listing, "tehran", pkg.netGrams, pkg.priceRial).options;
+    expect(options.length).toBeGreaterThan(1);
+    const pricier = options[options.length - 1]!;
+    const session = await signIn();
+    const addressId = await address(session.cookie);
+    await add(session.cookie, "checkout-method-cart");
+    const created = await call("POST", "/v1/checkouts", { addressId, paymentMethod: "GATEWAY", shipping: { [listing.shopId]: pricier.method } }, session.cookie, { "idempotency-key": "checkout-method-0001" });
+    expect(created.status).toBe(201);
+    expect(created.body.orders[0].deliveryFeeRial).toBe(pricier.costRial);
+  });
+
+  it("refuses a shipping method the shop cannot use for this city", async () => {
+    const session = await signIn();
+    const addressId = await address(session.cookie);
+    await add(session.cookie, "checkout-bad-method-cart");
+    const created = await call("POST", "/v1/checkouts", { addressId, paymentMethod: "GATEWAY", shipping: { [listing.shopId]: "SELLER_LOCAL" } }, session.cookie, { "idempotency-key": "checkout-bad-method" });
+    expect(created.status).toBe(409);
+    expect(created.body.code).toBe("SHIPPING_METHOD_UNAVAILABLE");
+  });
+
+  it("cancels the shop orders of an expired checkout", async () => {
+    const session = await signIn();
+    const addressId = await address(session.cookie);
+    await add(session.cookie, "checkout-expire-orders-cart");
+    const created = await call("POST", "/v1/checkouts", { addressId, paymentMethod: "GATEWAY" }, session.cookie, { "idempotency-key": "checkout-expire-orders" });
+    await api.deps.db.query("update ordering.checkouts set expires_at = now() - interval '1 second' where id = $1", [created.body.id]);
+    const loaded = await call("GET", `/v1/checkouts/${created.body.id}`, undefined, session.cookie);
+    expect(loaded.body.status).toBe("FAILED");
+    expect(loaded.body.orders.map((o: { status: string }) => o.status)).toEqual(["CANCELLED"]);
+  });
+
+  it("answers 404 for unknown or foreign checkouts", async () => {
+    const a = await signIn();
+    const b = await signIn();
+    const addressId = await address(a.cookie);
+    await add(a.cookie, "checkout-foreign-cart");
+    const created = await call("POST", "/v1/checkouts", { addressId, paymentMethod: "GATEWAY" }, a.cookie, { "idempotency-key": "checkout-foreign-0001" });
+    expect((await call("GET", `/v1/checkouts/${created.body.id}`, undefined, b.cookie)).status).toBe(404);
+    expect((await call("GET", "/v1/checkouts/not-a-uuid", undefined, a.cookie)).status).toBe(404);
+  });
 });

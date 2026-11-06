@@ -10,7 +10,7 @@ export class OrderController {
 
   @Post()
   async create(@CurrentUser() user: AuthUser, @Headers("idempotency-key") key: string | undefined, @Body(new ZodPipe(CheckoutCreateSchema)) body: z.infer<typeof CheckoutCreateSchema>) {
-    const result = await idempotent(this.db, `checkout:create:${user.id}`, key, body, () => this.orders.create(user.id, body.addressId, body.paymentMethod));
+    const result = await idempotent(this.db, `checkout:create:${user.id}`, key, body, () => this.orders.create(user.id, body.addressId, body.paymentMethod, body.shipping));
     return result.body;
   }
 

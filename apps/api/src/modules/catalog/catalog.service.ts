@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { type Database, type Logger, notFound, TOKENS } from "@nobar/common";
+import { type Database, type Logger, notFound, type Sql, TOKENS } from "@nobar/common";
 import {
   createMarket,
   type Excluded,
@@ -61,6 +61,24 @@ export class CatalogService {
 
   invalidate(): void {
     this.snapshot = undefined;
+  }
+
+  // ---------- stock (owned by catalog; other modules pass in their transaction and call
+  // invalidate() after it commits, so the snapshot is never reloaded from uncommitted state)
+
+  /** Live stock of a listing, row-locked until the caller's transaction ends. */
+  lockStock(sql: Sql, listingId: string) {
+    return this.repo.lockStock(sql, listingId);
+  }
+
+  /** Sold: subtract from stock. Returns false when stock is no longer there. */
+  takeStock(sql: Sql, listingId: string, base: number): Promise<boolean> {
+    return this.repo.takeStock(sql, listingId, base);
+  }
+
+  /** Cancelled after payment (refund): put the quantity back. */
+  returnStock(sql: Sql, listingId: string, base: number): Promise<void> {
+    return this.repo.returnStock(sql, listingId, base);
   }
 
   async market(): Promise<Market> {

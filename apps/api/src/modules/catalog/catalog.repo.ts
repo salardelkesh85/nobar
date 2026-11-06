@@ -1,4 +1,4 @@
-import { type Database, iso, isoOrNull } from "@nobar/common";
+import { type Database, iso, isoOrNull, type Sql } from "@nobar/common";
 import type { Category, Listing, MarketData, ProduceType, Shop } from "@nobar/domain";
 
 interface CategoryRow {
@@ -157,6 +157,22 @@ export class CatalogRepo {
       shops: shops.map(toShop),
       listings: listings.map(toListing),
     };
+  }
+
+  /** Row-locks a listing inside the caller's transaction so concurrent checkouts see stock one at a time. */
+  async lockStock(sql: Sql, listingId: string): Promise<{ stockBase: number; status: Listing["status"] } | null> {
+    const [row] = await sql.query<{ stock_base: number; status: Listing["status"] }>("select stock_base, status from catalog.listings where id = $1 for update", [listingId]);
+    return row ? { stockBase: Number(row.stock_base), status: row.status } : null;
+  }
+
+  /** Removes sold quantity from stock; refuses to go below zero. */
+  async takeStock(sql: Sql, listingId: string, base: number): Promise<boolean> {
+    const rows = await sql.query("update catalog.listings set stock_base = stock_base - $2, updated_at = now() where id = $1 and stock_base >= $2 returning id", [listingId, base]);
+    return rows.length === 1;
+  }
+
+  async returnStock(sql: Sql, listingId: string, base: number): Promise<void> {
+    await sql.query("update catalog.listings set stock_base = stock_base + $2, updated_at = now() where id = $1", [listingId, base]);
   }
 
   async isEmpty(): Promise<boolean> {
