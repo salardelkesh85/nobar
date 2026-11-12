@@ -105,3 +105,4 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 | P3 catalog and shops | Done | Shared rules; catalog API; seller onboarding with encrypted KYC, listings, moderation, audit log |
 | Reviews, questions, notifications | Done | Reviews after delivery with staff approval; Q&A; in-app + SMS notices from order events |
 | Cart, checkout and escrow | Done | One payment per cart (as built by the owner); reservations, test gateway, ledger, shop-order lifecycle, disputes, payouts |
+| Staff tools and beta gate test | Done | Staff shop list and produce-type numbers (audited); end-to-end buying test over HTTP; CI workflow for typecheck and tests |
