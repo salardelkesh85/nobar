@@ -12,12 +12,13 @@ This file distinguishes the published static demo from a release that can accept
 | Product/shop/produce/origin detail | API-connected | Detail data, destination-aware delivery and related catalog results come from the API in API mode. Loading, retry and failure states are explicit; failures do not fall back to demo catalog data. Reviews remain demo-only and are hidden in API mode. |
 | Cart | API-connected | Authenticated server cart supports add/set/remove/clear, groups by seller, revalidates catalog price/stock/freshness/delivery on every read, and requires idempotency keys for additive writes. |
 | Checkout/order | API-connected | `POST /v1/checkouts` snapshots the address and prices, reserves stock transactionally per seller, creates pending orders, clears the cart only after commit, and safely replays idempotent requests. Expired reservations are released. |
-| Payment and escrow | API-connected | `POST /v1/checkouts/{id}/pay` opens a payment on the test gateway; the callback is verified server-side and booked once into escrow (double-entry ledger). Failure, expiry and late payments release stock or credit the buyer's wallet. A real gateway (ZarinPal) adapter is still pending. |
+| Payment and escrow | API-connected | `POST /v1/checkouts/{id}/pay` opens a payment on the test gateway; the callback is verified server-side and booked once into escrow (double-entry ledger). Failure, expiry and late payments release stock or credit the buyer's wallet. The ZarinPal adapter (`PAYMENT_PROVIDER=zarinpal`) is tested against a stand-in server; a run against the real sandbox with the merchant ID is still to do. |
 | Order lifecycle | API-connected | Seller accept/reject/ship, buyer delivery confirmation, complaint window, disputes with partial refunds, automatic timeouts, settlement and payouts. |
 | Seller panel | API-connected | Onboarding with encrypted KYC, listings, stock/prices, orders, balance, reviews and questions use authenticated endpoints. |
 | Reviews, questions, notifications | API-connected | Verified reviews after delivery with staff approval, product Q&A, in-app and SMS notices from order events. |
 | Admin panel | API-connected | With `NEXT_PUBLIC_API_URL` set, staff sign in by phone code (ADMIN role only) and work on real data: KYC queue, shop list with suspend/reinstate, listing and review moderation, dispute rulings, orders, payouts, commission rates, produce-type numbers and the audit log. Without it the panel keeps the demo data (GitHub Pages). |
-| Backend hosting | Not configured | GitHub Pages only hosts static frontends. A database-backed API, secrets, SMS provider and approved CORS origin need a separate environment. |
+| SMS | Adapter ready | Melipayamak (`SMS_PROVIDER=melipayamak`) for sign-in codes and order notices, tested against a stand-in server; a real send with the panel credentials is still to do. |
+| Backend hosting | Manifests ready, not deployed | Kubernetes per the brief: Helm chart, CloudNativePG database with nightly backups, Argo CD apps for staging and production, CI image build with a Trivy scan. See [deployment.md](deployment.md). No cluster has been provisioned yet. |
 
 ## Gate for the first real beta
 
@@ -34,5 +35,5 @@ Until these gates pass, call the public site a demo, not a production marketplac
 
 ## Next implementation order
 
-1. Deployment: hosted API + PostgreSQL, secrets, backups, monitoring (gate 6); real SMS and payment gateway adapters once the providers are chosen.
+1. Provision the cluster and follow [deployment.md](deployment.md) (gate 6); try ZarinPal's sandbox and one real Melipayamak message with the owner's credentials.
 2. AI features (Phase 3): assistant, hybrid search, smart compare.

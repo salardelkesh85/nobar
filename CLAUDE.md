@@ -58,6 +58,7 @@ seller copilot.
 - docs/domain.md — bounded contexts, entities, state machines, glossary, open business questions
 - docs/adr/ — Architecture Decision Records (check before changing a core choice)
 - docs/roadmap.md — phases, exit criteria, progress
+- docs/deployment.md — images, Helm chart, database, Argo CD, secrets, release steps
 
 ## Local environment constraint
 - The primary dev machine is Windows 10 with ~8 GB RAM. Local dev must stay lean:

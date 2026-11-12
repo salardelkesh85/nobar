@@ -1,0 +1,21 @@
+# Production overrides: replace the example domains before the first sync.
+# image:
+#   tag: <commit sha that passed staging>
+#   pullPolicy: IfNotPresent
+replicaCount: 3
+config:
+  API_PUBLIC_URL: https://api.nobar.example
+  WEB_URL: https://nobar.example
+  CORS_ORIGINS: https://nobar.example,https://seller.nobar.example,https://admin.nobar.example
+ingress:
+  host: api.nobar.example
+resources:
+  requests: { cpu: 250m, memory: 384Mi }
+  limits: { memory: 768Mi }
+autoscaling:
+  minReplicas: 3
+  maxReplicas: 10
+podDisruptionBudget:
+  minAvailable: 2
+serviceMonitor:
+  enabled: true
