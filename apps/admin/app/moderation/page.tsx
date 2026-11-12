@@ -2,14 +2,20 @@
 
 import { MODERATION_QUEUE } from "@nobar/demo";
 import { Badge, Button, Card, RelativeDay } from "@nobar/ui";
+import { ApiModeration } from "@/components/api-pages";
 import { useDecisions } from "@/components/decisions";
 import { useToast } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 const SUBJECT_FA = { LISTING: "آگهی", REVIEW: "نظر", SHOP: "غرفه" } as const;
 type D = "APPROVED" | "REJECTED" | "NEEDS_CHANGES";
 const D_FA: Record<D, string> = { APPROVED: "تأیید شد", REJECTED: "رد شد", NEEDS_CHANGES: "برای اصلاح برگشت" };
 
 export default function ModerationPage() {
+  return API_URL ? <ApiModeration /> : <DemoModerationPage />;
+}
+
+function DemoModerationPage() {
   const [decisions, decide] = useDecisions<D>("admin_moderation");
   const toast = useToast();
   return (

@@ -1,11 +1,14 @@
 import { AUDIT_LOG } from "@nobar/demo";
 import { JalaliDate } from "@nobar/ui";
 import type { Metadata } from "next";
+import { ApiAudit } from "@/components/api-pages";
 import { Table } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 export const metadata: Metadata = { title: "گزارش ممیزی" };
 
 export default function AuditPage() {
+  if (API_URL) return <ApiAudit />;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-black">گزارش ممیزی</h1>

@@ -16,7 +16,7 @@ This file distinguishes the published static demo from a release that can accept
 | Order lifecycle | API-connected | Seller accept/reject/ship, buyer delivery confirmation, complaint window, disputes with partial refunds, automatic timeouts, settlement and payouts. |
 | Seller panel | API-connected | Onboarding with encrypted KYC, listings, stock/prices, orders, balance, reviews and questions use authenticated endpoints. |
 | Reviews, questions, notifications | API-connected | Verified reviews after delivery with staff approval, product Q&A, in-app and SMS notices from order events. |
-| Admin API | API ready, UI demo only | KYC queue, shop list/approve/reject/suspend, listing moderation, produce-type numbers, orders, disputes, finance, payouts, commission rules, review moderation and audit log exist under `/v1/admin/*`. The admin frontend still shows demo data. |
+| Admin panel | API-connected | With `NEXT_PUBLIC_API_URL` set, staff sign in by phone code (ADMIN role only) and work on real data: KYC queue, shop list with suspend/reinstate, listing and review moderation, dispute rulings, orders, payouts, commission rates, produce-type numbers and the audit log. Without it the panel keeps the demo data (GitHub Pages). |
 | Backend hosting | Not configured | GitHub Pages only hosts static frontends. A database-backed API, secrets, SMS provider and approved CORS origin need a separate environment. |
 
 ## Gate for the first real beta
@@ -34,6 +34,5 @@ Until these gates pass, call the public site a demo, not a production marketplac
 
 ## Next implementation order
 
-1. Connect the admin frontend to `/v1/admin/*`.
-2. Deployment: hosted API + PostgreSQL, secrets, backups, monitoring (gate 6); real SMS and payment gateway adapters once the providers are chosen.
-3. AI features (Phase 3): assistant, hybrid search, smart compare.
+1. Deployment: hosted API + PostgreSQL, secrets, backups, monitoring (gate 6); real SMS and payment gateway adapters once the providers are chosen.
+2. AI features (Phase 3): assistant, hybrid search, smart compare.

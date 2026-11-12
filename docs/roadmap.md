@@ -106,3 +106,4 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 | Reviews, questions, notifications | Done | Reviews after delivery with staff approval; Q&A; in-app + SMS notices from order events |
 | Cart, checkout and escrow | Done | One payment per cart (as built by the owner); reservations, test gateway, ledger, shop-order lifecycle, disputes, payouts |
 | Staff tools and beta gate test | Done | Staff shop list and produce-type numbers (audited); end-to-end buying test over HTTP; CI workflow for typecheck and tests |
+| Admin panel on the API | Done | Staff sign-in and every admin page on `/v1/admin/*`; payout overview endpoint; checked in the browser against a local API |

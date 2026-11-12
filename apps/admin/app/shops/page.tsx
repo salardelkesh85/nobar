@@ -2,11 +2,14 @@ import { cityName, LISTINGS, provinceOfCity, SHOP_TYPE_FA, SHOPS } from "@nobar/
 import { formatFaNumber } from "@nobar/fa";
 import { Badge, RatingStars } from "@nobar/ui";
 import type { Metadata } from "next";
+import { ApiShops } from "@/components/api-pages";
 import { Table } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 export const metadata: Metadata = { title: "غرفه‌ها" };
 
 export default function ShopsPage() {
+  if (API_URL) return <ApiShops />;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-black">غرفه‌ها</h1>

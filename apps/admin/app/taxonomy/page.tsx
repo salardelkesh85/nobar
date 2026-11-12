@@ -2,12 +2,15 @@ import { categoryById, JALALI_MONTHS, PRODUCE_TYPES } from "@nobar/demo";
 import { formatFaNumber } from "@nobar/fa";
 import { Badge } from "@nobar/ui";
 import type { Metadata } from "next";
+import { ApiTaxonomy } from "@/components/api-pages";
 import { Table } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 export const metadata: Metadata = { title: "انواع محصول و فصل" };
 const STORAGE_FA = { AMBIENT: "دمای اتاق", COOL: "خنک", COLD: "زنجیره‌ی سرد" } as const;
 
 export default function TaxonomyPage() {
+  if (API_URL) return <ApiTaxonomy />;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-black">انواع محصول و فصل</h1>
