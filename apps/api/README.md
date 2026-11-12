@@ -13,7 +13,7 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 | notification: in-app notices and SMS for order events (from the event bus) | `notification` | done |
 | cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done |
 | order: checkout, expiring reservations, per-shop orders, lifecycle, disputes | `ordering` | done |
-| payment: test gateway, double-entry ledger (escrow, wallets, seller balances), commission, payouts | `payment` | done |
+| payment: test gateway and ZarinPal, double-entry ledger (escrow, wallets, seller balances), commission, payouts | `payment` | done |
 
 A module touches only its own schema; other modules use its exported service or its events.
 
@@ -42,9 +42,9 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
 | `ADMIN_PHONES` | — | phones that get the ADMIN role |
 | `JWT_PRIVATE_JWK` | generated in dev | ES256 private key (JSON); required in production |
 | `ACCESS_TTL_SEC` / `REFRESH_TTL_DAYS` | `900` / `30` | |
-| `SMS_PROVIDER` | `console` | `kavenegar` in production (`KAVENEGAR_API_KEY`, `KAVENEGAR_TEMPLATE`) |
+| `SMS_PROVIDER` | `console` | `melipayamak` in production (`MELIPAYAMAK_USERNAME`, `MELIPAYAMAK_PASSWORD`, `MELIPAYAMAK_FROM`; `MELIPAYAMAK_OTP_BODY_ID` sends sign-in codes through an approved pattern). `kavenegar` is also available |
 | `API_PUBLIC_URL` | `http://localhost:4000` | used in gateway callbacks |
-| `PAYMENT_PROVIDER` | `fake` | test gateway; refused in production |
+| `PAYMENT_PROVIDER` | `fake` | `fake` is the test gateway (refused in production); `zarinpal` needs `ZARINPAL_MERCHANT_ID` (`ZARINPAL_SANDBOX=true` for the sandbox). Another gateway is one more class in `modules/payment/provider.ts` |
 | `ORDER_TIMER_SEC` | `30` | `0` turns the order timers off |
 | `KYC_KEY` | dev key | 32 bytes, base64; required in production |
 | `SEED_DEMO` | on outside production | import the demo catalog into an empty database |
