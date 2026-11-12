@@ -188,6 +188,22 @@ export class PaymentService {
 
   // ---------- payouts
 
+  /** Staff view: what each shop is owed now, and the payouts already made. */
+  async payoutOverview() {
+    const pending = await this.db.query<{ account: string; balance: number }>(
+      `select account, sum(case when direction = 'C' then amount_rial else -amount_rial end)::bigint as balance
+       from payment.ledger_entries where account like 'seller:%' group by account
+       having sum(case when direction = 'C' then amount_rial else -amount_rial end) > 0 order by account`,
+    );
+    const history = await this.db.query<{ id: string; shop_id: string; amount_rial: number; status: string; created_at: Date; paid_at: Date | null }>(
+      "select id, shop_id, amount_rial, status, created_at, paid_at from payment.payouts order by created_at desc, id desc limit 200",
+    );
+    return {
+      pending: pending.map((r) => ({ shopId: r.account.slice("seller:".length), amountRial: Number(r.balance) })),
+      history: history.map((p) => ({ id: p.id, shopId: p.shop_id, amountRial: Number(p.amount_rial), status: p.status, createdAt: iso(p.created_at), paidAt: p.paid_at ? iso(p.paid_at) : null })),
+    };
+  }
+
   /** Pays every positive seller balance in one batch (bank transfer itself is outside the system for now). */
   async runPayouts(adminId: string): Promise<Array<{ id: string; shopId: string; amountRial: number }>> {
     return this.db.tx(async (sql) => {

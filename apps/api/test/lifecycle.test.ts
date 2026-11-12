@@ -208,9 +208,15 @@ describe("money stays consistent", () => {
   it("pays out seller balances and keeps the books balanced", async () => {
     const sellerBalance = await balance(`seller:${listing.shopId}`);
     expect(sellerBalance).toBeGreaterThan(0);
+    expect((await call("GET", "/v1/admin/payouts", undefined, seller.cookie)).status).toBe(403);
+    const due = (await call("GET", "/v1/admin/payouts", undefined, admin.cookie)).body;
+    expect(due.pending.find((p: { shopId: string }) => p.shopId === listing.shopId).amountRial).toBe(sellerBalance);
     const run = await call("POST", "/v1/admin/payouts", undefined, admin.cookie, { "idempotency-key": key() });
     expect(run.body.find((p: { shopId: string }) => p.shopId === listing.shopId).amountRial).toBe(sellerBalance);
     expect(await balance(`seller:${listing.shopId}`)).toBe(0);
+    const after = (await call("GET", "/v1/admin/payouts", undefined, admin.cookie)).body;
+    expect(after.pending).toEqual([]);
+    expect(after.history[0]).toMatchObject({ shopId: listing.shopId, amountRial: sellerBalance, status: "PAID" });
     expect((await call("GET", "/v1/seller/balance", undefined, seller.cookie)).body[0].payouts[0].amountRial).toBe(sellerBalance);
 
     const t = (await call("GET", "/v1/admin/finance", undefined, admin.cookie)).body;

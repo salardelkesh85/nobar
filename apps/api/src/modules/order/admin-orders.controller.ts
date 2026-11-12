@@ -45,6 +45,11 @@ export class AdminOrdersController {
     return this.payments.totals();
   }
 
+  @Get("payouts")
+  payoutOverview() {
+    return this.payments.payoutOverview();
+  }
+
   @Post("payouts")
   async payouts(@CurrentUser() user: AuthUser, @Headers("idempotency-key") key: string | undefined) {
     return (await idempotent(this.db, `payouts:${user.id}`, key, {}, () => this.payments.runPayouts(user.id))).body;

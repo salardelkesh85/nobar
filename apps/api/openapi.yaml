@@ -533,6 +533,10 @@ paths:
       description: "ADMIN role."
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/payouts:
+    get:
+      summary: "Seller balances waiting for payout, and past payouts"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
     post:
       summary: "Pay out every positive seller balance"
       description: "ADMIN role. Requires Idempotency-Key."
