@@ -442,6 +442,32 @@ paths:
       summary: "Shops waiting for approval (KYC masked)"
       description: "ADMIN role."
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/shops:
+    get:
+      summary: "Every shop with its status, review note and listing counts"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/produce-types/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    patch:
+      summary: "Edit the freshness, season and complaint-window numbers of a produce type"
+      description: "ADMIN role. Audited with the old and new values; `needsReview: false` confirms the numbers. Read them from `GET /v1/catalog/produce-types`."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                shelfLifeDays: { type: integer, minimum: 1, maximum: 365 }
+                minShelfDaysOnArrival: { type: integer, minimum: 0 }
+                complaintWindowHours: { type: integer, minimum: 1, maximum: 720 }
+                storage: { type: string, enum: [AMBIENT, COOL, COLD] }
+                months: { type: array, items: { type: integer, minimum: 1, maximum: 12 } }
+                peakMonths: { type: array, items: { type: integer, minimum: 1, maximum: 12 } }
+                needsReview: { type: boolean }
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/shops/{id}/approve:
     parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
     post:

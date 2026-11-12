@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post } from "@nestjs/common";
 import { type AuthUser, CurrentUser, Roles, ZodPipe } from "@nobar/common";
-import { ListingCreateSchema, ListingUpdateSchema, PriceUpdateSchema, ReasonSchema, ShopApplySchema, ShopUpdateSchema, StockUpdateSchema } from "@nobar/contracts";
+import { ListingCreateSchema, ListingUpdateSchema, PriceUpdateSchema, ProduceTypeUpdateSchema, ReasonSchema, ShopApplySchema, ShopUpdateSchema, StockUpdateSchema } from "@nobar/contracts";
 import type { z } from "zod";
 import type { Actor } from "../audit/audit.service";
 import { SellerCatalogService } from "./seller-catalog.service";
@@ -73,6 +73,16 @@ export class AdminCatalogController {
   @Get("kyc")
   kyc() {
     return this.seller.kycQueue();
+  }
+
+  @Get("shops")
+  shops() {
+    return this.seller.shopsForStaff();
+  }
+
+  @Patch("produce-types/:id")
+  produceType(@CurrentUser() user: AuthUser, @Param("id") id: string, @Body(new ZodPipe(ProduceTypeUpdateSchema)) body: z.infer<typeof ProduceTypeUpdateSchema>) {
+    return this.seller.updateProduceType(staff(user), id, body);
   }
 
   @Post("shops/:id/approve")

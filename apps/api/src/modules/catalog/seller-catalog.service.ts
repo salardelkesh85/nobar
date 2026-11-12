@@ -9,6 +9,27 @@ import { toListing, toShop, type ListingRow, type ShopRow } from "./catalog.repo
 import { CatalogService } from "./catalog.service";
 import { KYC_VAULT, type KycVault } from "./kyc";
 
+export interface ProduceTypePatch {
+  shelfLifeDays?: number;
+  minShelfDaysOnArrival?: number;
+  complaintWindowHours?: number;
+  storage?: "AMBIENT" | "COOL" | "COLD";
+  months?: number[];
+  peakMonths?: number[];
+  needsReview?: boolean;
+}
+interface TypeNumbers {
+  name: string;
+  shelf_life_days: number;
+  min_shelf_days_on_arrival: number;
+  complaint_window_hours: number;
+  storage: "AMBIENT" | "COOL" | "COLD";
+  months: number[];
+  peak_months: number[];
+  needs_review: boolean;
+}
+const sortedMonths = (months: number[]): number[] => [...new Set(months)].sort((a, b) => a - b);
+
 /** kit moderation rule (packages/demo MODERATION_QUEUE): a price moving more than 30% in one go is reviewed */
 const PRICE_JUMP = 0.3;
 
@@ -349,6 +370,57 @@ export class SellerCatalogService {
       shebaLast4: r.sheba_last4,
       submittedAt: r.submitted_at ? iso(r.submitted_at) : null,
     }));
+  }
+
+  /** Every shop with what staff need to decide on it (the public list shows only active ones). */
+  async shopsForStaff() {
+    const rows = await this.db.query<ShopRow & { review_note: string | null; listings: number; published: number }>(
+      `select s.*, (select count(*) from catalog.listings l where l.shop_id = s.id)::int as listings,
+              (select count(*) from catalog.listings l where l.shop_id = s.id and l.status = 'PUBLISHED')::int as published
+       from catalog.shops s order by s.created_at desc, s.position, s.id`,
+    );
+    return rows.map((r) => ({ shop: toShop(r), reviewNote: r.review_note, listings: r.listings, publishedListings: r.published }));
+  }
+
+  /**
+   * The numbers behind the freshness meter and smart delivery. They change what buyers are offered at once,
+   * so every change is audited with the values it replaced.
+   */
+  async updateProduceType(actor: Actor, id: string, patch: ProduceTypePatch) {
+    return this.tx(async (sql) => {
+      const [t] = await sql.query<TypeNumbers>(
+        "select name, shelf_life_days, min_shelf_days_on_arrival, complaint_window_hours, storage, months, peak_months, needs_review from catalog.produce_types where id = $1 for update",
+        [id],
+      );
+      if (!t) throw notFound("نوع محصول");
+      const next = {
+        shelfLifeDays: patch.shelfLifeDays ?? t.shelf_life_days,
+        minShelfDaysOnArrival: patch.minShelfDaysOnArrival ?? t.min_shelf_days_on_arrival,
+        complaintWindowHours: patch.complaintWindowHours ?? t.complaint_window_hours,
+        storage: patch.storage ?? t.storage,
+        months: sortedMonths(patch.months ?? t.months),
+        peakMonths: sortedMonths(patch.peakMonths ?? t.peak_months),
+        needsReview: patch.needsReview ?? t.needs_review,
+      };
+      if (next.minShelfDaysOnArrival >= next.shelfLifeDays) throw unprocessable("SHELF_LIFE", "حداقل تازگی هنگام رسیدن باید کمتر از عمر تازگی باشد");
+      if (next.peakMonths.some((m) => !next.months.includes(m))) throw unprocessable("PEAK_MONTHS", "ماه‌های اوج باید از ماه‌های فصل باشد");
+      await sql.query(
+        `update catalog.produce_types set shelf_life_days = $2, min_shelf_days_on_arrival = $3, complaint_window_hours = $4, storage = $5,
+           months = $6, peak_months = $7, needs_review = $8 where id = $1`,
+        [id, next.shelfLifeDays, next.minShelfDaysOnArrival, next.complaintWindowHours, next.storage, next.months, next.peakMonths, next.needsReview],
+      );
+      const changes = [
+        t.shelf_life_days !== next.shelfLifeDays && `عمر تازگی ${t.shelf_life_days}→${next.shelfLifeDays} روز`,
+        t.min_shelf_days_on_arrival !== next.minShelfDaysOnArrival && `حداقل تازگی ${t.min_shelf_days_on_arrival}→${next.minShelfDaysOnArrival} روز`,
+        t.complaint_window_hours !== next.complaintWindowHours && `مهلت شکایت ${t.complaint_window_hours}→${next.complaintWindowHours} ساعت`,
+        t.storage !== next.storage && `نگهداری ${t.storage}→${next.storage}`,
+        t.months.join() !== next.months.join() && "ماه‌های فصل",
+        t.peak_months.join() !== next.peakMonths.join() && "ماه‌های اوج",
+        t.needs_review !== next.needsReview && (next.needsReview ? "نیاز به بازبینی" : "تأیید کارشناس"),
+      ].filter(Boolean);
+      if (changes.length) await this.audit.record(sql, actor, "ویرایش نوع محصول", `${t.name}: ${changes.join("، ")}`);
+      return { id, ...next };
+    });
   }
 
   private async shopForStaff(sql: Sql, shopId: string) {

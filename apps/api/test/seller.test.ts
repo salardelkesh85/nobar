@@ -192,3 +192,32 @@ describe("listings", () => {
     expect((await call("GET", `/v1/shops/${shopId}`)).status).toBe(404);
   });
 });
+
+describe("staff tools", () => {
+  it("lists every shop with its status for staff only", async () => {
+    expect((await call("GET", "/v1/admin/shops", undefined, seller.cookie)).status).toBe(403);
+    const shops = (await call("GET", "/v1/admin/shops", undefined, admin.cookie)).body;
+    const mine = shops.find((s: { shop: { id: string } }) => s.shop.id === shopId);
+    expect(mine).toMatchObject({ shop: { status: "SUSPENDED" }, reviewNote: "شکایت‌های مکرر", publishedListings: 1 });
+    expect(shops.some((s: { shop: { status: string } }) => s.shop.status === "ACTIVE")).toBe(true);
+    expect(JSON.stringify(shops)).not.toContain(NATIONAL_ID);
+  });
+
+  it("lets staff correct and confirm a produce type's freshness numbers, with an audit entry", async () => {
+    const before = (await call("GET", "/v1/catalog/produce-types")).body.find((t: { id: string }) => t.id === "apple-red");
+    expect((await call("PATCH", "/v1/admin/produce-types/apple-red", { shelfLifeDays: before.shelfLifeDays + 5 }, seller.cookie)).status).toBe(403);
+    expect((await call("PATCH", "/v1/admin/produce-types/apple-red", {}, admin.cookie)).status).toBe(400);
+    expect((await call("PATCH", "/v1/admin/produce-types/apple-red", { minShelfDaysOnArrival: before.shelfLifeDays }, admin.cookie)).body.code).toBe("SHELF_LIFE");
+    const outside = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].find((m) => !before.months.includes(m));
+    if (outside) expect((await call("PATCH", "/v1/admin/produce-types/apple-red", { peakMonths: [outside] }, admin.cookie)).body.code).toBe("PEAK_MONTHS");
+    expect((await call("PATCH", "/v1/admin/produce-types/nope", { needsReview: false }, admin.cookie)).status).toBe(404);
+
+    const ok = await call("PATCH", "/v1/admin/produce-types/apple-red", { shelfLifeDays: before.shelfLifeDays + 5, needsReview: false }, admin.cookie);
+    expect(ok.status).toBe(200);
+    const after = (await call("GET", "/v1/catalog/produce-types")).body.find((t: { id: string }) => t.id === "apple-red");
+    expect(after).toMatchObject({ shelfLifeDays: before.shelfLifeDays + 5, needsReview: false, months: before.months });
+    const audit = (await call("GET", "/v1/admin/audit", undefined, admin.cookie)).body;
+    expect(audit[0].action).toBe("ویرایش نوع محصول");
+    expect(audit[0].subject).toContain(`${before.shelfLifeDays}→${before.shelfLifeDays + 5}`);
+  });
+});
