@@ -53,7 +53,8 @@ and commission rates and no shops; sellers apply at `/seller/`.
 2. Sign in to the store with a real phone: the SMS arrives.
 3. Approve a test shop and listing in the admin panel; the listing appears in search and has its own page.
 4. Pay a small order through ZarinPal; it appears under orders in the admin panel and the seller gets an SMS.
-5. `ls backups/` — a dump is written at start and then every day. Copy dumps off the server regularly.
+5. `ls backups/` — a dump is written once the database schema exists, then every day. Copy dumps off the server
+   regularly. CI restores a fresh dump into an empty database on every run.
 
 The same flow, automated against stand-ins for ZarinPal and Melipayamak, runs in CI: `ci/smoke.mjs`.
 
@@ -63,7 +64,8 @@ The same flow, automated against stand-ins for ZarinPal and Melipayamak, runs in
 |---|---|
 | Logs | `docker compose logs -f api` |
 | Update to a new version | `git pull`, then `docker compose up -d --build` (migrations run on start) |
-| Restore a backup | `gunzip -c backups/nobar-<time>.sql.gz \| docker compose exec -T db psql -U nobar -d nobar` (into an empty database) |
+| Back up now (e.g. before an update) | `docker compose exec backup sh /backup.sh once` |
+| Restore a backup | stop the API (`docker compose stop api web`), recreate the database (`docker compose exec db dropdb -U nobar nobar`, then `docker compose exec db createdb -U nobar nobar`), then `gunzip -c backups/nobar-<time>.sql.gz \| docker compose exec -T db psql -U nobar -d nobar -v ON_ERROR_STOP=1`, and `docker compose start api web` |
 | Use the assistant with a model | set `LLM_PROVIDER=openai-compatible`, `LLM_BASE_URL`, `LLM_MODEL` in `.env` and `docker compose up -d` |
 
 Behind another TLS terminator or load balancer, set `SITE_ADDRESS=:80`. For more than one server, use the Helm

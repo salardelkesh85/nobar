@@ -133,13 +133,20 @@ jobs:
           ADMIN_PHONE: "09120000001"
           SHOTS: /tmp/ui-shots
 
-      - name: Backup was written and holds the schema
+      - name: Backup and restore
         run: |
-          for i in $(seq 1 30); do ls backups/nobar-*.sql.gz >/dev/null 2>&1 && break; sleep 2; done
-          ls -l backups/
-          # read the whole dump first (grep -q on a pipe would cut gunzip off and fail under pipefail)
-          gunzip -c backups/nobar-*.sql.gz > /tmp/dump.sql
-          grep -c "CREATE TABLE catalog.listings" /tmp/dump.sql
+          dc="docker compose -f docker-compose.yml -f ci/docker-compose.ci.yml"
+          # a dump taken now holds what the tests just created
+          $dc exec -T backup sh /backup.sh once
+          f=$(ls -t backups/nobar-*.sql.gz | head -n 1)
+          ls -l "$f"
+          $dc exec -T db psql -U nobar -d postgres -qc "create database restore_check"
+          gunzip -c "$f" > /tmp/dump.sql
+          $dc exec -T db psql -U nobar -d restore_check -v ON_ERROR_STOP=1 -q < /tmp/dump.sql > /dev/null
+          listings=$($dc exec -T db psql -U nobar -d restore_check -tAc "select count(*) from catalog.listings where title = 'سیب قرمز آزمون انتشار'")
+          orders=$($dc exec -T db psql -U nobar -d restore_check -tAc "select count(*) from ordering.orders")
+          echo "restored: listings=$listings orders=$orders"
+          test "$listings" = "1" && test "$orders" -ge 1
 
       - uses: actions/upload-artifact@v4
         if: always()
