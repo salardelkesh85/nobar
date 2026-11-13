@@ -1,17 +1,31 @@
 import { formatFaNumber } from "@nobar/fa";
 import { Star } from "lucide-react";
-import type { CSSProperties, ReactNode } from "react";
+import { useId, type CSSProperties, type ReactNode } from "react";
 import { Toman, Weight } from "./format";
 import { hasIllustration, ProduceIllustration } from "./illustrations";
 import { Badge, cn } from "./primitives";
 
-/** Two-leaf mark. */
+/**
+ * Nobar's two-leaf mark (from the brand deck): a large leaf with a light midrib and a smaller lime leaf.
+ * Colours come from --leaf-* tokens so the mark stays visible in dark mode.
+ */
 export function LogoMark({ className }: { className?: string }) {
+  const id = useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 40 40" className={className} aria-hidden>
-      <path d="M20 35 C20 24 21 16 27 9" fill="none" stroke="var(--brand-strong)" strokeWidth="2.6" strokeLinecap="round" />
-      <path d="M21.5 22 C 11 24, 5 17, 5 8 C 14 7.5, 21 13, 21.5 22 Z" fill="var(--brand)" />
-      <path d="M22.5 18 C 25 9, 31 5, 37 5 C 37.5 13, 32 19.5, 22.5 18 Z" fill="var(--brand-strong)" />
+    <svg viewBox="-12 0 384 390" className={className} aria-hidden focusable="false">
+      <defs>
+        <linearGradient id={`${id}-a`} x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" style={{ stopColor: "var(--leaf-a1, #2f8f3e)" }} />
+          <stop offset="1" style={{ stopColor: "var(--leaf-a2, #1f6e30)" }} />
+        </linearGradient>
+        <linearGradient id={`${id}-b`} x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" style={{ stopColor: "var(--leaf-b1, #a6d16a)" }} />
+          <stop offset="1" style={{ stopColor: "var(--leaf-b2, #6fae3c)" }} />
+        </linearGradient>
+      </defs>
+      <path d="M63 378 C120 300 230 210 360 220 C320 320 200 395 63 378 Z" fill={`url(#${id}-b)`} />
+      <path d="M10 363 C-10 250 60 60 243 5 C252 130 190 300 10 363 Z" fill={`url(#${id}-a)`} />
+      <path d="M20 353 Q120 190 225 33" fill="none" stroke="var(--leaf-rib, #b9e4b9)" strokeWidth="9" strokeLinecap="round" />
     </svg>
   );
 }
