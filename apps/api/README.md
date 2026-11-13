@@ -39,7 +39,7 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
 | `DATA_DIR` | `.data` | |
 | `CORS_ORIGINS` | the three local apps | comma separated |
 | `RATE_LIMIT_PER_MIN` | `600` | requests per minute per client IP on `/v1/*`; `0` turns it off |
-| `TRUST_PROXY` | `loopback` | which proxies may set `X-Forwarded-For` (used by rate limits) |
+| `TRUST_PROXY` | `loopback` | which proxies may set `X-Forwarded-For` (used by rate limits): `true`, `false`, or proxy IPs/CIDRs; a hop count is refused |
 | `OTP_SECRET` | dev value | HMAC key for sign-in codes; required in production |
 | `OTP_ECHO` | on outside production | returns the code in the response; refused in production |
 | `ADMIN_PHONES` | — | phones that get the ADMIN role |

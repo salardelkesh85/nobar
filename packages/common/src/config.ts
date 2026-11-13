@@ -14,7 +14,7 @@ export const baseConfigSchema = z.object({
   PORT: z.coerce.number().int().positive(),
   /**
    * Which proxies may set X-Forwarded-For (the client IP used by rate limits): "loopback" (default),
-   * "true" (any — only behind an ingress that overwrites the header), "false", a hop count, or IPs/CIDRs.
+   * "true" (any — only behind an ingress that overwrites the header), "false", or IPs/CIDRs (comma separated).
    */
   TRUST_PROXY: z.string().default("loopback"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
@@ -39,9 +39,12 @@ export const baseConfigSchema = z.object({
 export type BaseConfig = z.infer<typeof baseConfigSchema>;
 
 /** TRUST_PROXY → Fastify's `trustProxy` option. */
-export function trustProxyOption(value: string): boolean | number | string {
+export function trustProxyOption(value: string): boolean | string {
   if (value === "true" || value === "false") return value === "true";
-  return /^\d+$/.test(value) ? Number(value) : value;
+  // a hop count cannot check who the immediate peer is, so a client could forge X-Forwarded-For;
+  // fastify 5.12 trusts nobody for a number, which would quietly break rate limits — refuse it instead
+  if (/^\d+$/.test(value)) throw new Error("TRUST_PROXY: a hop count is not supported; list the proxy IPs or CIDRs (e.g. 10.0.0.0/8), or use \"true\" behind an ingress that overwrites the header");
+  return value;
 }
 
 export function loadConfig<S extends z.ZodType<BaseConfig>>(schema: S, overrides: Record<string, string | undefined> = {}): z.infer<S> {

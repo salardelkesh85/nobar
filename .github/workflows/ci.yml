@@ -33,6 +33,15 @@ jobs:
 
       - run: pnpm lint:rtl
 
+      # committed secrets fail the build (the scan reads the working tree, including history-free config files)
+      - name: Secret scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          exit-code: "1"
+
       - run: pnpm test
 
       - name: Helm chart renders for staging and production
@@ -64,6 +73,19 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
+
+      # the image holds only the API's production dependencies, so this is the dependency audit that matters
+      - name: SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+          format: cyclonedx
+          output: sbom-api.cdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-api
+          path: sbom-api.cdx.json
 
       - name: Publish
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

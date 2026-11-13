@@ -28,6 +28,8 @@
 | The test-gateway page answered for any payment authority, also when a real gateway is configured (it could not confirm a payment, but showed the amount to anyone holding the authority) | Low | The page now only knows test-gateway payments |
 | A buyer's phone number typed into the assistant reached `ai_audit_log` through a tool argument | Medium | All logged tool input and output is redacted (found by an eval case) |
 | Two API replicas starting together could both run a migration | Medium | Advisory lock around each migration |
+| `fastify` 5.11.3 had high-severity advisories (`pnpm audit`) | High | `@nestjs/platform-fastify` 11.2.10 brings `fastify` 5.12.8. Its stricter proxy handling makes a numeric `TRUST_PROXY` hop count trust nobody, so a hop count is now refused at start with a message |
+| No SBOM and no secret scanning in CI | Medium | CI scans the tree for secrets, builds a CycloneDX SBOM of the API image and keeps it as a build artifact; the image scan fails on high/critical findings |
 | No general rate limit: search, cart and copilot endpoints could be hammered, and each copilot draft may reach the model | Medium | Per-IP limit on `/v1/*` (`RATE_LIMIT_PER_MIN`, default 600) and a daily cap on copilot drafts per seller (`AI_DAILY_MESSAGES`) |
 
 ## Open
@@ -40,4 +42,4 @@
 | `JWT_PRIVATE_JWK` rotation is not supported (one key) | Low | Key set with `kid` rollover |
 | Seller-supplied images are not handled yet (no upload path exists); when it does, it needs type and size checks and scanning | — | Design with the upload feature |
 | ZarinPal and Melipayamak adapters were never run against the real services | — | Sandbox run before launch |
-| Dependencies not audited; no SBOM; no secret scanning in CI | Medium | Add `pnpm audit`, an SBOM step and secret scanning to CI |
+| Dev-only advisories: `tinypool` (critical) through `vitest` 3, `esbuild` (low) in the build tool, `sharp` and `image-size` (high) in the seminar-deck tool. None ship in the API image | Low | Move to `vitest` 4 and update the deck tool when convenient |
