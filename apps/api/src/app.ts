@@ -55,20 +55,21 @@ export function apiService(): ServiceDefinition<ApiConfig> {
       await app.get(NotificationService).subscribe(deps);
       await app.get(RecommendationService).subscribe(deps);
       await app.get(OrderMetrics).subscribe(deps);
+      // reference data every market needs, also in production: categories, produce types (their freshness
+      // numbers start as "needs review" for staff to confirm) and the kit's commission table, editable by staff
+      const demo = await import("@nobar/demo");
+      await app.get(CatalogService).seedReference(demo.CATEGORIES, demo.PRODUCE_TYPES);
+      const payments = app.get(PaymentService);
+      if (!(await payments.hasCommissionRules())) {
+        // packages/demo COMMISSION_RULES: 10% overall, citrus 9%, dried fruit and dates 12%
+        await payments.setCommissionRule("GLOBAL", null, 1000, "سراسری");
+        await payments.setCommissionRule("CATEGORY", "citrus", 900, "دسته: مرکبات");
+        await payments.setCommissionRule("CATEGORY", "dried", 1200, "دسته: خشکبار و خرما");
+      }
       if (seedDemoEnabled(deps.config)) {
-        // the same sample catalog as the static demo site, so both show the same shops and listings
-        await app.get(CatalogService).seedIfEmpty(async () => {
-          const demo = await import("@nobar/demo");
-          return { categories: demo.CATEGORIES, types: demo.PRODUCE_TYPES, shops: demo.SHOPS, listings: demo.LISTINGS };
-        });
-        await app.get(ReviewService).seed((await import("@nobar/demo")).REVIEWS);
-        const payments = app.get(PaymentService);
-        if (!(await payments.hasCommissionRules())) {
-          // the kit's commission table (packages/demo COMMISSION_RULES): 10% overall, citrus 9%, dried fruit and dates 12%
-          await payments.setCommissionRule("GLOBAL", null, 1000, "سراسری");
-          await payments.setCommissionRule("CATEGORY", "citrus", 900, "دسته: مرکبات");
-          await payments.setCommissionRule("CATEGORY", "dried", 1200, "دسته: خشکبار و خرما");
-        }
+        // the same sample shops and listings as the static demo site
+        await app.get(CatalogService).seedIfEmpty(async () => ({ categories: demo.CATEGORIES, types: demo.PRODUCE_TYPES, shops: demo.SHOPS, listings: demo.LISTINGS }));
+        await app.get(ReviewService).seed(demo.REVIEWS);
       }
       if (deps.config.ORDER_TIMER_SEC === 0) return;
       // acceptance deadlines, complaint windows, unpaid reservations, listings past their freshness

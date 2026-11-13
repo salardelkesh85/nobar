@@ -50,6 +50,15 @@ export class CatalogService {
   }
 
   /** Loads the demo catalog into an empty database (development only). */
+  /** Adds missing categories and produce types (every start, also in production). */
+  async seedReference(categories: Parameters<CatalogRepo["importReference"]>[0], types: Parameters<CatalogRepo["importReference"]>[1]): Promise<void> {
+    const added = await this.repo.importReference(categories, types);
+    if (added) {
+      this.invalidate();
+      this.log.info({ added }, "catalog reference data added (categories, produce types)");
+    }
+  }
+
   async seedIfEmpty(load: () => Promise<Parameters<CatalogRepo["importAll"]>[0]>): Promise<boolean> {
     if (!(await this.repo.isEmpty())) return false;
     const data = await load();
