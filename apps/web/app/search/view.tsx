@@ -11,6 +11,8 @@ import { useStore } from "@/lib/store";
 import { useCatalogSearch } from "@/lib/api-catalog";
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+/** results per page in API mode (the API caps a page at 100) */
+const PAGE_SIZE = 48;
 
 export function SearchView() {
   const sp: Record<string, string | undefined> = Object.fromEntries(useSearchParams().entries());
@@ -31,7 +33,7 @@ export function SearchView() {
     }),
     [dest, q, cat, origin, sp.fresh, sp.organic, sp.nobar, sp.sort],
   );
-  const { result, loading, error, retry, apiMode } = useCatalogSearch(searchParams);
+  const { result, loading, error, retry, apiMode, hasMore, loadMore, loadingMore } = useCatalogSearch(searchParams, { pageSize: PAGE_SIZE });
   const heading = q ? `نتیجه‌های «${q}»` : cat ? categoryById(cat)?.name ?? "محصولات" : origin ? `محصولات ${provinceById(origin)?.name ?? ""}` : "همه‌ی محصولات";
 
   return (
@@ -66,7 +68,19 @@ export function SearchView() {
             {Array.from({ length: 8 }, (_, index) => <Skeleton key={index} className="aspect-[3/4] rounded-card" />)}
           </div>
         ) : result.hits.length ? (
-          <ListingGrid hits={result.hits} className="lg:rounded-t-none lg:-mt-3" />
+          <>
+            <ListingGrid hits={result.hits} className="lg:rounded-t-none lg:-mt-3" />
+            {hasMore ? (
+              <div className="mt-4 flex flex-col items-center gap-1">
+                <Button type="button" variant="secondary" onClick={loadMore} disabled={loadingMore}>
+                  {loadingMore ? "در حال دریافت…" : "نمایش محصولات بیشتر"}
+                </Button>
+                <p className="text-xs text-ink-soft">
+                  {result.hits.length.toLocaleString("fa-IR")} از {result.total.toLocaleString("fa-IR")} محصول
+                </p>
+              </div>
+            ) : null}
+          </>
         ) : !error ? (
           <EmptyState
             icon={<Search className="size-10" />}

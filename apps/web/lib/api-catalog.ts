@@ -219,12 +219,18 @@ export function useCatalogOrigin(id: string, dest: string) {
   return useCatalogResource<ApiOriginDetail, OriginDetail>(`origins/${encodeURIComponent(id)}?dest=${encodeURIComponent(dest)}`, fallback, hydrateOrigin);
 }
 
-export function useCatalogSearch(params: SearchParams) {
+/**
+ * Search results. With `pageSize` (API mode) the API returns one page at a time and `loadMore` appends the
+ * next one; `total` is always the full count. Without it every hit comes in one response.
+ */
+export function useCatalogSearch(params: SearchParams, opts: { pageSize?: number } = {}) {
   const serialized = useMemo(() => query(params), [params]);
   const demo = useMemo(() => demoSearch(params), [serialized]);
-  const [state, setState] = useState<{ result: SearchResult; loading: boolean; error: string | null }>({
+  const pageSize = API_URL ? opts.pageSize : undefined;
+  const [state, setState] = useState<{ result: SearchResult; loading: boolean; loadingMore: boolean; error: string | null }>({
     result: API_URL ? EMPTY_RESULT : demo,
     loading: Boolean(API_URL),
+    loadingMore: false,
     error: null,
   });
   const [attempt, setAttempt] = useState(0);
@@ -232,21 +238,39 @@ export function useCatalogSearch(params: SearchParams) {
 
   useEffect(() => {
     if (!API_URL) {
-      setState({ result: demo, loading: false, error: null });
+      setState({ result: demo, loading: false, loadingMore: false, error: null });
       return;
     }
     const controller = new AbortController();
     setState((previous) => ({ ...previous, loading: true, error: null }));
-    request<ApiSearchResult>(`search?${serialized}`, controller.signal)
-      .then((result) => setState({ result: hydrate(result), loading: false, error: null }))
+    request<ApiSearchResult>(`search?${serialized}${pageSize ? `&limit=${pageSize}&offset=0` : ""}`, controller.signal)
+      .then((result) => setState({ result: hydrate(result), loading: false, loadingMore: false, error: null }))
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
         setState((previous) => ({ ...previous, loading: false, error: catalogErrorMessage(error) }));
       });
     return () => controller.abort();
-  }, [serialized, demo, attempt]);
+  }, [serialized, demo, attempt, pageSize]);
 
-  return { ...state, retry, apiMode: Boolean(API_URL) };
+  const hasMore = state.result.hits.length < state.result.total;
+  const loadMore = useCallback(() => {
+    if (!API_URL || !pageSize || state.loadingMore || !hasMore) return;
+    const offset = state.result.hits.length;
+    setState((previous) => ({ ...previous, loadingMore: true }));
+    request<ApiSearchResult>(`search?${serialized}&limit=${pageSize}&offset=${offset}`)
+      .then((page) => {
+        const next = hydrate(page);
+        setState((previous) => ({
+          ...previous,
+          loadingMore: false,
+          // a page asked for at a stale offset (results changed meanwhile) is dropped rather than mixed in
+          result: previous.result.hits.length === offset ? { ...previous.result, total: next.total, hits: [...previous.result.hits, ...next.hits] } : previous.result,
+        }));
+      })
+      .catch((error: unknown) => setState((previous) => ({ ...previous, loadingMore: false, error: catalogErrorMessage(error) })));
+  }, [serialized, pageSize, state.loadingMore, state.result.hits.length, hasMore]);
+
+  return { ...state, retry, loadMore, hasMore: Boolean(pageSize) && hasMore, apiMode: Boolean(API_URL) };
 }
 
 export function useCatalogSuggestions(text: string, enabled: boolean) {
