@@ -100,6 +100,8 @@ try {
   const sellerCode = await requestCode(seller, "#seller-phone", SELLER_PHONE, "دریافت کد");
   await seller.fill("#seller-code", sellerCode);
   await seller.getByRole("button", { name: "ورود" }).click();
+  // navigate only once signed in: leaving earlier can drop the request that sets the session cookie
+  await seller.locator("#seller-code").waitFor({ state: "detached", timeout: 20_000 });
   await seller.goto(`${BASE}/seller/products/`);
   await seller.getByText(LISTING_TITLE).first().waitFor({ timeout: 20_000 });
   await shot(seller, "seller-products");
@@ -111,6 +113,7 @@ try {
   const adminCode = await requestCode(admin, "#admin-phone", ADMIN_PHONE, "دریافت کد");
   await admin.fill("#admin-code", adminCode);
   await admin.getByRole("button", { name: "ورود" }).click();
+  await admin.locator("#admin-code").waitFor({ state: "detached", timeout: 20_000 });
   await admin.getByRole("heading", { name: "پیشخوان" }).waitFor({ timeout: 20_000 });
   await admin.getByText("آخرین سفارش‌ها").waitFor({ timeout: 20_000 });
   await shot(admin, "admin-home");
