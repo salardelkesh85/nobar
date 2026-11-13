@@ -28,12 +28,12 @@
 | The test-gateway page answered for any payment authority, also when a real gateway is configured (it could not confirm a payment, but showed the amount to anyone holding the authority) | Low | The page now only knows test-gateway payments |
 | A buyer's phone number typed into the assistant reached `ai_audit_log` through a tool argument | Medium | All logged tool input and output is redacted (found by an eval case) |
 | Two API replicas starting together could both run a migration | Medium | Advisory lock around each migration |
+| No general rate limit: search, cart and copilot endpoints could be hammered, and each copilot draft may reach the model | Medium | Per-IP limit on `/v1/*` (`RATE_LIMIT_PER_MIN`, default 600) and a daily cap on copilot drafts per seller (`AI_DAILY_MESSAGES`) |
 
 ## Open
 
 | Finding | Severity | Suggested next step |
 |---|---|---|
-| No general per-IP rate limit (only sign-in codes and the assistant's daily cap). Search, cart and copilot endpoints can be hammered | Medium | Rate limit at the ingress, plus a per-user limit on `/v1/seller/copilot/*` (each call may reach the model) |
 | Rate limiter and catalog snapshot are per process without Redis; with several replicas sign-in limits are per replica | Medium | Set `REDIS_URL` in production |
 | Staff accounts are a phone list with a single `ADMIN` role; no second factor, no separation between support and finance | Medium | Finer roles and a second factor before real payouts |
 | Payouts are recorded by one staff click; the bank transfer happens outside the system | Medium | Two-person approval, bank file export |

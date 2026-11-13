@@ -1,9 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { type Database, forbidden, type Logger, notFound, TOKENS } from "@nobar/common";
+import { type Database, forbidden, type Logger, notFound, TOKENS, tooMany } from "@nobar/common";
 import { uuidv7 } from "@nobar/contracts";
 import { cityName } from "@nobar/contracts/cities";
 import { type Listing, pricePerKg } from "@nobar/domain";
 import { cleanFaText } from "@nobar/fa";
+import type { ApiConfig } from "../../config";
 import { CatalogService } from "../catalog/catalog.service";
 import { ReviewService } from "../review/review.service";
 import { type ListingFacts, listingTemplate, type ReviewFacts, reviewReplyTemplate } from "./copilot-templates";
@@ -30,6 +31,7 @@ export class CopilotService {
   constructor(
     @Inject(TOKENS.DB) private readonly db: Database,
     @Inject(TOKENS.LOG) private readonly log: Logger,
+    @Inject(TOKENS.CONFIG) private readonly config: ApiConfig,
     @Inject(CatalogService) private readonly catalog: CatalogService,
     @Inject(ReviewService) private readonly reviews: ReviewService,
     @Inject(LLM_PROVIDER) private readonly llm: LlmProvider,
@@ -69,6 +71,9 @@ export class CopilotService {
   }
 
   private async ask(userId: string, task: string, facts: unknown): Promise<string | null> {
+    // each draft may reach the model: the same daily allowance as the buyer assistant
+    const [used] = await this.db.query<{ n: number }>("select count(*)::int as n from ai.ai_audit_log where user_id = $1 and name like 'COPILOT:%' and created_at > now() - interval '1 day'", [userId]);
+    if ((used?.n ?? 0) >= this.config.AI_DAILY_MESSAGES) throw tooMany("سقف پیش‌نویس‌های امروز پر شده است؛ فردا دوباره امتحان کنید.");
     const started = Date.now();
     const id = uuidv7();
     const log = (output: unknown, ok: boolean) =>

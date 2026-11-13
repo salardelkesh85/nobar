@@ -39,7 +39,8 @@ async function buy(listings: Hit["listing"][]) {
   expect((await get(`/v1/payments/callback?Authority=${pay.body.redirectUrl.split("/fake/")[1]}&Status=OK`)).status).toBe(303);
 }
 async function eventually<T>(fn: () => Promise<T>, ok: (v: T) => boolean): Promise<T> {
-  for (let i = 0; i < 60; i++) {
+  // purchases arrive through the outbox; under a busy test run that can take a few seconds
+  for (let i = 0; i < 200; i++) {
     const v = await fn();
     if (ok(v)) return v;
     await new Promise((r) => setTimeout(r, 50));
@@ -77,7 +78,7 @@ describe("recommendations", () => {
     expect(items.every((i) => searchable.has(i.listingId))).toBe(true);
   });
 
-  it("learns from paid orders: bought together on the product page, popular on the home page", async () => {
+  it("learns from paid orders: bought together on the product page, popular on the home page", { timeout: 20_000 }, async () => {
     await buy([a, b]);
     await buy([a, b]);
     const page = await eventually(() => get(`/v1/recommendations?dest=${DEST}&listingId=${a.id}`), (r) => r.body.items[0]?.reasonCode === "BOUGHT_TOGETHER");
@@ -85,7 +86,7 @@ describe("recommendations", () => {
     // never the listing itself or another seller of the same produce (that is the compare page)
     expect((page.body.items as Item[]).every((i) => i.listingId !== a.id && i.produceTypeId !== a.produceTypeId)).toBe(true);
 
-    const home: Item[] = (await get(`/v1/recommendations?dest=${DEST}`)).body.items;
+    const home: Item[] = (await eventually(() => get(`/v1/recommendations?dest=${DEST}`), (r) => (r.body.items as Item[]).filter((i) => i.reasonCode === "POPULAR").length === 2)).body.items;
     expect(home.filter((i) => i.reasonCode === "POPULAR").map((i) => i.listingId).sort()).toEqual([a.id, b.id].sort());
   });
 

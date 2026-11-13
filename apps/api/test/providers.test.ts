@@ -1,6 +1,8 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
+import { startService } from "@nobar/common";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { apiService } from "../src/app";
 import { MelipayamakSmsProvider } from "../src/modules/identity/sms";
 import { GatewayUnavailableError, ZarinpalPaymentProvider } from "../src/modules/payment/provider";
 
@@ -99,5 +101,23 @@ describe("Melipayamak", () => {
   it("fails loudly when the panel refuses the message", async () => {
     answer = () => ({ json: { Value: "0", RetStatus: 0, StrRetStatus: "InvalidUserPass" } });
     await expect(new MelipayamakSmsProvider({ username: "u", password: "bad", from: "5000", baseUrl: base }).send("+989141234567", "x")).rejects.toThrow("InvalidUserPass");
+  });
+});
+
+describe("general rate limit", () => {
+  it("answers 429 with Retry-After once one IP passes the per-minute limit, and never limits health checks", async () => {
+    const api = await startService(apiService(), { overrides: { PORT: String(41_000 + Math.floor(Math.random() * 900)), DATA_DIR: "memory", LOG_LEVEL: "silent", NODE_ENV: "test", ORDER_TIMER_SEC: "0", RATE_LIMIT_PER_MIN: "5" } });
+    try {
+      const get = (path: string, ip = "10.1.1.1") => fetch(`${api.url}${path}`, { headers: { "x-forwarded-for": ip } });
+      for (let i = 0; i < 5; i++) expect((await get("/v1/catalog/categories")).status).toBe(200);
+      const limited = await get("/v1/catalog/categories");
+      expect(limited.status).toBe(429);
+      expect(Number(limited.headers.get("retry-after"))).toBeGreaterThan(0);
+      expect(((await limited.json()) as { code: string }).code).toBe("RATE_LIMITED");
+      expect((await get("/v1/catalog/categories", "10.1.1.2")).status).toBe(200);
+      expect((await get("/healthz")).status).toBe(200);
+    } finally {
+      await api.stop();
+    }
   });
 });

@@ -32,6 +32,8 @@ export const baseConfigSchema = z.object({
   JWT_ISSUER: z.string().default("nobar-identity"),
   JWT_AUDIENCE: z.string().default("nobar"),
   WEB_URL: z.string().default("http://localhost:3000"),
+  /** requests per minute from one client IP to /v1/* (0 turns the limit off; health and metrics are never limited) */
+  RATE_LIMIT_PER_MIN: z.coerce.number().int().min(0).default(600),
 });
 
 export type BaseConfig = z.infer<typeof baseConfigSchema>;
