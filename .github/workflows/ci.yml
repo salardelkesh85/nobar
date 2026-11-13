@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # Trivy's official image, pinned (scans run the same way locally: docker run aquasec/trivy ...)
+  TRIVY: aquasec/trivy:0.58.0
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -33,14 +37,9 @@ jobs:
 
       - run: pnpm lint:rtl
 
-      # committed secrets fail the build (the scan reads the working tree, including history-free config files)
+      # committed secrets fail the build (Trivy's own image, pinned; scans the checked-out tree)
       - name: Secret scan
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: secret
-          exit-code: "1"
+        run: docker run --rm -v "$PWD:/src:ro" "$TRIVY" fs --scanners secret --exit-code 1 --skip-dirs /src/node_modules /src
 
       - run: pnpm test
 
@@ -67,20 +66,11 @@ jobs:
         run: docker build -f apps/api/Dockerfile -t "$IMAGE:${{ github.sha }}" .
 
       - name: Scan for critical and high vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          exit-code: "1"
+        run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY" image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$IMAGE:${{ github.sha }}"
 
       # the image holds only the API's production dependencies, so this is the dependency audit that matters
       - name: SBOM (CycloneDX)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
-          format: cyclonedx
-          output: sbom-api.cdx.json
+        run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/out" "$TRIVY" image --format cyclonedx --output /out/sbom-api.cdx.json "$IMAGE:${{ github.sha }}"
 
       - uses: actions/upload-artifact@v4
         with:
