@@ -1,6 +1,6 @@
 {
   "name": "@nobar/api",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Nobar backend: one NestJS app with a module per bounded context (ADR 0008)",
   "scripts": {

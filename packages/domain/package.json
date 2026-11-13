@@ -1,6 +1,6 @@
 {
   "name": "@nobar/domain",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Marketplace domain shared by the backend and the frontends: types and the deterministic rules (freshness, pricing, delivery, comparison, search)",
   "main": "./src/index.ts",
