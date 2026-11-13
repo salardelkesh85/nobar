@@ -118,11 +118,35 @@ jobs:
           STUBS_INTERNAL: http://stubs:8080
           ADMIN_PHONE: "09120000001"
 
-      - name: Backup was written
+      - name: The three apps in a real browser
+        run: |
+          mkdir -p /tmp/ui /tmp/ui-shots
+          cp ci/ui.mjs /tmp/ui/
+          cd /tmp/ui
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          node ui.mjs
+        env:
+          BASE: http://localhost
+          STUBS: http://localhost:8080
+          ADMIN_PHONE: "09120000001"
+          SHOTS: /tmp/ui-shots
+
+      - name: Backup was written and holds the schema
         run: |
           for i in $(seq 1 30); do ls backups/nobar-*.sql.gz >/dev/null 2>&1 && break; sleep 2; done
           ls -l backups/
-          gunzip -c backups/nobar-*.sql.gz | grep -q "CREATE TABLE catalog.listings"
+          # read the whole dump first (grep -q on a pipe would cut gunzip off and fail under pipefail)
+          gunzip -c backups/nobar-*.sql.gz > /tmp/dump.sql
+          grep -c "CREATE TABLE catalog.listings" /tmp/dump.sql
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-screenshots
+          path: /tmp/ui-shots
+          if-no-files-found: ignore
 
       - name: Logs
         if: always()
