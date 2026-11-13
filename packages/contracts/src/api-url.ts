@@ -8,6 +8,8 @@
  */
 export function resolveApiUrl(raw: string | undefined): string {
   const value = (raw ?? "").trim();
-  if (value === "/") return typeof window === "undefined" ? "/" : window.location.origin;
+  // `location` exists only in the browser (this package is also compiled without DOM types)
+  const location = (globalThis as { location?: { origin: string } }).location;
+  if (value === "/") return location ? location.origin : "/";
   return value.replace(/\/$/, "");
 }
