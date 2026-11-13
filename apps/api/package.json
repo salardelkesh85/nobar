@@ -8,7 +8,8 @@
     "build": "tsup",
     "start": "node --enable-source-maps dist/main.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "bench": "BENCH=1 BENCH_OUT=../../docs/performance-search.md vitest run --dir bench"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.7",

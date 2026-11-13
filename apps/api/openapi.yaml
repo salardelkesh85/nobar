@@ -210,6 +210,8 @@ paths:
         - { name: freshOnly, in: query, schema: { type: boolean } }
         - { name: nobarOnly, in: query, schema: { type: boolean } }
         - { name: sort, in: query, schema: { enum: [relevance, landed, freshness, newest, rating] } }
+        - { name: limit, in: query, description: "Page size (1–100). Without it every hit is returned; `total` is always the full count.", schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
       responses: { "200": { description: Hits and the listings that cannot reach `dest` }, "400": { $ref: "#/components/responses/Problem" } }
   /v1/compare:
     get:

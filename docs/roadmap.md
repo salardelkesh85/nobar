@@ -113,3 +113,4 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 | P17 seller copilot | First version done | Price guidance (rule), listing and review-reply drafts (model with fallback), advisory only, in the seller panel; daily cap. Not yet: demand forecast |
 | P18 trust & safety | Started | Staff list of shops with risk patterns (rejections, disputes, refunds) with reasons, read only. Not yet: duplicate images, fake-review detection, complaint triage |
 | P19 hardening | Started | `docs/security-review.md`: security headers, per-IP rate limit, patched fastify, SBOM and secret scan in CI, redaction and migration-lock fixes; open list kept there. Not yet: load and chaos tests, staff second factor |
+| Search at 100k listings | Partly done | Text and filtered searches p95 < 300 ms on 100k listings (`docs/performance.md`); unfiltered browse ~0.5 s; optional paging on `/v1/search` |

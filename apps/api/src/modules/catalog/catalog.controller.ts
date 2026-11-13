@@ -24,6 +24,9 @@ const SearchQuery = z.object({
   freshOnly: BoolQuerySchema.optional(),
   nobarOnly: BoolQuerySchema.optional(),
   sort: z.enum(["relevance", "landed", "freshness", "newest", "rating"]).optional(),
+  /** optional paging; without it every hit is returned */
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  offset: z.coerce.number().int().min(0).max(100_000).optional(),
 });
 // the store's compare tray holds at most 4 listings (apps/web/components/actions.tsx)
 const CompareQuery = z.object({
