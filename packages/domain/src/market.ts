@@ -1,6 +1,7 @@
 // Deterministic marketplace rules from docs/02-domain-model.md (§5.1 freshness, §7 pricing, §8.2 comparison,
 // §10 delivery, §9 cart groups). The same code runs in the browser (demo data) and in the API (database rows).
-import { FA_STOPWORDS, jalaliMonth, searchKey, tehranDaysBetween, tokenizeFa } from "@nobar/fa";
+import { FA_STOPWORDS, jalaliMonth, searchKey, tehranDayOf, tehranDaysBetween, tokenizeFa } from "@nobar/fa";
+import type { City } from "@nobar/contracts/cities";
 import { cityById, distanceKm, provinceOfCity } from "./geo";
 import {
   type CompareBadge,
@@ -152,21 +153,24 @@ const WEIGHTS: Record<Preset, { price: number; fresh: number; rating: number; et
   fastest: { price: 0.2, fresh: 0.2, rating: 0.1, eta: 0.5 },
 };
 
-function transitDays(method: ShippingMethodCode, km: number, sameCity: boolean): [number, number] | null {
-  if (method === "SELLER_LOCAL") return sameCity ? [0, 0] : null;
+const TRANSIT: Record<Exclude<ShippingMethodCode, "SELLER_LOCAL">, ReadonlyArray<readonly [number, number]>> = {
+  POST: [[2, 3], [3, 4], [4, 6]],
+  TIPAX: [[1, 1], [1, 2], [2, 3]],
+  FREIGHT: [[1, 2], [2, 3], [3, 4]],
+};
+const SAME_DAY = [0, 0] as const;
+function transitDays(method: ShippingMethodCode, km: number, sameCity: boolean): readonly [number, number] | null {
+  if (method === "SELLER_LOCAL") return sameCity ? SAME_DAY : null;
   const band = km < 250 ? 0 : km < 700 ? 1 : 2;
-  const table: Record<Exclude<ShippingMethodCode, "SELLER_LOCAL">, Array<[number, number]>> = {
-    POST: [[2, 3], [3, 4], [4, 6]],
-    TIPAX: [[1, 1], [1, 2], [2, 3]],
-    FREIGHT: [[1, 2], [2, 3], [3, 4]],
-  };
-  return table[method][band]!;
+  return TRANSIT[method][band]!;
 }
 
+// building an Intl formatter is far slower than using one: make it once (search quotes every listing)
+const weekdayFmt = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Tehran", weekday: "short" });
+const WEEKDAYS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 const tehranWeekday = (d: Date): number => {
   // 0 = Saturday … 6 = Friday (docs/02 §4)
-  const wd = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Tehran", weekday: "short" }).format(d);
-  return ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"].indexOf(wd);
+  return WEEKDAYS.indexOf(weekdayFmt.format(d));
 };
 const addDays = (d: Date, n: number) => new Date(d.getTime() + n * 86_400_000);
 
@@ -205,7 +209,9 @@ export function queryTokens(q: string): string[] {
  * Binds the rules to one snapshot of catalog data and a clock.
  * Lookups are indexed once; the functions never mutate the data.
  */
-export function createMarket(data: MarketData, clock: () => Date = () => new Date()) {
+/** `wordIndex: false` scans every listing on a text search (the reference the index is tested against). */
+export function createMarket(data: MarketData, clock: () => Date = () => new Date(), options: { wordIndex?: boolean } = {}) {
+  const useIndex = options.wordIndex ?? true;
   const typeById = new Map(data.types.map((t) => [t.id, t]));
   const shopById = new Map(data.shops.map((s) => [s.id, s]));
   const listingById = new Map(data.listings.map((l) => [l.id, l]));
@@ -225,7 +231,24 @@ export function createMarket(data: MarketData, clock: () => Date = () => new Dat
 
   // ---------- freshness (§5.1)
 
+  // freshness depends on the clock only through the Tehran calendar day (tehranDaysBetween), so it is
+  // remembered per listing for the day, across searches on this snapshot
+  let freshDay = NaN;
+  let freshCache = new Map<Listing, Freshness>();
   function freshnessOf(listing: Listing, now: Date = clock()): Freshness {
+    const day = tehranDayOf(now);
+    if (day !== freshDay) {
+      freshDay = day;
+      freshCache = new Map();
+    }
+    const hit = freshCache.get(listing);
+    if (hit) return hit;
+    const f = computeFreshness(listing, now);
+    freshCache.set(listing, f);
+    return f;
+  }
+
+  function computeFreshness(listing: Listing, now: Date): Freshness {
     const pt = mustType(listing.produceTypeId);
     const shelf = pt.shelfLifeDays;
     if (listing.isPreorder) return { badge: "PREORDER", ageDays: 0, shelfDays: shelf, ratio: 1, daysLeft: shelf, sellable: true };
@@ -258,6 +281,49 @@ export function createMarket(data: MarketData, clock: () => Date = () => new Dat
 
   // ---------- delivery (§10)
 
+  // per catalog snapshot: distances between city pairs; per clock reading: each shop's dispatch day
+  const distances = new Map<string, number>();
+  const distance = (a: City, b: City): number => {
+    const key = `${a.id}>${b.id}`;
+    let km = distances.get(key);
+    if (km === undefined) {
+      km = distanceKm(a, b);
+      distances.set(key, km);
+    }
+    return km;
+  };
+  let isoAt = NaN;
+  let isoCache = new Map<number, string>();
+  /** `now + days` as an ISO string, made once per clock reading */
+  const isoIn = (now: Date, days: number): string => {
+    if (now.getTime() !== isoAt) {
+      isoAt = now.getTime();
+      isoCache = new Map();
+    }
+    let iso = isoCache.get(days);
+    if (iso === undefined) {
+      iso = addDays(now, days).toISOString();
+      isoCache.set(days, iso);
+    }
+    return iso;
+  };
+  // the dispatch day depends on the clock only through the Tehran day (weekday of today + handling)
+  let dispatchDay = NaN;
+  let dispatchCache = new Map<string, number>();
+  const shopDispatch = (shop: Shop, listing: Listing, now: Date): number => {
+    const day = tehranDayOf(now);
+    if (day !== dispatchDay) {
+      dispatchDay = day;
+      dispatchCache = new Map();
+    }
+    let d = dispatchCache.get(shop.id);
+    if (d === undefined) {
+      d = dispatchOffset(shop, listing, now);
+      dispatchCache.set(shop.id, d);
+    }
+    return d;
+  };
+
   function quoteDelivery(listing: Listing, destCityId: string, grams?: number, itemsRial?: number, now: Date = clock()): DeliveryQuote {
     const shop = mustShop(listing.shopId);
     const pt = mustType(listing.produceTypeId);
@@ -270,8 +336,8 @@ export function createMarket(data: MarketData, clock: () => Date = () => new Dat
     const g = grams ?? packageGrams(first);
     const items = itemsRial ?? first.priceRial;
     const sameCity = origin.id === dest.id;
-    const km = distanceKm(origin, dest);
-    const dispatch = dispatchOffset(shop, listing, now);
+    const km = distance(origin, dest);
+    const dispatch = listing.isPreorder ? dispatchOffset(shop, listing, now) : shopDispatch(shop, listing, now);
     const options: DeliveryOption[] = [];
     let sawFreshFail = false;
     let sawHeavy = false;
@@ -297,8 +363,8 @@ export function createMarket(data: MarketData, clock: () => Date = () => new Dat
         costRial: cost,
         etaMinDays: dispatch + transit[0],
         etaMaxDays: etaMax,
-        etaFrom: addDays(now, dispatch + transit[0]).toISOString(),
-        etaTo: addDays(now, etaMax).toISOString(),
+        etaFrom: isoIn(now, dispatch + transit[0]),
+        etaTo: isoIn(now, etaMax),
         freshOnArrivalDays: freshOnArrival,
       });
     }
@@ -393,28 +459,87 @@ export function createMarket(data: MarketData, clock: () => Date = () => new Dat
 
   // ---------- search (Persian-aware; OpenSearch can replace it behind the same API)
 
+  // each listing's searchable words, normalised once per catalog snapshot (not on every search)
+  const wordCache = new WeakMap<Listing, Array<[string[], number]>>();
+  // the same names, cities and tags recur across thousands of listings: normalise each text once
+  const textWords = new Map<string, string[]>();
+  const words = (texts: string[]): string[] =>
+    texts.flatMap((t) => {
+      let w = textWords.get(t);
+      if (!w) {
+        w = tokenizeFa(t).map(searchKey);
+        textWords.set(t, w);
+      }
+      return w;
+    });
+
+  /**
+   * Word → listings (positions in data.listings), built on the first text search of this snapshot.
+   * A query token selects the vocabulary words it would match in `relevance` (exact, or prefix /
+   * substring for tokens of 3+ letters), so only listings containing them are scored. Same results
+   * and order as scanning every listing.
+   */
+  let vocabulary: Map<string, number[]> | null = null;
+  function buildVocabulary(): Map<string, number[]> {
+    const vocab = new Map<string, number[]>();
+    data.listings.forEach((l, i) => {
+      if (l.status !== "PUBLISHED") return;
+      const seen = new Set<string>();
+      for (const [fieldWords] of fieldsOf(l)) {
+        for (const w of fieldWords) {
+          if (!w || seen.has(w)) continue;
+          seen.add(w);
+          const postings = vocab.get(w);
+          if (postings) postings.push(i);
+          else vocab.set(w, [i]);
+        }
+      }
+    });
+    return vocab;
+  }
+  function candidates(tokens: string[]): Listing[] {
+    vocabulary ??= buildVocabulary();
+    let acc: Set<number> | null = null;
+    for (const tk of tokens) {
+      const found = new Set<number>();
+      for (const [w, postings] of vocabulary) {
+        if (w === tk || (tk.length >= 3 && (w.startsWith(tk) || (w.length > tk.length && w.includes(tk))))) for (const i of postings) found.add(i);
+      }
+      if (acc) {
+        const prev: Set<number> = acc;
+        acc = new Set([...found].filter((i) => prev.has(i)));
+      } else acc = found;
+      if (!acc.size) return [];
+    }
+    return [...(acc ?? [])].sort((a, b) => a - b).map((i) => data.listings[i]!);
+  }
+  function fieldsOf(l: Listing): Array<[string[], number]> {
+    let f = wordCache.get(l);
+    if (!f) {
+      const pt = mustType(l.produceTypeId);
+      const shop = mustShop(l.shopId);
+      f = [
+        [words([pt.name, ...pt.aliases]), 3],
+        [words([l.title]), 2],
+        [words([l.variety ?? "", ...l.tags, l.description]), 1.2],
+        [words([shop.name, cityById(l.originCityId)?.name ?? "", provinceOfCity(l.originCityId)?.name ?? "", categoryName.get(pt.categoryId) ?? ""]), 1],
+      ];
+      wordCache.set(l, f);
+    }
+    return f;
+  }
+
   function relevance(l: Listing, tokens: string[]): number {
     if (!tokens.length) return 1;
-    const pt = mustType(l.produceTypeId);
-    const shop = mustShop(l.shopId);
-    const fields: Array<[string[], number]> = [
-      [[pt.name, ...pt.aliases], 3],
-      [[l.title], 2],
-      [[l.variety ?? "", ...l.tags, l.description], 1.2],
-      [[shop.name, cityById(l.originCityId)?.name ?? "", provinceOfCity(l.originCityId)?.name ?? "", categoryName.get(pt.categoryId) ?? ""], 1],
-    ];
+    const fields = fieldsOf(l);
     let score = 0;
     let matched = 0;
-    for (const t of tokens) {
-      const tk = searchKey(t);
+    for (const tk of tokens) {
       let best = 0;
-      for (const [texts, w] of fields) {
-        for (const text of texts) {
-          const words = tokenizeFa(text).map(searchKey);
-          if (words.includes(tk)) best = Math.max(best, w);
-          else if (tk.length >= 3 && words.some((x) => x.startsWith(tk))) best = Math.max(best, w * 0.6);
-          else if (tk.length >= 3 && words.some((x) => x.length > tk.length && x.includes(tk))) best = Math.max(best, w * 0.4);
-        }
+      for (const [fieldWords, w] of fields) {
+        if (fieldWords.includes(tk)) best = Math.max(best, w);
+        else if (tk.length >= 3 && fieldWords.some((x) => x.startsWith(tk))) best = Math.max(best, w * 0.6);
+        else if (tk.length >= 3 && fieldWords.some((x) => x.length > tk.length && x.includes(tk))) best = Math.max(best, w * 0.4);
       }
       if (best > 0) matched++;
       score += best;
@@ -425,10 +550,10 @@ export function createMarket(data: MarketData, clock: () => Date = () => new Dat
 
   function search(p: SearchParams): SearchResult {
     const now = clock();
-    const tokens = queryTokens(p.q ?? "");
+    const tokens = queryTokens(p.q ?? "").map(searchKey);
     const hits: SearchHit[] = [];
     const notDeliverable: Excluded[] = [];
-    for (const l of data.listings) {
+    for (const l of tokens.length && useIndex ? candidates(tokens) : data.listings) {
       if (l.status !== "PUBLISHED") continue;
       const pt = mustType(l.produceTypeId);
       const shop = mustShop(l.shopId);
@@ -438,11 +563,11 @@ export function createMarket(data: MarketData, clock: () => Date = () => new Dat
       if (p.originProvince && cityById(l.originCityId)?.provinceId !== p.originProvince) continue;
       if (p.organic && !l.isOrganic) continue;
       if (p.nobarOnly && !isNobar(l, now)) continue;
+      const rel = relevance(l, tokens);
+      if (rel <= 0) continue;
       const fr = freshnessOf(l, now);
       if (!fr.sellable) continue;
       if (p.freshOnly && fr.badge !== "FRESH_PICKED" && fr.badge !== "FRESH") continue;
-      const rel = relevance(l, tokens);
-      if (rel <= 0) continue;
       const offer = landedOffer(l, p.dest, packageGrams(l.packages[0]!), now);
       if (!isOffer(offer)) {
         notDeliverable.push(offer);
@@ -452,25 +577,37 @@ export function createMarket(data: MarketData, clock: () => Date = () => new Dat
     }
     // drop incidental matches (e.g. the query only appears in a shop's name) when strong matches exist
     if (tokens.length) {
-      const top = Math.max(0, ...hits.map((h) => h.relevance));
-      for (let i = hits.length - 1; i >= 0; i--) if (hits[i]!.relevance < top * 0.5) hits.splice(i, 1);
+      // a loop, not Math.max(...spread): spreading 100k values overflows the call stack
+      let top = 0;
+      for (const h of hits) if (h.relevance > top) top = h.relevance;
+      // one pass (splicing inside the loop is quadratic when thousands of weak matches are dropped)
+      let kept = 0;
+      for (const h of hits) if (h.relevance >= top * 0.5) hits[kept++] = h;
+      hits.length = kept;
     }
     const sort = p.sort ?? "relevance";
-    const freshRank = (h: SearchHit) => h.offer.delivery.freshOnArrivalDays / h.freshness.shelfDays;
-    hits.sort((a, b) => {
+    // the comparator runs ~n·log n times: compute each hit's keys once and compare plain numbers
+    const keyed = hits.map((h) => ({
+      h,
+      nobar: Number(isNobar(h.listing, now)),
+      rating: sort === "rating" ? ratingBayes(h.shop) : 0,
+      fresh: h.offer.delivery.freshOnArrivalDays / h.freshness.shelfDays,
+    }));
+    keyed.sort((a, b) => {
       switch (sort) {
         case "landed":
-          return a.offer.landedPerKgRial - b.offer.landedPerKgRial;
+          return a.h.offer.landedPerKgRial - b.h.offer.landedPerKgRial;
         case "freshness":
-          return freshRank(b) - freshRank(a);
+          return b.fresh - a.fresh;
         case "newest":
-          return b.listing.publishedAt.localeCompare(a.listing.publishedAt);
+          return b.h.listing.publishedAt.localeCompare(a.h.listing.publishedAt);
         case "rating":
-          return ratingBayes(b.shop) - ratingBayes(a.shop);
+          return b.rating - a.rating;
         default:
-          return b.relevance - a.relevance || Number(isNobar(b.listing, now)) - Number(isNobar(a.listing, now)) || freshRank(b) - freshRank(a);
+          return b.h.relevance - a.h.relevance || b.nobar - a.nobar || b.fresh - a.fresh;
       }
     });
+    for (let i = 0; i < keyed.length; i++) hits[i] = keyed[i]!.h;
     return { hits, notDeliverable, total: hits.length };
   }
 
