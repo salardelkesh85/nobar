@@ -1,11 +1,11 @@
 "use client";
 
 import { cityName, currentMonth, inSeason, isPeak, PRODUCE_TYPES, SHOPS, type SearchParams, type Shop } from "@nobar/demo";
-import { Skeleton } from "@nobar/ui";
+import { LogoMark, Skeleton } from "@nobar/ui";
 import { ArrowLeft, BadgeCheck, MapPin, Scale, ShieldCheck, Sprout, Star, Truck, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ListingRail } from "@/components/listing-card";
+import { ListingCard, ListingRail } from "@/components/listing-card";
 import { Photo } from "@/components/photo";
 import { type Promo, PromoCarousel } from "@/components/promo-carousel";
 import { Recommendations } from "@/components/recommendations";
@@ -17,7 +17,7 @@ import { useStore } from "@/lib/store";
 const RAIL = 12;
 const fa = (n: number) => n.toLocaleString("fa-IR");
 
-function Section({ title, sub, href, tone, children }: { title: string; sub?: string; href?: string; tone?: "nobar" | "brand"; children: ReactNode }) {
+function Section({ title, sub, href, tone, children }: { title: string; sub?: string; href?: string; tone?: "brand"; children: ReactNode }) {
   return (
     <section className={tone ? `nx-section nx-section-${tone}` : "nx-section"}>
       <div className="nx-section-head">
@@ -37,7 +37,7 @@ function Section({ title, sub, href, tone, children }: { title: string; sub?: st
 }
 
 /** One row of products from the catalog (the API in API mode, the demo data otherwise). */
-function ProductRow(props: { params: SearchParams; title: string; sub?: string; href: string; tone?: "nobar" | "brand" }) {
+function ProductRow(props: { params: SearchParams; title: string; sub?: string; href: string; tone?: "brand" }) {
   const { result, loading } = useCatalogSearch(props.params, { pageSize: RAIL });
   const hits = result.hits.slice(0, RAIL);
   if (!loading && !hits.length) return null;
@@ -53,6 +53,57 @@ function ProductRow(props: { params: SearchParams; title: string; sub?: string; 
         <ListingRail hits={hits} />
       )}
     </Section>
+  );
+}
+
+/**
+ * The "fresh nobars" strip: a red frame with an intro block, joined product cards and a "see all" card that fills
+ * the remaining width. Only real first-harvest listings appear; no countdown or discount is shown because Nobar has none.
+ */
+function NobarStrip({ params }: { params: SearchParams }) {
+  const { result, loading } = useCatalogSearch(params, { pageSize: RAIL });
+  const hits = result.hits.slice(0, RAIL);
+  if (!loading && !hits.length) return null;
+  return (
+    <section className="nx-amazing" aria-labelledby="nx-amazing-title">
+      <ul className="nx-amazing-rail">
+        <li className="nx-amazing-intro">
+          <LogoMark className="nx-amazing-mark" />
+          <h2 id="nx-amazing-title" className="nx-amazing-title">
+            نوبرهای
+            <br />
+            تازه
+          </h2>
+          <p className="nx-amazing-sub">اولین برداشت‌های فصل</p>
+          <Link href="/search/?nobar=1" className="nx-amazing-all">
+            مشاهده همه <ArrowLeft className="size-4" aria-hidden />
+          </Link>
+        </li>
+        {loading
+          ? Array.from({ length: 4 }, (_, i) => (
+              <li key={i} className="nx-amazing-item">
+                <Skeleton className="h-full min-h-72 w-full rounded-none" />
+              </li>
+            ))
+          : hits.map((h) => (
+              <li key={h.listing.id} className="nx-amazing-item">
+                <ListingCard hit={h} variant="row" />
+              </li>
+            ))}
+        <li className="nx-amazing-end">
+          <Link
+            href="/search/?nobar=1"
+            className="nx-amazing-end-link"
+            style={{ backgroundImage: `linear-gradient(0deg, rgb(20 10 14 / 0.72), rgb(20 10 14 / 0.25)), url(${bannerSrc("banner-pomegranate")})` }}
+          >
+            <span className="nx-amazing-end-icon" aria-hidden>
+              <ArrowLeft className="size-6" />
+            </span>
+            همه‌ی نوبرهای فصل
+          </Link>
+        </li>
+      </ul>
+    </section>
   );
 }
 
@@ -105,7 +156,7 @@ export default function HomePage() {
         </Link>
       </nav>
 
-      <ProductRow params={{ dest, nobarOnly: true, sort: "newest" }} title="نوبرهای تازه" sub="اولین برداشت‌های فصل، به محض رسیدن" href="/search/?nobar=1" tone="nobar" />
+      <NobarStrip params={{ dest, nobarOnly: true, sort: "newest" }} />
 
       <ul className="nx-values" aria-label="چرا نوبر">
         <li>
