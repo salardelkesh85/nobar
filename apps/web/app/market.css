@@ -789,19 +789,6 @@ body.nx {
   font-size: 12.5px;
   font-weight: 800;
 }
-.nx-section-nobar {
-  background: linear-gradient(180deg, var(--nobar-solid) 0, var(--nobar-solid) 92px, var(--surface) 92px);
-}
-.nx-section-nobar .nx-section-title,
-.nx-section-nobar .nx-section-more {
-  color: #fff;
-}
-.nx-section-nobar .nx-section-sub {
-  color: rgb(255 255 255 / 0.85);
-}
-.nx-section-nobar .nx-card {
-  box-shadow: 0 1px 2px rgb(16 24 20 / 0.08), 0 0 0 1px var(--line);
-}
 .nx-section-brand {
   background: linear-gradient(180deg, var(--brand-soft) 0, var(--brand-soft) 92px, var(--surface) 92px);
 }
@@ -1459,4 +1446,151 @@ body.nx {
   color: var(--ink-soft);
   font-size: 13px;
   font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- fresh nobars strip */
+
+.nx-amazing {
+  padding: 12px 0;
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 140% at 100% 0, rgb(255 255 255 / 0.14) 0, transparent 55%),
+    var(--nobar-solid);
+}
+.nx-amazing-rail {
+  display: flex;
+  gap: 2px;
+  padding-inline: 12px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 12px;
+  scrollbar-width: none;
+}
+.nx-amazing-rail::-webkit-scrollbar {
+  display: none;
+}
+.nx-amazing-intro {
+  display: flex;
+  flex: 0 0 116px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-inline-end: 8px;
+  color: #fff;
+  text-align: center;
+  --leaf-a1: #fff;
+  --leaf-a2: #ffe3ea;
+  --leaf-b1: #ffd0db;
+  --leaf-b2: #ffb3c4;
+  --leaf-rib: #d81e4a;
+}
+.nx-amazing-mark {
+  width: 44px;
+  height: 44px;
+}
+.nx .nx-amazing-title {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.nx-amazing-sub {
+  color: rgb(255 255 255 / 0.9);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+.nx-amazing-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.nx-amazing-item {
+  display: flex;
+  flex: 0 0 156px;
+  scroll-snap-align: start;
+}
+.nx-amazing-item > * {
+  flex: 1;
+}
+.nx-amazing .nx-card {
+  border-radius: 0;
+  box-shadow: none;
+}
+.nx-amazing-intro + .nx-amazing-item .nx-card,
+.nx-amazing-intro + .nx-amazing-item > * {
+  border-start-start-radius: 12px;
+  border-end-start-radius: 12px;
+}
+.nx-amazing-end {
+  display: flex;
+  flex: 1 0 140px;
+  scroll-snap-align: start;
+}
+.nx-amazing-end-link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  border-start-end-radius: 12px;
+  border-end-end-radius: 12px;
+  background-color: #3a1520;
+  background-position: center;
+  background-size: cover;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+.nx-amazing-end-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--nobar-solid);
+  transition: transform 160ms ease;
+}
+@media (hover: hover) {
+  .nx-amazing-end-link:hover .nx-amazing-end-icon {
+    transform: translateX(-4px);
+  }
+}
+@media (min-width: 768px) {
+  .nx-amazing {
+    padding: 16px 0;
+  }
+  .nx-amazing-rail {
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
+  }
+  .nx-amazing-intro {
+    flex-basis: 150px;
+    margin-inline-end: 12px;
+  }
+  .nx-amazing-mark {
+    width: 56px;
+    height: 56px;
+  }
+  .nx .nx-amazing-title {
+    font-size: 28px;
+  }
+  .nx-amazing-sub {
+    font-size: 12.5px;
+  }
+  .nx-amazing-item {
+    flex-basis: 196px;
+  }
+  .nx-amazing-end {
+    flex-basis: 180px;
+  }
 }
