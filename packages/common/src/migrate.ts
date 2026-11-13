@@ -48,10 +48,14 @@ export async function migrate(db: Database, migrations: Migration[], log: Logger
   const applied = new Set((await db.query<{ name: string }>("select name from _migrations")).map((r) => r.name));
   for (const m of migrations) {
     if (applied.has(m.name)) continue;
-    await db.tx(async (sql) => {
+    // several replicas may start together: one applies the migration, the others wait and then skip it
+    const ran = await db.tx(async (sql) => {
+      await sql.query("select pg_advisory_xact_lock(7226001)");
+      if ((await sql.query("select 1 from _migrations where name = $1", [m.name])).length) return false;
       await sql.exec(m.sql);
       await sql.query("insert into _migrations (name) values ($1)", [m.name]);
+      return true;
     });
-    log.info({ migration: m.name }, "migration applied");
+    if (ran) log.info({ migration: m.name }, "migration applied");
   }
 }

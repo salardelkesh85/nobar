@@ -3,9 +3,12 @@ import { formatFaNumber } from "@nobar/fa";
 import { Badge, Card, RelativeDay, Stat, Toman } from "@nobar/ui";
 import { Bot } from "lucide-react";
 import Link from "next/link";
+import { ApiHome } from "@/components/api-pages";
 import { Table } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 export default function AdminHome() {
+  if (API_URL) return <ApiHome />;
   const live = SHOP_ORDERS.filter((o) => !["REJECTED", "EXPIRED", "CANCELLED"].includes(o.status));
   const gmv = live.reduce((s, o) => s + itemsTotal(o), 0);
   const commission = live.filter((o) => o.status === "COMPLETED").reduce((s, o) => s + commissionOf(o), 0);

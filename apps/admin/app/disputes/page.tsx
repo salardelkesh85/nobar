@@ -5,12 +5,18 @@ import { formatFaNumber, formatToman, toEnDigits } from "@nobar/fa";
 import { Badge, Button, Card, Input, RelativeDay, Toman } from "@nobar/ui";
 import { Image as ImageIcon } from "lucide-react";
 import { useState } from "react";
+import { ApiDisputes } from "@/components/api-pages";
 import { useDecisions } from "@/components/decisions";
 import { useToast } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 type D = { refundRial: number; note: string };
 
 export default function DisputesPage() {
+  return API_URL ? <ApiDisputes /> : <DemoDisputesPage />;
+}
+
+function DemoDisputesPage() {
   const [decisions, decide] = useDecisions<D>("admin_disputes");
   const toast = useToast();
   const [amounts, setAmounts] = useState<Record<string, string>>({});

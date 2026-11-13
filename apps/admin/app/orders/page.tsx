@@ -1,11 +1,14 @@
 import { cityName, commissionOf, itemsTotal, METHOD_FA, SHOP_ORDERS, SHOP_ORDER_STATUS_FA, SHOP_ORDER_TONE, shopById } from "@nobar/demo";
 import { Badge, JalaliDate, Toman } from "@nobar/ui";
 import type { Metadata } from "next";
+import { ApiOrders } from "@/components/api-pages";
 import { Table } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 export const metadata: Metadata = { title: "سفارش‌ها" };
 
 export default function OrdersPage() {
+  if (API_URL) return <ApiOrders />;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-black">سفارش‌ها</h1>

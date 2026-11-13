@@ -1,0 +1,12 @@
+{{- if .Values.grafanaDashboard.enabled }}
+# Picked up by the Grafana dashboard sidecar (kube-prometheus-stack) through its label.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nobar-api.name" . }}-dashboard
+  labels: {{- include "nobar-api.labels" . | nindent 4 }}
+    {{- toYaml .Values.grafanaDashboard.labels | nindent 4 }}
+data:
+  nobar-api.json: |-
+{{ .Files.Get "files/dashboard.json" | indent 4 }}
+{{- end }}

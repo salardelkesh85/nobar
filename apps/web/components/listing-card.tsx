@@ -1,8 +1,8 @@
-import { cityName, isNobar, minPricePerKg, type SearchHit } from "@nobar/demo";
+import { isNobar, minPricePerKg, type SearchHit } from "@nobar/demo";
 import { cn, Toman } from "@nobar/ui";
-import { BadgeCheck, MapPin, Star } from "lucide-react";
+import { Star, Truck } from "lucide-react";
 import Link from "next/link";
-import { CompareToggle, FavoriteToggle, QuickAdd } from "./actions";
+import { FavoriteToggle, QuickAdd } from "./actions";
 import { Photo } from "./photo";
 
 const FRESH_LABEL: Record<string, string> = {
@@ -12,67 +12,80 @@ const FRESH_LABEL: Record<string, string> = {
   PREORDER: "پیش‌فروش",
   NOT_FRESH: "خارج از تازگی",
 };
-const FRESH_DOT: Record<string, string> = {
-  FRESH_PICKED: "bg-brand",
-  FRESH: "bg-brand",
-  GOOD: "bg-saffron",
-  PREORDER: "bg-ink-soft",
-  NOT_FRESH: "bg-danger",
-};
 
+const fa = (n: number) => n.toLocaleString("fa-IR");
+
+/**
+ * Product card used in every grid and rail. The headline price is the landed price per kilo for the buyer's
+ * city (goods plus delivery), Nobar's honest comparison number; the goods-only price is shown beside it.
+ */
 export function ListingCard({ hit, variant = "grid" }: { hit: SearchHit; variant?: "grid" | "row" }) {
   const { listing: l, shop, type, freshness, offer } = hit;
-  const perKg = minPricePerKg(l);
+  const goodsPerKg = minPricePerKg(l);
   const firstPkg = l.packages[0]!;
+  const eta = offer.delivery.etaMaxDays;
   return (
-    <article className={cn("nobar-product-card group relative flex h-full flex-col", variant === "row" ? "nobar-product-card-row w-56 shrink-0 sm:w-60" : "nobar-product-card-grid")}>
-      <div className="nobar-product-visual">
-        <Link href={"/l/" + l.id} aria-label={l.title} className="nobar-product-image-link block">
-          <Photo kind={type.id} alt="" fallback={{ emoji: type.emoji, hue: type.hue }} className="nobar-product-photo aspect-square w-full" />
-        </Link>
-        <span className="nobar-fresh-badge">
-          <span className={cn("size-1.5 rounded-full", FRESH_DOT[freshness.badge])} /> {FRESH_LABEL[freshness.badge]}
-        </span>
-        {isNobar(l) ? <span className="nobar-product-nobar-badge">نوبر شد!</span> : null}
-        <div className="nobar-product-actions">
-          <FavoriteToggle listingId={l.id} className="nobar-icon-action" />
-          {variant === "grid" ? <CompareToggle listingId={l.id} label={false} className="nobar-icon-action" /> : null}
+    <article className={cn("nx-card", variant === "row" && "nx-card-row")}>
+      <div className="nx-card-media">
+        <Photo kind={type.id} alt="" fallback={{ emoji: type.emoji, hue: type.hue }} sizes="(max-width: 640px) 50vw, 240px" className="nx-card-photo" />
+        <div className="nx-card-badges">
+          {isNobar(l) ? <span className="nx-badge nx-badge-nobar">نوبر</span> : null}
+          <span className={cn("nx-badge", freshness.badge === "FRESH_PICKED" || freshness.badge === "FRESH" ? "nx-badge-fresh" : "nx-badge-muted")}>{FRESH_LABEL[freshness.badge]}</span>
         </div>
-        <QuickAdd listingId={l.id} packageId={firstPkg.id} label={firstPkg.label} className="nobar-quick-add" />
+        <FavoriteToggle listingId={l.id} className="nx-card-fav" />
       </div>
 
-      <div className="nobar-product-info">
-        <div className="flex items-center justify-between gap-2">
-          <span className="nobar-product-shop"><BadgeCheck className="size-3.5 shrink-0" /> <span className="truncate">{shop.name}</span></span>
-          <span className="nobar-product-rating"><Star className="size-3 fill-current" /> {shop.ratingAvg.toLocaleString("fa-IR")}</span>
-        </div>
-        <h3 className="nobar-product-title">
-          <Link href={"/l/" + l.id} className="after:absolute after:inset-0">{l.title}</Link>
+      <div className="nx-card-body">
+        <h3 className="nx-card-title">
+          <Link href={"/l/" + l.id} className="nx-card-link">
+            {l.title}
+          </Link>
         </h3>
-        <p className="nobar-product-origin"><MapPin className="size-3 shrink-0" /> {cityName(l.originCityId)} <span>·</span> ارسال به مقصد انتخابی</p>
-      </div>
+        <p className="nx-card-meta">
+          <span className="nx-card-shop">{shop.name}</span>
+          {shop.ratingCount ? (
+            <span className="nx-card-rating">
+              <Star className="size-3 fill-current" aria-hidden /> {shop.ratingAvg.toLocaleString("fa-IR")}
+            </span>
+          ) : null}
+        </p>
+        <p className="nx-card-eta">
+          <Truck className="size-3.5" aria-hidden /> {eta === 0 ? "رسیدن امروز" : `رسیدن تا ${fa(eta)} روز`}
+        </p>
 
-      <div className="nobar-product-price">
-        <div className="flex items-baseline justify-end gap-1">
-          <Toman rial={perKg ?? firstPkg.priceRial} unit={false} className="text-lg font-black tracking-tight text-ink" />
-          <span className="text-[10px] text-ink-soft">تومان</span>
+        <div className="nx-card-foot">
+          <div className="nx-card-price">
+            <p className="nx-card-price-main">
+              <Toman rial={offer.landedPerKgRial} unit={false} />
+              <span>تومان</span>
+            </p>
+            <p className="nx-card-price-note">{goodsPerKg ? "هر کیلو، با ارسال" : firstPkg.label}</p>
+          </div>
+          <QuickAdd listingId={l.id} packageId={firstPkg.id} label={firstPkg.label} className="nx-card-add" />
         </div>
-        <p className="text-[10px] text-ink-soft">{perKg ? "قیمت هر کیلو" : firstPkg.label}</p>
-        {variant === "grid" ? (
-          <p className="nobar-landed-price">
-            <span>با ارسال تا مقصد</span>
-            <strong><Toman rial={offer.landedPerKgRial} unit={false} /> <small>تومان / کیلو</small></strong>
-          </p>
-        ) : null}
       </div>
     </article>
   );
 }
 
 export function ListingGrid({ hits, className }: { hits: SearchHit[]; className?: string }) {
-  return <div className={cn("nobar-product-grid grid grid-cols-2 overflow-hidden rounded-2xl border border-line bg-surface simple:grid-cols-1 sm:grid-cols-3 sm:simple:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5", className)}>{hits.map((h) => <ListingCard key={h.listing.id} hit={h} />)}</div>;
+  return (
+    <div className={cn("nx-grid", className)}>
+      {hits.map((h) => (
+        <ListingCard key={h.listing.id} hit={h} />
+      ))}
+    </div>
+  );
 }
 
 export function ListingRail({ hits }: { hits: SearchHit[] }) {
-  return <ul className="nobar-product-rail flex snap-x overflow-x-auto scrollbar-none">{hits.map((h) => <li key={h.listing.id} className="nobar-product-rail-item snap-start"><ListingCard hit={h} variant="row" /></li>)}</ul>;
+  return (
+    <ul className="nx-rail">
+      {hits.map((h) => (
+        <li key={h.listing.id} className="nx-rail-item">
+          <ListingCard hit={h} variant="row" />
+        </li>
+      ))}
+    </ul>
+  );
 }

@@ -1,35 +1,40 @@
 # Nobar v1 readiness
 
-This file distinguishes the published static demo from a release that can accept real orders.
+Version 1.0.0 is the first release that can run a real market. This page separates what the software does and how
+it is proven, from what an operator still has to do before the first real order.
 
-## Current status
+## Software (1.0.0)
 
-| Area | Status | Evidence / limitation |
+| Area | Status | Evidence |
 | --- | --- | --- |
-| Buyer UI | Demo-ready | Responsive storefront, account and checkout screens are published on Pages and covered by route/interaction checks. |
-| Identity/profile/addresses | API-connected | OTP, HttpOnly-cookie session restoration/rotation, logout, profile and address CRUD work against NestJS/PGlite when `NEXT_PUBLIC_API_URL` is configured. Cookie mutations validate the browser Origin. |
-| Catalog search/suggestions | API-connected | Search results, destination, filters, sorting and keyboard suggestions use the public catalog API in API mode. API errors never silently fall back to demo results. |
-| Product/shop/produce/origin detail | API-connected | Detail data, destination-aware delivery and related catalog results come from the API in API mode. Loading, retry and failure states are explicit; failures do not fall back to demo catalog data. Reviews remain demo-only and are hidden in API mode. |
-| Cart | API-connected | Authenticated server cart supports add/set/remove/clear, groups by seller, revalidates catalog price/stock/freshness/delivery on every read, and requires idempotency keys for additive writes. |
-| Checkout/order | API-connected | `POST /v1/checkouts` snapshots the address and prices, reserves stock transactionally per seller, creates pending orders, clears the cart only after commit, and safely replays idempotent requests. Expired reservations are released. |
-| Payment | Demo only | Browser checkout and simulated payment remain. Server-side payment verification and callback handling are still pending. |
-| Seller/admin actions | Demo only | Panels do not write to authenticated backend endpoints. |
-| Backend hosting | Not configured | GitHub Pages only hosts static frontends. A database-backed API, secrets, SMS provider and approved CORS origin need a separate environment. |
+| Sign-in, sessions, profile, addresses | Done | Phone OTP; HttpOnly cookies with rotation and reuse detection; Origin checks on cookie writes (`identity.test.ts`) |
+| Catalog, search, comparison | Done | Freshness and delivery rules shared with the demo (`catalog.test.ts`); word index, p95 < 300 ms for text and filtered searches on 100k listings (`docs/performance.md`); paged results |
+| Product and shop pages | Done | Rendered by the store server for any listing or shop, including ones created after the build; real 404 for unknown ones (stack test) |
+| Cart and checkout | Done | Stock reserved under row locks, idempotent retries, no overselling under parallel checkouts (`order.test.ts`) |
+| Payment and escrow | Done | ZarinPal verified server to server and booked once; cancelled, failed, expired and late payments handled; ledger always balanced (`lifecycle.test.ts`, `providers.test.ts`, stack test) |
+| Orders, disputes, payouts | Done | Accept / reject / ship / deliver, complaint window, partial refunds, timeouts, settlement, payouts (`lifecycle.test.ts`) |
+| Seller panel | Done | Onboarding with encrypted KYC, listings, stock and prices, orders, payouts, reviews, copilot (`seller.test.ts`, browser checks) |
+| Admin panel | Done | KYC, moderation, disputes, orders, payouts, commission, produce data, audit, risk signals (browser checks) |
+| Reviews, questions, notifications | Done | Verified reviews with staff approval; Q&A; in-app notices and Melipayamak SMS (`review.test.ts`, stack test) |
+| Assistant, recommendations | Done | Read-only tools, grounding check, confirmed proposals, audit log; 40 Persian evals (`assistant*.test.ts`, `services/ai/evals`) |
+| Production start-up | Done | Refuses unsafe configuration; seeds categories, produce types and commission rates (`startup.test.ts`) |
+| Deployment | Done | Compose stack built and tested in production mode on every CI run (`infra/compose/ci/smoke.mjs`); Helm chart rendered in CI |
+| Monitoring | Done | Metrics, SLO alerts, dashboard, runbooks (`docs/runbooks`) |
+| Security | Done for 1.0 | `docs/security-review.md`: fixed items, open items |
 
-## Gate for the first real beta
+## Before the first real order (operator)
 
-The first real beta is ready only when all of these are green:
+These need the owner's accounts and cannot be done in the repository:
 
-1. ~~Durable HttpOnly session flow survives reloads and has CSRF/CORS coverage.~~ Completed.
-2. ~~Listing, shop, produce and origin pages use API data and handle loading, empty and failure states.~~ Completed.
-3. ~~Server cart and checkout reserve stock transactionally; an idempotency key returns the same checkout on retry and parallel requests cannot oversell.~~ Completed for authenticated checkout and per-seller orders.
-4. Fake payment is verified server-side; failures and expiry release reservations; orders persist and sellers can accept or reject them.
-5. One end-to-end test covers OTP → search → two-seller cart → checkout → fake payment → seller decisions, plus duplicate callback and concurrent-stock tests.
-6. API and PostgreSQL are deployed with secrets, migrations, backups, health checks, logs and monitoring. Frontend builds use the deployed API URL.
+1. A server (or cluster) and a domain; follow [infra/compose/README.md](../infra/compose/README.md).
+2. ZarinPal merchant ID: pay one small real order and check it on the admin finance page. Refunds go to the buyer's
+   in-app wallet; returning money to a card is done in the ZarinPal panel.
+3. Melipayamak panel: sign in once with a real phone (the code must arrive); optionally register an OTP pattern.
+4. Confirm the produce-type freshness numbers in the admin panel (they start as "needs review").
+5. Confirm or change the commission rates (10% overall, citrus 9%, dried fruit and dates 12%).
+6. Copy backups off the server and try one restore.
 
-Until these gates pass, call the public site a demo, not a production marketplace. A calendar release date depends on the hosting/SMS/payment choices; engineering progress is reported against these gates rather than an unsupported date.
+## Not in 1.0
 
-## Next implementation order
-
-1. Fake payment verification and order lifecycle, then seller acceptance.
-2. Deployment and production-readiness checks.
+Courier and delivery slots, a second staff role and second factor, demand forecast for sellers, semantic search with
+embeddings, a hosted-model adapter, load tests against a deployed environment. See [roadmap.md](roadmap.md).

@@ -85,6 +85,8 @@ export interface OrderEventData {
   itemsTotalRial: number;
   deliveryFeeRial: number;
   totalRial: number;
+  /** what was bought (added later; older events do not have it) */
+  items?: Array<{ listingId: string; packageId: string; qty: number }>;
   reason?: string;
   /** who caused a cancellation: buyer, seller, system (timeout / payment failure) */
   cancelledBy?: "BUYER" | "SELLER" | "SYSTEM";

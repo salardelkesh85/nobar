@@ -181,6 +181,20 @@ export const AnswerSchema = z.object({ answer: z.string().trim().min(2).max(1000
 export const ReplySchema = z.object({ reply: z.string().trim().min(2).max(1000) });
 
 export const ReasonSchema = z.object({ reason: z.string().trim().min(2).max(300) });
+const MonthsSchema = z.array(z.number().int().min(1).max(12)).min(1).max(12);
+/** Staff edit of the numbers behind the freshness and delivery rules; sending needsReview=false confirms them. */
+export const ProduceTypeUpdateSchema = z
+  .object({
+    shelfLifeDays: z.number().int().min(1).max(365),
+    minShelfDaysOnArrival: z.number().int().min(0).max(365),
+    complaintWindowHours: z.number().int().min(1).max(720),
+    storage: z.enum(["AMBIENT", "COOL", "COLD"]),
+    months: MonthsSchema,
+    peakMonths: MonthsSchema,
+    needsReview: z.boolean(),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: "حداقل یک فیلد لازم است" });
 export const OptionalReasonSchema = z.object({ reason: z.string().trim().max(300).optional() });
 
 export const AssistantChatSchema = z.object({

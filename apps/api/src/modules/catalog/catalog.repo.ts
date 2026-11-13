@@ -194,22 +194,47 @@ export class CatalogRepo {
     await sql.query("update catalog.listings set stock_base = stock_base + $2, updated_at = now() where id = $1", [listingId, base]);
   }
 
+  /** No shops yet (the demo import runs only then). */
   async isEmpty(): Promise<boolean> {
-    const [row] = await this.db.query<{ n: number }>("select count(*)::int as n from catalog.categories");
+    const [row] = await this.db.query<{ n: number }>("select count(*)::int as n from catalog.shops");
     return (row?.n ?? 0) === 0;
+  }
+
+  /**
+   * Categories and produce types the market cannot work without (sellers pick a produce type for every
+   * listing). Adds the missing ones only: staff edits to existing rows are kept. Returns how many were added.
+   */
+  async importReference(categories: MarketData["categories"], types: MarketData["types"]): Promise<number> {
+    return this.db.tx(async (sql) => {
+      let added = 0;
+      for (const [i, c] of categories.entries()) {
+        const r = await sql.query("insert into catalog.categories (id, slug, name, emoji, art, position) values ($1, $2, $3, $4, $5, $6) on conflict (id) do nothing returning id", [c.id, c.slug, c.name, c.emoji, c.art, i]);
+        added += r.length;
+      }
+      for (const [i, t] of types.entries()) {
+        const r = await sql.query(
+          `insert into catalog.produce_types (id, slug, name, category_id, aliases, unit_kind, shelf_life_days, storage,
+             min_shelf_days_on_arrival, complaint_window_hours, months, peak_months, storage_tips, emoji, hue, needs_review, position)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) on conflict (id) do nothing returning id`,
+          [t.id, t.slug, t.name, t.categoryId, t.aliases, t.unitKind, t.shelfLifeDays, t.storage, t.minShelfDaysOnArrival, t.complaintWindowHours, t.months, t.peakMonths, t.storageTips, t.emoji, t.hue, t.needsReview, i],
+        );
+        added += r.length;
+      }
+      return added;
+    });
   }
 
   /** Imports a full catalog (the demo data in development) in one transaction. */
   async importAll(data: MarketData): Promise<void> {
     await this.db.tx(async (sql) => {
       for (const [i, c] of data.categories.entries()) {
-        await sql.query("insert into catalog.categories (id, slug, name, emoji, art, position) values ($1, $2, $3, $4, $5, $6)", [c.id, c.slug, c.name, c.emoji, c.art, i]);
+        await sql.query("insert into catalog.categories (id, slug, name, emoji, art, position) values ($1, $2, $3, $4, $5, $6) on conflict (id) do nothing", [c.id, c.slug, c.name, c.emoji, c.art, i]);
       }
       for (const [i, t] of data.types.entries()) {
         await sql.query(
           `insert into catalog.produce_types (id, slug, name, category_id, aliases, unit_kind, shelf_life_days, storage,
              min_shelf_days_on_arrival, complaint_window_hours, months, peak_months, storage_tips, emoji, hue, needs_review, position)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) on conflict (id) do nothing`,
           [t.id, t.slug, t.name, t.categoryId, t.aliases, t.unitKind, t.shelfLifeDays, t.storage, t.minShelfDaysOnArrival, t.complaintWindowHours, t.months, t.peakMonths, t.storageTips, t.emoji, t.hue, t.needsReview, i],
         );
       }

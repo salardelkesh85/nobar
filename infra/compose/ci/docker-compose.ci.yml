@@ -1,0 +1,19 @@
+# Stack test overlay (CI): the real stack in production mode, with stand-ins for ZarinPal and Melipayamak.
+#   docker compose -f docker-compose.yml -f ci/docker-compose.ci.yml up -d --build
+services:
+  stubs:
+    image: node:22-alpine
+    command: ["node", "/stubs.mjs"]
+    volumes: ["./ci/stubs.mjs:/stubs.mjs:ro"]
+    ports: ["8080:8080"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 2s
+      retries: 30
+
+  api:
+    environment:
+      ZARINPAL_BASE_URL: http://stubs:8080
+      MELIPAYAMAK_BASE_URL: http://stubs:8080
+    depends_on:
+      stubs: { condition: service_healthy }

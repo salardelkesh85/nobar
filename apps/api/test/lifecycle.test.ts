@@ -208,9 +208,15 @@ describe("money stays consistent", () => {
   it("pays out seller balances and keeps the books balanced", async () => {
     const sellerBalance = await balance(`seller:${listing.shopId}`);
     expect(sellerBalance).toBeGreaterThan(0);
+    expect((await call("GET", "/v1/admin/payouts", undefined, seller.cookie)).status).toBe(403);
+    const due = (await call("GET", "/v1/admin/payouts", undefined, admin.cookie)).body;
+    expect(due.pending.find((p: { shopId: string }) => p.shopId === listing.shopId).amountRial).toBe(sellerBalance);
     const run = await call("POST", "/v1/admin/payouts", undefined, admin.cookie, { "idempotency-key": key() });
     expect(run.body.find((p: { shopId: string }) => p.shopId === listing.shopId).amountRial).toBe(sellerBalance);
     expect(await balance(`seller:${listing.shopId}`)).toBe(0);
+    const after = (await call("GET", "/v1/admin/payouts", undefined, admin.cookie)).body;
+    expect(after.pending).toEqual([]);
+    expect(after.history[0]).toMatchObject({ shopId: listing.shopId, amountRial: sellerBalance, status: "PAID" });
     expect((await call("GET", "/v1/seller/balance", undefined, seller.cookie)).body[0].payouts[0].amountRial).toBe(sellerBalance);
 
     const t = (await call("GET", "/v1/admin/finance", undefined, admin.cookie)).body;
@@ -219,6 +225,24 @@ describe("money stays consistent", () => {
       "select txn_id from payment.ledger_entries group by txn_id having sum(case when direction = 'D' then amount_rial else 0 end) <> sum(case when direction = 'C' then amount_rial else 0 end)",
     );
     expect(unbalanced).toEqual([]);
+  });
+
+  it("flags a shop with many rejected and disputed orders, with reasons, and changes nothing", async () => {
+    expect((await call("GET", "/v1/admin/risk/shops", undefined, seller.cookie)).status).toBe(403);
+    // on top of the orders above, the shop turns down four more in a row
+    for (let i = 0; i < 4; i++) {
+      const { order } = await paidOrder();
+      expect((await call("POST", `/v1/seller/orders/${order.id}/reject`, { reason: "موجودی تمام شد" }, seller.cookie)).body.status).toBe("REJECTED");
+    }
+    const risk = (await call("GET", "/v1/admin/risk/shops", undefined, admin.cookie)).body;
+    const mine = risk.find((r: { shopId: string }) => r.shopId === listing.shopId);
+    expect(mine.orders).toBeGreaterThanOrEqual(5);
+    expect(mine.score).toBeGreaterThan(0);
+    expect(mine.reasons.length).toBeGreaterThan(0);
+    expect(mine.rejected).toBeGreaterThanOrEqual(5);
+    expect(mine.reasons.join(" ")).toContain("رد شده یا بی‌پاسخ مانده");
+    // still on the store: the list informs staff, it does not act
+    expect((await call("GET", `/v1/shops/${listing.shopId}`)).status).toBe(200);
   });
 
   it("lets staff change commission rules", async () => {

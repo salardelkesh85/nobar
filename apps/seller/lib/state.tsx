@@ -1,6 +1,6 @@
 "use client";
 
-import { IdentityApiError, IdentityClient, type OrderDto } from "@nobar/contracts";
+import { IdentityApiError, IdentityClient, type OrderDto, resolveApiUrl } from "@nobar/contracts";
 import { LISTINGS, PAYOUTS, SHOP_ORDERS, shopById, type Listing, type Payout, type Shop, type ShopOrder, type ShopOrderStatus } from "@nobar/demo";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
@@ -8,7 +8,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 export const SHOP_ID = "s1";
 
 /** Set at build/start time; unset (GitHub Pages) keeps the demo data. */
-export const API_URL = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, "") ?? "";
+export const API_URL = resolveApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
 type OrderPatch = Partial<Pick<ShopOrder, "status" | "trackingCode" | "shippedAt" | "deliveredAt">>;
 type ListingPatch = Partial<{ prices: Record<string, number>; stockBase: number; paused: boolean }>;

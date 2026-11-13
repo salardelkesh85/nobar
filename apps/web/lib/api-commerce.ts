@@ -70,6 +70,8 @@ export function useApiCart(client: IdentityClient, signedIn: boolean, dest: stri
     /** false until the first answer for this session (avoids flashing an empty cart) */
     loaded,
     items,
+    /** re-read the cart after something else changed it (a confirmed assistant proposal) */
+    refresh: async () => apply(await client.call<ServerCart>(`cart${q}`)),
     add: async (item: CartItem) => apply(await client.call<ServerCart>(`cart/items${q}`, { method: "POST", body: item, idempotencyKey: newIdempotencyKey() })),
     set: async (listingId: string, packageId: string, qty: number) => apply(await client.call<ServerCart>(`cart/items${q}`, { method: "PATCH", body: { listingId, packageId, qty } })),
     clear: async () => apply(await client.call<ServerCart>(`cart${q}`, { method: "DELETE" })),

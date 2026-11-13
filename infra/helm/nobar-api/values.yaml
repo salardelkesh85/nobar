@@ -1,0 +1,80 @@
+# Defaults are safe for staging; production overrides live in values-prod.yaml.
+image:
+  repository: ghcr.io/salardelkesh85/nobar-api
+  # CI publishes every main commit as <commit sha> and "latest". Staging follows "latest";
+  # production pins a commit sha in values-prod.yaml so a release is a reviewed git change.
+  tag: latest
+  pullPolicy: Always
+imagePullSecrets: []
+
+replicaCount: 2
+
+# Non-secret settings (see apps/api/README.md for the full list).
+config:
+  LOG_LEVEL: info
+  TRUST_PROXY: "true" # behind the ingress controller
+  API_PUBLIC_URL: https://api.nobar.example
+  WEB_URL: https://nobar.example
+  CORS_ORIGINS: https://nobar.example,https://seller.nobar.example,https://admin.nobar.example
+  SMS_PROVIDER: melipayamak
+  PAYMENT_PROVIDER: zarinpal
+  SEED_DEMO: "false"
+
+# Secret settings come from one existing Secret (create it with Sealed Secrets or External Secrets, never in git).
+# Required keys: OTP_SECRET, JWT_PRIVATE_JWK, KYC_KEY, INTERNAL_TOKEN, ADMIN_PHONES, ZARINPAL_MERCHANT_ID,
+#                MELIPAYAMAK_USERNAME, MELIPAYAMAK_PASSWORD, MELIPAYAMAK_FROM
+# Optional:      MELIPAYAMAK_OTP_BODY_ID, and DATABASE_URL when database.existingSecret is not used
+existingSecret: nobar-api
+
+# DATABASE_URL from a separate Secret, e.g. the "<cluster>-app" Secret that CloudNativePG creates (key "uri").
+database:
+  existingSecret: nobar-db-app
+  key: uri
+
+service:
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  host: api.nobar.example
+  tls:
+    enabled: true
+    secretName: nobar-api-tls
+    clusterIssuer: letsencrypt # cert-manager ClusterIssuer; empty = bring your own certificate
+
+resources:
+  requests: { cpu: 100m, memory: 256Mi }
+  limits: { memory: 512Mi }
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+networkPolicy:
+  enabled: true
+  # namespace of the ingress controller that may reach the API
+  ingressNamespace: ingress-nginx
+
+# Prometheus Operator ServiceMonitor for /metrics
+serviceMonitor:
+  enabled: false
+
+# PrometheusRule with SLO burn-rate and operational alerts (needs the Prometheus Operator CRDs)
+prometheusRule:
+  enabled: false
+  # the release label your Prometheus selects rules by (kube-prometheus-stack: its release name)
+  labels: {}
+  runbookBaseUrl: https://github.com/salardelkesh85/nobar/blob/main/docs/runbooks
+
+# Grafana dashboard as a ConfigMap for the dashboard sidecar
+grafanaDashboard:
+  enabled: false
+  labels:
+    grafana_dashboard: "1"

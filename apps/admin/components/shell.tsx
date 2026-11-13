@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AdminGate } from "@/components/admin-gate";
+import { AdminProvider, useAdminOptional } from "@/lib/api";
+import { API_URL } from "@/lib/config";
 import {
   createContext,
   useCallback,
@@ -26,25 +29,31 @@ import {
   type ReactNode,
 } from "react";
 
-const NAV = [
+const DEMO_COUNTS = {
+  kyc: KYC_QUEUE.length,
+  moderation: MODERATION_QUEUE.length,
+  disputes: DISPUTES.filter((d) => d.status === "AWAITING_STAFF").length,
+};
+
+const NAV: Array<{ href: string; label: string; icon: typeof LayoutDashboard; queue?: keyof typeof DEMO_COUNTS }> = [
   { href: "/", label: "پیشخوان", icon: LayoutDashboard },
   {
     href: "/kyc",
     label: "تأیید هویت غرفه‌ها",
     icon: BadgeCheck,
-    count: KYC_QUEUE.length,
+    queue: "kyc",
   },
   {
     href: "/moderation",
     label: "بررسی آگهی و نظر",
     icon: ShieldAlert,
-    count: MODERATION_QUEUE.length,
+    queue: "moderation",
   },
   {
     href: "/disputes",
     label: "داوری شکایت‌ها",
     icon: Gavel,
-    count: DISPUTES.filter((d) => d.status === "AWAITING_STAFF").length,
+    queue: "disputes",
   },
   { href: "/orders", label: "سفارش‌ها", icon: ClipboardList },
   { href: "/payouts", label: "تسویه‌ها", icon: Banknote },
@@ -57,8 +66,23 @@ const NAV = [
 const ToastCtx = createContext<(m: string) => void>(() => {});
 export const useToast = () => useContext(ToastCtx);
 
+/** Demo data on GitHub Pages; the signed-in staff member's real queues when NEXT_PUBLIC_API_URL is set. */
 export function Shell({ children }: { children: ReactNode }) {
+  return API_URL ? (
+    <AdminProvider>
+      <Frame>
+        <AdminGate>{children}</AdminGate>
+      </Frame>
+    </AdminProvider>
+  ) : (
+    <Frame>{children}</Frame>
+  );
+}
+
+function Frame({ children }: { children: ReactNode }) {
   const path = usePathname();
+  const admin = useAdminOptional();
+  const counts = admin ? admin.counts : DEMO_COUNTS;
   const [toast, setToast] = useState<string | null>(null);
   const show = useCallback((m: string) => {
     setToast(m);
@@ -73,15 +97,25 @@ export function Shell({ children }: { children: ReactNode }) {
         <aside className="studio-workspace-sidebar border-b border-line bg-surface p-3 lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-e">
           <div className="flex items-center justify-between lg:block">
             <Logo subtitle="پنل مدیریت" />
-            <span className="rounded-full bg-surface-2 px-3 py-1 text-xs lg:mt-4 lg:inline-block">
-              نگار · پشتیبانی
-            </span>
+            {admin ? (
+              admin.stage === "ready" ? (
+                <button type="button" onClick={() => void admin.signOut()} className="rounded-full bg-surface-2 px-3 py-1 text-xs lg:mt-4 lg:inline-block">
+                  {admin.user?.name ?? "پشتیبانی"} · خروج
+                </button>
+              ) : null
+            ) : (
+              <span className="rounded-full bg-surface-2 px-3 py-1 text-xs lg:mt-4 lg:inline-block">
+                نگار · پشتیبانی
+              </span>
+            )}
           </div>
           <nav
             aria-label="منوی مدیریت"
             className="mt-3 flex gap-1 overflow-x-auto scrollbar-none lg:mt-5 lg:flex-col"
           >
-            {NAV.map(({ href, label, icon: Icon, count }) => (
+            {NAV.map(({ href, label, icon: Icon, queue }) => {
+              const count = queue ? counts?.[queue] : 0;
+              return (
               <Link
                 key={href}
                 href={href}
@@ -101,7 +135,8 @@ export function Shell({ children }: { children: ReactNode }) {
                   </span>
                 ) : null}
               </Link>
-            ))}
+              );
+            })}
           </nav>
         </aside>
         <div className="studio-workspace-content">
@@ -112,9 +147,11 @@ export function Shell({ children }: { children: ReactNode }) {
                 {NAV.find((n) => active(n.href))?.label ?? "مدیریت بازار"}
               </strong>
             </div>
-            <span className="studio-demo-badge">
-              <span /> محیط نمایشی
-            </span>
+            {admin ? null : (
+              <span className="studio-demo-badge">
+                <span /> محیط نمایشی
+              </span>
+            )}
             <a
               href={
                 process.env.NEXT_PUBLIC_STORE_URL ?? "http://localhost:3000/"

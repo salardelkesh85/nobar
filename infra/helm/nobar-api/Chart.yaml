@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nobar-api
+description: Nobar backend (one NestJS app, a module per bounded context)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

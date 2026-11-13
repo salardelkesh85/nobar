@@ -1,0 +1,92 @@
+{{- if .Values.prometheusRule.enabled }}
+{{- $svc := printf "service=%q" "api" }}
+{{- $checkout := printf "%s,route=~%q" $svc "/v1/checkouts|/v1/checkouts/:id/pay|/v1/payments/callback" }}
+{{- $search := printf "%s,route=%q" $svc "/v1/search" }}
+{{- $runbooks := .Values.prometheusRule.runbookBaseUrl }}
+# SLOs (roadmap Phase 2): checkout availability 99.5%; 95% of searches within 300 ms.
+# Multi-window burn-rate alerts: page when the budget burns 14.4x too fast (1h and 5m), ticket at 6x (6h and 30m).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "nobar-api.name" . }}
+  labels: {{- include "nobar-api.labels" . | nindent 4 }}
+    {{- with .Values.prometheusRule.labels }}{{ toYaml . | nindent 4 }}{{ end }}
+spec:
+  groups:
+    - name: nobar-api-slo.recording
+      rules:
+        {{- range $w := list "5m" "30m" "1h" "6h" }}
+        - record: nobar:checkout_errors:ratio_rate{{ $w }}
+          expr: |
+            sum(rate(http_server_request_duration_seconds_count{ {{- $checkout }},status=~"5.."}[{{ $w }}]))
+            /
+            sum(rate(http_server_request_duration_seconds_count{ {{- $checkout }}}[{{ $w }}]))
+        - record: nobar:search_slow:ratio_rate{{ $w }}
+          expr: |
+            1 - (
+              sum(rate(http_server_request_duration_seconds_bucket{ {{- $search }},le="0.3"}[{{ $w }}]))
+              /
+              sum(rate(http_server_request_duration_seconds_count{ {{- $search }}}[{{ $w }}]))
+            )
+        {{- end }}
+    - name: nobar-api-slo.alerts
+      rules:
+        - alert: NobarCheckoutErrorBudgetFastBurn
+          expr: nobar:checkout_errors:ratio_rate1h > (14.4 * 0.005) and nobar:checkout_errors:ratio_rate5m > (14.4 * 0.005)
+          labels: { severity: page }
+          annotations:
+            summary: Checkout is failing; at this rate the monthly error budget is gone in about two days
+            runbook_url: {{ $runbooks }}/checkout-availability.md
+        - alert: NobarCheckoutErrorBudgetSlowBurn
+          expr: nobar:checkout_errors:ratio_rate6h > (6 * 0.005) and nobar:checkout_errors:ratio_rate30m > (6 * 0.005)
+          labels: { severity: ticket }
+          annotations:
+            summary: Checkout errors are eating the error budget about six times too fast
+            runbook_url: {{ $runbooks }}/checkout-availability.md
+        - alert: NobarSearchLatencyFastBurn
+          expr: nobar:search_slow:ratio_rate1h > (14.4 * 0.05) and nobar:search_slow:ratio_rate5m > (14.4 * 0.05)
+          labels: { severity: page }
+          annotations:
+            summary: Most searches take longer than 300 ms
+            runbook_url: {{ $runbooks }}/search-latency.md
+        - alert: NobarSearchLatencySlowBurn
+          expr: nobar:search_slow:ratio_rate6h > (6 * 0.05) and nobar:search_slow:ratio_rate30m > (6 * 0.05)
+          labels: { severity: ticket }
+          annotations:
+            summary: Too many searches take longer than 300 ms
+            runbook_url: {{ $runbooks }}/search-latency.md
+    - name: nobar-api.alerts
+      rules:
+        - alert: NobarApiDown
+          expr: sum(up{job={{ include "nobar-api.name" . | quote }}}) == 0
+          for: 2m
+          labels: { severity: page }
+          annotations:
+            summary: No API pod is answering the metrics scrape
+            runbook_url: {{ $runbooks }}/api-down.md
+        - alert: NobarOutboxBacklog
+          expr: max(nobar_outbox_pending{ {{- $svc }}}) > 100
+          for: 10m
+          labels: { severity: ticket }
+          annotations:
+            summary: Events are piling up in the outbox (notifications, recommendations and metrics lag)
+            runbook_url: {{ $runbooks }}/outbox-backlog.md
+        - alert: NobarPaymentFailuresHigh
+          expr: |
+            sum(increase(nobar_payments_total{ {{- $svc }},outcome="FAILED"}[30m])) > 10
+            and
+            sum(increase(nobar_payments_total{ {{- $svc }},outcome="FAILED"}[30m])) / sum(increase(nobar_payments_total{ {{- $svc }}}[30m])) > 0.3
+          labels: { severity: page }
+          annotations:
+            summary: More than 30% of gateway payments failed in the last 30 minutes
+            runbook_url: {{ $runbooks }}/payment-failures.md
+        - alert: NobarAssistantUnavailable
+          expr: |
+            sum(increase(nobar_assistant_turns_total{ {{- $svc }},outcome="model_unavailable"}[15m]))
+            / sum(increase(nobar_assistant_turns_total{ {{- $svc }}}[15m])) > 0.2
+          for: 10m
+          labels: { severity: ticket }
+          annotations:
+            summary: The assistant's model is failing; buyers are sent to normal search
+            runbook_url: {{ $runbooks }}/assistant-unavailable.md
+{{- end }}

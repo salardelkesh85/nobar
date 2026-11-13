@@ -50,6 +50,15 @@ export class CatalogService {
   }
 
   /** Loads the demo catalog into an empty database (development only). */
+  /** Adds missing categories and produce types (every start, also in production). */
+  async seedReference(categories: Parameters<CatalogRepo["importReference"]>[0], types: Parameters<CatalogRepo["importReference"]>[1]): Promise<void> {
+    const added = await this.repo.importReference(categories, types);
+    if (added) {
+      this.invalidate();
+      this.log.info({ added }, "catalog reference data added (categories, produce types)");
+    }
+  }
+
   async seedIfEmpty(load: () => Promise<Parameters<CatalogRepo["importAll"]>[0]>): Promise<boolean> {
     if (!(await this.repo.isEmpty())) return false;
     const data = await load();
@@ -219,12 +228,16 @@ export class CatalogService {
     };
   }
 
-  async search(p: SearchParams) {
+  /** Without `limit` every hit is returned (what the store expects today); with it, one page. `total` is always the full count. */
+  async search(p: SearchParams & { limit?: number; offset?: number }) {
+    const { limit, offset = 0, ...params } = p;
     const m = await this.market();
-    const r = m.search(p);
+    const r = m.search(params);
+    const page = limit === undefined ? r.hits : r.hits.slice(offset, offset + limit);
     return {
       total: r.total,
-      hits: r.hits.map((h) => ({
+      ...(limit === undefined ? {} : { limit, offset }),
+      hits: page.map((h) => ({
         listing: h.listing,
         shop: this.shopCard(m, h.shop),
         type: h.type,
@@ -233,7 +246,7 @@ export class CatalogService {
         relevance: h.relevance,
         isNobar: m.isNobar(h.listing),
       })),
-      notDeliverable: r.notDeliverable.map((x) => this.excludedView(m, x)),
+      notDeliverable: (limit === undefined ? r.notDeliverable : r.notDeliverable.slice(0, limit)).map((x) => this.excludedView(m, x)),
     };
   }
 

@@ -5,6 +5,7 @@ import { formatToman, toEnDigits } from "@nobar/fa";
 import { Button, Card, Field, Input, Select, Textarea } from "@nobar/ui";
 import { Camera, CircleCheck, ImagePlus, Mic, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { DraftButton } from "@/components/copilot";
 import { errorText, useSeller } from "@/lib/state";
 
 interface Draft {
@@ -34,7 +35,7 @@ const EMPTY: Draft = {
 const num = (s: string) => Number(toEnDigits(s).replace(/[^\d.]/g, ""));
 
 export default function NewProductPage() {
-  const { showToast, apiMode, client, reload } = useSeller();
+  const { showToast, apiMode, client, reload, shop } = useSeller();
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -59,7 +60,9 @@ export default function NewProductPage() {
   }, [draft]);
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
-  const stat = marketStat(draft.produceTypeId);
+  // demo numbers only on the demo site; in API mode the copilot's price guide works on saved listings
+  const stat = apiMode ? null : marketStat(draft.produceTypeId);
+  const harvestedDaysAgo = draft.harvestedAt ? Math.max(0, Math.round((Date.now() - new Date(`${draft.harvestedAt}T07:00:00+03:30`).getTime()) / 86_400_000)) : undefined;
 
   if (sent)
     return (
@@ -194,6 +197,25 @@ export default function NewProductPage() {
             <Input id="stock" inputMode="decimal" value={draft.stockKg ?? ""} onChange={(e) => set("stockKg", e.target.value)} />
           </Field>
         </div>
+        {apiMode ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-control border border-dashed border-line p-3 text-sm">
+            <span className="flex-1 text-ink-soft">باغبون از نوع، رقم، درجه و تاریخ برداشت یک عنوان و توضیح پیشنهاد می‌دهد. قیمت یا ادعایی اضافه نمی‌کند.</span>
+            <DraftButton<{ title: string; description: string }>
+              path="seller/copilot/listing-draft"
+              label="پیش‌نویس با باغبون"
+              body={{
+                produceTypeId: draft.produceTypeId,
+                grade: draft.grade,
+                originCityId: shop.cityId,
+                isOrganic: draft.organic,
+                ...(draft.variety.trim() ? { variety: draft.variety.trim() } : {}),
+                ...(harvestedDaysAgo === undefined ? {} : { harvestedDaysAgo }),
+                ...(draft.description.trim() ? { notes: draft.description.trim().slice(0, 300) } : {}),
+              }}
+              onDraft={(d) => setDraft((x) => ({ ...x, title: d.title, description: d.description }))}
+            />
+          </div>
+        ) : null}
         <Field label="توضیح کوتاه" htmlFor="desc">
           <Textarea id="desc" rows={3} value={draft.description} onChange={(e) => set("description", e.target.value)} />
         </Field>

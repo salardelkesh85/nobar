@@ -1,0 +1,70 @@
+# Release: pushing a tag vX.Y.Z builds the three images, scans them, publishes them to GHCR as
+# ghcr.io/<owner>/nobar-{api,web,edge}:X.Y.Z, and creates the GitHub release from that version's CHANGELOG section.
+# A server then runs: IMAGE_PREFIX=ghcr.io/<owner>/nobar NOBAR_VERSION=X.Y.Z docker compose pull && docker compose up -d
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  TRIVY: aquasec/trivy:0.58.0
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Version
+        id: v
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          grep -q "^## ${version} " CHANGELOG.md || { echo "CHANGELOG.md has no section for ${version}"; exit 1; }
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "prefix=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/nobar" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: |
+          p="${{ steps.v.outputs.prefix }}"; v="${{ steps.v.outputs.version }}"
+          docker build -f apps/api/Dockerfile -t "$p-api:$v" .
+          docker build -f apps/web/Dockerfile -t "$p-web:$v" .
+          docker build -f infra/compose/Dockerfile.edge -t "$p-edge:$v" .
+
+      - name: Scan for critical and high vulnerabilities
+        run: |
+          p="${{ steps.v.outputs.prefix }}"; v="${{ steps.v.outputs.version }}"
+          for app in api web edge; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY" image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$p-$app:$v"
+          done
+
+      - name: SBOMs
+        run: |
+          p="${{ steps.v.outputs.prefix }}"; v="${{ steps.v.outputs.version }}"
+          for app in api web edge; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/out" "$TRIVY" image --format cyclonedx --output "/out/sbom-$app-$v.cdx.json" "$p-$app:$v"
+          done
+
+      - name: Publish images
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          p="${{ steps.v.outputs.prefix }}"; v="${{ steps.v.outputs.version }}"
+          for app in api web edge; do
+            docker tag "$p-$app:$v" "$p-$app:latest"
+            docker push "$p-$app:$v"
+            docker push "$p-$app:latest"
+          done
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          v="${{ steps.v.outputs.version }}"
+          # this version's section of CHANGELOG.md, without its heading
+          awk -v v="$v" '$0 ~ "^## "v" " {on=1; next} /^## / && on {exit} on' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "Nobar $v" --notes-file notes.md sbom-*.cdx.json

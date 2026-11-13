@@ -3,8 +3,10 @@ import type { City, Province } from "./types";
 
 export { CITIES, PROVINCES };
 
-export const cityById = (id: string): City | undefined => CITIES.find((c) => c.id === id);
-export const provinceById = (id: string): Province | undefined => PROVINCES.find((p) => p.id === id);
+const CITY = new Map(CITIES.map((c) => [c.id, c]));
+const PROVINCE = new Map(PROVINCES.map((p) => [p.id, p]));
+export const cityById = (id: string): City | undefined => CITY.get(id);
+export const provinceById = (id: string): Province | undefined => PROVINCE.get(id);
 export const cityName = (id: string): string => cityById(id)?.name ?? id;
 export const provinceOfCity = (id: string): Province | undefined => {
   const c = cityById(id);

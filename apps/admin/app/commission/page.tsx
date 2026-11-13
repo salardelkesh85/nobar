@@ -2,11 +2,14 @@ import { COMMISSION_RULES } from "@nobar/demo";
 import { formatFaNumber } from "@nobar/fa";
 import { Card } from "@nobar/ui";
 import type { Metadata } from "next";
+import { ApiCommission } from "@/components/api-pages";
 import { Table } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 export const metadata: Metadata = { title: "کمیسیون" };
 
 export default function CommissionPage() {
+  if (API_URL) return <ApiCommission />;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-black">قاعده‌های کمیسیون</h1>

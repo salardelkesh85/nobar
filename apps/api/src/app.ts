@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { allowOrigins, every, JwtVerifier, type ServiceDefinition } from "@nobar/common";
 import { type ApiConfig, apiConfigSchema, assertProductionConfig, seedDemoEnabled } from "./config";
+import { AssistantModule } from "./modules/assistant/assistant.module";
+import { assistantMigrations } from "./modules/assistant/migrations";
 import { AuditModule } from "./modules/audit/audit.module";
 import { auditMigrations } from "./modules/audit/migrations";
 import { CatalogModule } from "./modules/catalog/catalog.module";
@@ -16,12 +18,14 @@ import { cartMigrations } from "./modules/cart/migrations";
 import { OrderModule } from "./modules/order/order.module";
 import { orderMigrations } from "./modules/order/migrations";
 import { FulfilmentService } from "./modules/order/fulfilment.service";
+import { OrderMetrics } from "./modules/order/order-metrics";
 import { paymentMigrations } from "./modules/payment/migrations";
 import { notificationMigrations } from "./modules/notification/migrations";
 import { NotificationModule } from "./modules/notification/notification.module";
 import { NotificationService } from "./modules/notification/notification.service";
 import { reviewMigrations } from "./modules/review/migrations";
 import { ReviewModule } from "./modules/review/review.module";
+import { recommendationMigrations, RecommendationModule, RecommendationService } from "./modules/recommendation/recommendation.module";
 import { ReviewService } from "./modules/review/review.service";
 import { PaymentService } from "./modules/payment/payment.service";
 
@@ -35,7 +39,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
   return {
     name: "api",
     configSchema: apiConfigSchema,
-    migrations: [...identityMigrations, ...auditMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations, ...paymentMigrations, ...reviewMigrations, ...notificationMigrations],
+    migrations: [...identityMigrations, ...auditMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations, ...paymentMigrations, ...reviewMigrations, ...notificationMigrations, ...assistantMigrations, ...recommendationMigrations],
     // the API verifies its own tokens with the identity module's keys (no JWKS round trip)
     async verifier({ config }) {
       assertProductionConfig(config);
@@ -44,25 +48,28 @@ export function apiService(): ServiceDefinition<ApiConfig> {
     },
     module: (deps) => ({
       module: ApiModule,
-      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), AuditModule, CatalogModule, CartModule, OrderModule, ReviewModule, NotificationModule],
+      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), AuditModule, CatalogModule, CartModule, OrderModule, ReviewModule, NotificationModule, AssistantModule, RecommendationModule],
     }),
     configure: ({ app, deps }) => allowOrigins(app, deps.config.CORS_ORIGINS.split(",")),
     async onStart({ app, deps }) {
       await app.get(NotificationService).subscribe(deps);
+      await app.get(RecommendationService).subscribe(deps);
+      await app.get(OrderMetrics).subscribe(deps);
+      // reference data every market needs, also in production: categories, produce types (their freshness
+      // numbers start as "needs review" for staff to confirm) and the kit's commission table, editable by staff
+      const demo = await import("@nobar/demo");
+      await app.get(CatalogService).seedReference(demo.CATEGORIES, demo.PRODUCE_TYPES);
+      const payments = app.get(PaymentService);
+      if (!(await payments.hasCommissionRules())) {
+        // packages/demo COMMISSION_RULES: 10% overall, citrus 9%, dried fruit and dates 12%
+        await payments.setCommissionRule("GLOBAL", null, 1000, "سراسری");
+        await payments.setCommissionRule("CATEGORY", "citrus", 900, "دسته: مرکبات");
+        await payments.setCommissionRule("CATEGORY", "dried", 1200, "دسته: خشکبار و خرما");
+      }
       if (seedDemoEnabled(deps.config)) {
-        // the same sample catalog as the static demo site, so both show the same shops and listings
-        await app.get(CatalogService).seedIfEmpty(async () => {
-          const demo = await import("@nobar/demo");
-          return { categories: demo.CATEGORIES, types: demo.PRODUCE_TYPES, shops: demo.SHOPS, listings: demo.LISTINGS };
-        });
-        await app.get(ReviewService).seed((await import("@nobar/demo")).REVIEWS);
-        const payments = app.get(PaymentService);
-        if (!(await payments.hasCommissionRules())) {
-          // the kit's commission table (packages/demo COMMISSION_RULES): 10% overall, citrus 9%, dried fruit and dates 12%
-          await payments.setCommissionRule("GLOBAL", null, 1000, "سراسری");
-          await payments.setCommissionRule("CATEGORY", "citrus", 900, "دسته: مرکبات");
-          await payments.setCommissionRule("CATEGORY", "dried", 1200, "دسته: خشکبار و خرما");
-        }
+        // the same sample shops and listings as the static demo site
+        await app.get(CatalogService).seedIfEmpty(async () => ({ categories: demo.CATEGORIES, types: demo.PRODUCE_TYPES, shops: demo.SHOPS, listings: demo.LISTINGS }));
+        await app.get(ReviewService).seed(demo.REVIEWS);
       }
       if (deps.config.ORDER_TIMER_SEC === 0) return;
       // acceptance deadlines, complaint windows, unpaid reservations, listings past their freshness

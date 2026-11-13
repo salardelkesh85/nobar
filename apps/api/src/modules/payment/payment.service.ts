@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { conflict, type Database, iso, type Sql, TOKENS } from "@nobar/common";
+import { conflict, type Database, iso, type Metrics, type Sql, TOKENS } from "@nobar/common";
 import { uuidv7 } from "@nobar/contracts";
 import type { ApiConfig } from "../../config";
 import { ACCOUNTS, balanceOf, type LedgerLine, postTransaction } from "./ledger";
@@ -35,7 +35,14 @@ export class PaymentService {
     @Inject(TOKENS.DB) private readonly db: Database,
     @Inject(TOKENS.CONFIG) private readonly config: ApiConfig,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
+    @Inject(TOKENS.METRICS) private readonly metrics: Metrics,
   ) {}
+
+  /** Called by the order module after the payment's transaction commits (so a rollback is never counted). */
+  recordOutcome(outcome: "SUCCEEDED" | "FAILED", amountRial: number): void {
+    this.metrics.counter("nobar_payments_total", "Gateway payments by outcome", ["provider", "outcome"]).inc({ provider: this.provider.name, outcome });
+    if (outcome === "SUCCEEDED") this.metrics.counter("nobar_payments_rial_total", "Rial received through the gateway", ["provider"]).inc({ provider: this.provider.name }, amountRial);
+  }
 
   // ---------- gateway
 
@@ -53,10 +60,10 @@ export class PaymentService {
     return { paymentId: id, redirectUrl };
   }
 
-  /** Looks up an attempt by its gateway authority (for the test gateway page). */
+  /** Looks up a test-gateway attempt by its authority (for the test gateway page; real gateways have their own page). */
   async byAuthority(authority: string): Promise<{ checkoutId: string; amountRial: number; status: string } | null> {
     const [row] = await this.db.query<{ checkout_id: string; amount_rial: number; status: string }>(
-      "select checkout_id, amount_rial, status from payment.payments where authority = $1",
+      "select checkout_id, amount_rial, status from payment.payments where authority = $1 and provider = 'fake'",
       [authority],
     );
     return row ? { checkoutId: row.checkout_id, amountRial: Number(row.amount_rial), status: row.status } : null;
@@ -187,6 +194,22 @@ export class PaymentService {
   }
 
   // ---------- payouts
+
+  /** Staff view: what each shop is owed now, and the payouts already made. */
+  async payoutOverview() {
+    const pending = await this.db.query<{ account: string; balance: number }>(
+      `select account, sum(case when direction = 'C' then amount_rial else -amount_rial end)::bigint as balance
+       from payment.ledger_entries where account like 'seller:%' group by account
+       having sum(case when direction = 'C' then amount_rial else -amount_rial end) > 0 order by account`,
+    );
+    const history = await this.db.query<{ id: string; shop_id: string; amount_rial: number; status: string; created_at: Date; paid_at: Date | null }>(
+      "select id, shop_id, amount_rial, status, created_at, paid_at from payment.payouts order by created_at desc, id desc limit 200",
+    );
+    return {
+      pending: pending.map((r) => ({ shopId: r.account.slice("seller:".length), amountRial: Number(r.balance) })),
+      history: history.map((p) => ({ id: p.id, shopId: p.shop_id, amountRial: Number(p.amount_rial), status: p.status, createdAt: iso(p.created_at), paidAt: p.paid_at ? iso(p.paid_at) : null })),
+    };
+  }
 
   /** Pays every positive seller balance in one batch (bank transfer itself is outside the system for now). */
   async runPayouts(adminId: string): Promise<Array<{ id: string; shopId: string; amountRial: number }>> {

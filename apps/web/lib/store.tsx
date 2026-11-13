@@ -45,6 +45,8 @@ interface Store {
   /** API mode: the server's revalidated cart groups (demo mode computes them in lib/cart.ts) */
   serverCart: CartGroup[];
   serverCartLoaded: boolean;
+  /** API mode: re-read the server cart */
+  refreshCart: () => Promise<void>;
   requestOtp: ReturnType<typeof useApiIdentity>["requestOtp"];
   verifyCode: ReturnType<typeof useApiIdentity>["verifyCode"];
   completeSignIn: ReturnType<typeof useApiIdentity>["completeSignIn"];
@@ -179,6 +181,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       api: identity.client,
       serverCart: serverCart.groups,
       serverCartLoaded: serverCart.loaded,
+      refreshCart: async () => { if (identity.apiMode && identity.user) await serverCart.refresh(); },
       cart: identity.apiMode ? serverCart.items : cart,
       addToCart: async (item) => {
         if (!identity.apiMode) {

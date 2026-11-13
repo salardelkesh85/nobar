@@ -38,9 +38,33 @@ export function jalaliSeason(date: Date | string = new Date()): Season {
 const dayKeyFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 
 /** Whole calendar days between two instants, counted in Tehran time (b − a). */
+// harvest dates repeat across a catalog: remember the Tehran day of each timestamp and string seen (bounded)
+const dayByMs = new Map<number, number>();
+const dayByText = new Map<string, number>();
+const dayOfMs = (ms: number): number => {
+  let day = dayByMs.get(ms);
+  if (day === undefined) {
+    if (dayByMs.size > 50_000) dayByMs.clear();
+    day = Date.parse(`${dayKeyFmt.format(new Date(ms))}T00:00:00Z`);
+    dayByMs.set(ms, day);
+  }
+  return day;
+};
+/** The Tehran calendar day of an instant, as the UTC midnight of that date (an opaque, comparable number). */
+export const tehranDayOf = (d: Date | string): number => {
+  if (typeof d !== "string") return dayOfMs(d.getTime());
+  let day = dayByText.get(d);
+  if (day === undefined) {
+    if (dayByText.size > 50_000) dayByText.clear();
+    day = dayOfMs(Date.parse(d));
+    dayByText.set(d, day);
+  }
+  return day;
+};
+const tehranDay = tehranDayOf;
+
 export function tehranDaysBetween(a: Date | string, b: Date | string): number {
-  const day = (d: Date | string) => Date.parse(`${dayKeyFmt.format(new Date(d))}T00:00:00Z`);
-  return Math.round((day(b) - day(a)) / 86_400_000);
+  return Math.round((tehranDay(b) - tehranDay(a)) / 86_400_000);
 }
 
 /** «امروز» · «دیروز» · «۳ روز پیش» · «فردا» · «۲ روز دیگر» */

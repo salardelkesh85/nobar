@@ -7,17 +7,42 @@ import { Check, Info, Mic, Scale, Send, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { apiErrorMessage } from "@/lib/api-commerce";
+import { askAssistant, TOOL_FA, type AssistantReply } from "@/lib/api-assistant";
 import { answer, type BotReply } from "@/lib/baghboon";
 import { useStore } from "@/lib/store";
 import { Photo } from "@/components/photo";
 
-type Msg = { id: number; from: "user" | "bot"; text?: string; reply?: BotReply; proposalState?: "pending" | "confirmed" | "declined" };
+/** API mode: the server's proposal id (confirmed through the API) and its plain product cards */
+type Reply = BotReply & { proposalId?: string; cards?: AssistantReply["productCards"] };
+type Msg = { id: number; from: "user" | "bot"; text?: string; reply?: Reply; proposalState?: "pending" | "confirmed" | "declined" };
+
+const fromApi = (r: AssistantReply): Reply => ({
+  text: r.message.split("\n").filter(Boolean),
+  cards: r.productCards,
+  ...(r.compareProduceTypeId ? { compareHref: `/compare?type=${r.compareProduceTypeId}` } : {}),
+  ...(r.basketProposal
+    ? {
+        proposalId: r.basketProposal.id,
+        proposal: {
+          id: r.basketProposal.id,
+          summary: r.basketProposal.summary,
+          items: r.basketProposal.items.map((i) => ({ listingId: i.listingId, packageId: i.packageId, qty: i.qty, title: i.title, label: i.label, priceRial: i.lineRial })),
+          itemsRial: r.basketProposal.itemsRial,
+          shippingRial: r.basketProposal.shippingRial,
+        },
+      }
+    : {}),
+});
 
 const EXAMPLES = ["سیب ترش برای کمپوت که تا کرج تازه برسه", "سبد میوه برای ۶ نفر با ۸۰۰ هزار تومن", "انار رو مقایسه کن", "الان چی فصلشه؟"];
 
 function Chat() {
   const params = useSearchParams();
-  const { dest, addToCart, showToast } = useStore();
+  const { dest, addToCart, showToast, apiMode, api, user, refreshCart } = useStore();
+  const [step, setStep] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const conversation = useRef<string | undefined>(undefined);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -31,6 +56,18 @@ function Chat() {
     setMsgs((m) => [...m, { id: ++idRef.current, from: "user", text: t }]);
     setInput("");
     setThinking(true);
+    if (apiMode) {
+      setStep(null);
+      askAssistant(api, dest, { message: t, ...(conversation.current ? { conversationId: conversation.current } : {}) }, (tool) => setStep(TOOL_FA[tool] ?? null))
+        .then((r) => {
+          conversation.current = r.conversationId;
+          const reply = fromApi(r);
+          setMsgs((m) => [...m, { id: ++idRef.current, from: "bot", reply, proposalState: reply.proposal ? "pending" : undefined }]);
+        })
+        .catch((e: unknown) => setMsgs((m) => [...m, { id: ++idRef.current, from: "bot", reply: { text: [apiErrorMessage(e)] } }]))
+        .finally(() => setThinking(false));
+      return;
+    }
     window.setTimeout(() => {
       const reply = answer(t, dest);
       setMsgs((m) => [...m, { id: ++idRef.current, from: "bot", reply, proposalState: reply.proposal ? "pending" : undefined }]);
@@ -40,7 +77,7 @@ function Chat() {
 
   useEffect(() => {
     const q = params.get("q");
-    if (q && !asked.current) {
+    if (q && !asked.current && !(apiMode && !user)) {
       asked.current = true;
       ask(q);
     }
@@ -66,11 +103,21 @@ function Chat() {
       </header>
       <p className="flex gap-2 rounded-control border border-dashed border-line bg-surface p-3 text-xs leading-6 text-ink-soft">
         <Info className="size-4 shrink-0 text-brand" aria-hidden />
-        نسخه‌ی نمایشی: پاسخ‌ها با قاعده‌های ساده ساخته می‌شود، نه مدل زبانی. قیمت، موجودی و زمان رسیدن فقط از داده‌ی غرفه‌ها خوانده می‌شود و هر تغییر در سبد با تأیید شماست.
+        {apiMode
+          ? "قیمت، موجودی و زمان رسیدن فقط از داده‌ی همین الان غرفه‌ها خوانده می‌شود و هر تغییر در سبد با تأیید شماست."
+          : "نسخه‌ی نمایشی: پاسخ‌ها با قاعده‌های ساده ساخته می‌شود، نه مدل زبانی. قیمت، موجودی و زمان رسیدن فقط از داده‌ی غرفه‌ها خوانده می‌شود و هر تغییر در سبد با تأیید شماست."}
       </p>
 
       <div className="min-h-[40vh] space-y-4" aria-live="polite">
-        {msgs.length === 0 ? (
+        {apiMode && !user ? (
+          <p className="rounded-control bg-surface-2 p-4 text-sm">
+            برای گفت‌وگو با باغبون{" "}
+            <Link href="/login?next=/baghboon" className="font-bold text-brand hover:underline">
+              وارد شوید
+            </Link>
+            ؛ سبد پیشنهادی به حساب شما اضافه می‌شود.
+          </p>
+        ) : msgs.length === 0 ? (
           <div className="space-y-3">
             <p className="font-bold">سلام! چه میوه یا سبزی‌ای لازم دارید؟ می‌توانید عادی بنویسید، مثلاً:</p>
             <div className="flex flex-wrap gap-2">
@@ -117,6 +164,21 @@ function Chat() {
                     ))}
                   </ul>
                 ) : null}
+                {m.reply!.cards?.length ? (
+                  <ul className="grid gap-2 sm:grid-cols-2">
+                    {m.reply!.cards.map((c) => (
+                      <li key={c.listingId}>
+                        <Link href={`/l/${c.listingId}`} className="block rounded-control border border-line p-3 text-sm hover:border-brand">
+                          <p className="line-clamp-1 font-bold">{c.title}</p>
+                          <p className="text-xs text-ink-soft">{c.shopName}</p>
+                          <p className="mt-1 text-xs">
+                            هر کیلو تا درِ خانه <Toman rial={c.landedPerKgRial} className="font-bold" /> · رسیدن تا {toFaDigits(c.arrivesWithinDays)} روز
+                          </p>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 {m.reply!.compareHref ? (
                   <ButtonLink href={m.reply!.compareHref} variant="secondary" size="sm">
                     <Scale className="size-4" aria-hidden />
@@ -147,7 +209,22 @@ function Chat() {
                     {m.proposalState === "pending" ? (
                       <div className="mt-3 flex gap-2">
                         <Button
+                          disabled={busy}
                           onClick={() => {
+                            if (m.reply!.proposalId) {
+                              // API mode: the server adds exactly what it proposed, once
+                              setBusy(true);
+                              api
+                                .call(`assistant/proposals/${m.reply!.proposalId}/confirm`, { method: "POST" })
+                                .then(async () => {
+                                  await refreshCart();
+                                  setProposal(m.id, "confirmed");
+                                  showToast("سبد پیشنهادی به سبد خرید اضافه شد.");
+                                })
+                                .catch((e: unknown) => showToast(apiErrorMessage(e)))
+                                .finally(() => setBusy(false));
+                              return;
+                            }
                             for (const it of m.reply!.proposal!.items) addToCart({ listingId: it.listingId, packageId: it.packageId, qty: it.qty });
                             setProposal(m.id, "confirmed");
                             showToast("سبد پیشنهادی به سبد خرید اضافه شد.");
@@ -178,7 +255,7 @@ function Chat() {
             </div>
           ),
         )}
-        {thinking ? <p className="text-end text-sm text-ink-soft">باغبون دارد می‌گردد…</p> : null}
+        {thinking ? <p className="text-end text-sm text-ink-soft">{step ?? "باغبون دارد می‌گردد…"}</p> : null}
         <div ref={endRef} />
       </div>
 
@@ -209,7 +286,7 @@ function Chat() {
         >
           <Mic className="size-5" />
         </button>
-        <button type="submit" className="grid size-11 place-items-center rounded-full bg-brand text-on-brand disabled:opacity-50" aria-label="فرستادن" disabled={!input.trim() || thinking}>
+        <button type="submit" className="grid size-11 place-items-center rounded-full bg-brand text-on-brand disabled:opacity-50" aria-label="فرستادن" disabled={!input.trim() || thinking || (apiMode && !user)}>
           <Send className="size-5 -scale-x-100" />
         </button>
       </form>

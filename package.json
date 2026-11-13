@@ -1,6 +1,7 @@
 {
   "name": "nobar",
   "private": true,
+  "version": "1.0.0",
   "description": "Nobar (نوبر) — multi-vendor fruit & vegetable marketplace with an AI shopping assistant",
   "packageManager": "pnpm@10.34.7",
   "engines": {

@@ -5,12 +5,18 @@ import { formatFaNumber } from "@nobar/fa";
 import { Badge, Button, Card, Input, RelativeDay } from "@nobar/ui";
 import { FileText, Image as ImageIcon } from "lucide-react";
 import { useState } from "react";
+import { ApiKyc } from "@/components/api-pages";
 import { useDecisions } from "@/components/decisions";
 import { useToast } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 type D = { status: "APPROVED" | "REJECTED"; note?: string };
 
 export default function KycPage() {
+  return API_URL ? <ApiKyc /> : <DemoKycPage />;
+}
+
+function DemoKycPage() {
   const [decisions, decide] = useDecisions<D>("admin_kyc");
   const toast = useToast();
   const [notes, setNotes] = useState<Record<string, string>>({});

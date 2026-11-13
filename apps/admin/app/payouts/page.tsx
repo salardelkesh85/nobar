@@ -2,12 +2,15 @@ import { PAYOUTS, shopById } from "@nobar/demo";
 import { formatFaNumber } from "@nobar/fa";
 import { Badge, Card, JalaliDate, Toman } from "@nobar/ui";
 import type { Metadata } from "next";
+import { ApiPayouts } from "@/components/api-pages";
 import { Table } from "@/components/shell";
+import { API_URL } from "@/lib/config";
 
 export const metadata: Metadata = { title: "تسویه‌ها" };
 const FA = { SCHEDULED: "زمان‌بندی‌شده", PAID: "واریز شد", FAILED: "ناموفق" } as const;
 
 export default function PayoutsPage() {
+  if (API_URL) return <ApiPayouts />;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-black">تسویه‌ها</h1>

@@ -1,0 +1,92 @@
+# Nobar on one server: edge (HTTPS, panels) → store and API → PostgreSQL, plus nightly database backups.
+#   cp .env.example .env   # fill in the domain, providers and admin phones
+#   docker compose run --rm --no-deps api node dist/keygen.js >> .env   # once: secrets
+#   docker compose up -d --build
+# Kubernetes (infra/helm) is the path for more than one server; see docs/deployment.md.
+name: nobar
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "20m", max-file: "5" }
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nobar
+      POSTGRES_USER: nobar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes: [db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nobar -d nobar"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 768m
+    logging: *logging
+
+  api:
+    build: { context: ../.., dockerfile: apps/api/Dockerfile }
+    image: ${IMAGE_PREFIX:-nobar}-api:${NOBAR_VERSION:-local}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://nobar:${POSTGRES_PASSWORD}@db:5432/nobar
+      API_PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL in .env}
+      WEB_URL: ${PUBLIC_URL}
+      CORS_ORIGINS: ${PUBLIC_URL}
+      # only the edge reaches the API on this network, and it sets X-Forwarded-For
+      TRUST_PROXY: "true"
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+    depends_on:
+      db: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 768m
+    logging: *logging
+
+  web:
+    build: { context: ../.., dockerfile: apps/web/Dockerfile }
+    image: ${IMAGE_PREFIX:-nobar}-web:${NOBAR_VERSION:-local}
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:4000
+    depends_on: [api]
+    mem_limit: 512m
+    logging: *logging
+
+  edge:
+    build: { context: ../.., dockerfile: infra/compose/Dockerfile.edge }
+    image: ${IMAGE_PREFIX:-nobar}-edge:${NOBAR_VERSION:-local}
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in .env (your domain, or :80)}
+    ports: ["80:80", "443:443"]
+    volumes: [edge-data:/data, edge-config:/config]
+    depends_on: [web, api]
+    mem_limit: 256m
+    logging: *logging
+
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    # one compressed dump per day; dumps older than BACKUP_KEEP_DAYS are pruned. Copy ./backups off the server too.
+    entrypoint: ["sh", "/backup.sh"]
+    volumes:
+      - "${BACKUP_DIR:-./backups}:/backups"
+      - ./backup.sh:/backup.sh:ro
+    depends_on:
+      db: { condition: service_healthy }
+    mem_limit: 128m
+    logging: *logging
+
+volumes:
+  db-data:
+  edge-data:
+  edge-config:

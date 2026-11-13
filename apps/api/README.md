@@ -13,7 +13,9 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 | notification: in-app notices and SMS for order events (from the event bus) | `notification` | done |
 | cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done |
 | order: checkout, expiring reservations, per-shop orders, lifecycle, disputes | `ordering` | done |
-| payment: test gateway, double-entry ledger (escrow, wallets, seller balances), commission, payouts | `payment` | done |
+| payment: test gateway and ZarinPal, double-entry ledger (escrow, wallets, seller balances), commission, payouts | `payment` | done |
+| assistant: shopping assistant (LLM provider interface, typed tools, guardrails, basket proposals, audit log, step stream) and seller copilot (price guidance, listing and review-reply drafts) | `ai` | first version |
+| recommendation: bought together, popular, in season; fed by order events | `recommendation` | first version |
 
 A module touches only its own schema; other modules use its exported service or its events.
 
@@ -36,15 +38,19 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
 | `DATABASE_URL` | — | `postgres://…`; when unset, PGlite under `DATA_DIR` (`memory` for tests). Required in production |
 | `DATA_DIR` | `.data` | |
 | `CORS_ORIGINS` | the three local apps | comma separated |
-| `TRUST_PROXY` | `loopback` | which proxies may set `X-Forwarded-For` (used by rate limits) |
+| `RATE_LIMIT_PER_MIN` | `600` | requests per minute per client IP on `/v1/*`; `0` turns it off |
+| `TRUST_PROXY` | `loopback` | which proxies may set `X-Forwarded-For` (used by rate limits): `true`, `false`, or proxy IPs/CIDRs; a hop count is refused |
 | `OTP_SECRET` | dev value | HMAC key for sign-in codes; required in production |
 | `OTP_ECHO` | on outside production | returns the code in the response; refused in production |
 | `ADMIN_PHONES` | — | phones that get the ADMIN role |
 | `JWT_PRIVATE_JWK` | generated in dev | ES256 private key (JSON); required in production |
 | `ACCESS_TTL_SEC` / `REFRESH_TTL_DAYS` | `900` / `30` | |
-| `SMS_PROVIDER` | `console` | `kavenegar` in production (`KAVENEGAR_API_KEY`, `KAVENEGAR_TEMPLATE`) |
+| `SMS_PROVIDER` | `console` | `melipayamak` in production (`MELIPAYAMAK_USERNAME`, `MELIPAYAMAK_PASSWORD`, `MELIPAYAMAK_FROM`; `MELIPAYAMAK_OTP_BODY_ID` sends sign-in codes through an approved pattern). `kavenegar` is also available |
 | `API_PUBLIC_URL` | `http://localhost:4000` | used in gateway callbacks |
-| `PAYMENT_PROVIDER` | `fake` | test gateway; refused in production |
+| `PAYMENT_PROVIDER` | `fake` | `fake` is the test gateway (refused in production); `zarinpal` needs `ZARINPAL_MERCHANT_ID` (`ZARINPAL_SANDBOX=true` for the sandbox). Another gateway is one more class in `modules/payment/provider.ts` |
+| `LLM_PROVIDER` | `fake` | `fake` is a rule-based stand-in; `openai-compatible` needs `LLM_BASE_URL` and `LLM_MODEL` (`LLM_API_KEY`, `LLM_TIMEOUT_MS` optional) |
+| `AI_DAILY_MESSAGES` | `40` | assistant messages per buyer per day |
+| `RECOMMENDATIONS` | on | `false` turns recommendations off |
 | `ORDER_TIMER_SEC` | `30` | `0` turns the order timers off |
 | `KYC_KEY` | dev key | 32 bytes, base64; required in production |
 | `SEED_DEMO` | on outside production | import the demo catalog into an empty database |

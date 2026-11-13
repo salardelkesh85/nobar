@@ -174,6 +174,8 @@ export class NatsEventBus implements EventBus {
 export async function createEventBus(opts: { natsUrl?: string; name: string; log: Logger; shared?: EventBus }): Promise<EventBus> {
   if (opts.shared) return opts.shared;
   if (opts.natsUrl) return NatsEventBus.connect(opts.natsUrl, opts.name, opts.log);
-  opts.log.warn("NATS_URL not set: using an in-process event bus (only valid inside the single-process dev host)");
+  // the modular monolith (ADR 0008): every replica runs every consumer and relays the shared outbox, and the
+  // inbox applies each event once, so an in-process bus is the normal setup; NATS is for separate services
+  opts.log.info("event bus: in-process (set NATS_URL to use NATS)");
   return new InMemoryEventBus(opts.log);
 }

@@ -1,4 +1,4 @@
-import { Logo, ProduceDefs } from "@nobar/ui";
+import { LogoMark, ProduceDefs } from "@nobar/ui";
 import { ArrowLeft, Sprout } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
@@ -20,6 +20,7 @@ import { PREFS_BOOT_SCRIPT } from "@/lib/constants";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 import "./studio.css";
+import "./market.css";
 
 export const metadata: Metadata = {
   title: { default: "نوبر — خرید تازه، مستقیم از باغ", template: "%s | نوبر" },
@@ -41,7 +42,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
-      <body className="studio-app min-h-dvh">
+      <body className="studio-app nx min-h-dvh">
         <Script id="nobar-prefs" strategy="beforeInteractive">
           {PREFS_BOOT_SCRIPT}
         </Script>
@@ -53,48 +54,35 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           >
             رفتن به محتوای اصلی
           </a>
-          <header className="studio-header sticky top-0 z-30">
-            <div className="studio-announcement">
-              <span>فصل عوض می‌شود؛ طعم خوب می‌ماند.</span>
-              <Link href="/season">
-                کشف طعم‌های فصل <ArrowLeft size={13} />
+          <header className="nx-header">
+            <div className="nx-header-row">
+              <Link href="/" aria-label="نوبر — صفحهٔ اصلی" className="nx-brand">
+                <LogoMark className="nx-brand-mark" />
+                <span className="nx-brand-name">نوبر</span>
               </Link>
-            </div>
-            <div className="studio-header-main">
-              <Link
-                href="/"
-                aria-label="نوبر — صفحهٔ اصلی"
-                className="studio-brand"
-              >
-                <Logo subtitle="از باغ، برای زندگی" />
-              </Link>
-              <Suspense
-                fallback={<div className="studio-search-placeholder" />}
-              >
-                <SearchBox className="studio-header-search" />
+              <Suspense fallback={<div className="nx-search-placeholder" />}>
+                <SearchBox className="nx-header-search" />
               </Suspense>
-              <div className="studio-header-actions">
+              <div className="nx-header-city">
                 <CityPicker compact />
-                <HeaderActions />
               </div>
+              <HeaderActions />
             </div>
-            <nav aria-label="دسته‌بندی اصلی" className="studio-navigation">
-              <div>
+            <nav aria-label="دسته‌بندی اصلی" className="nx-nav">
+              <div className="nx-nav-inner">
                 <MegaMenu />
-                <span className="studio-nav-separator" />
-                <Link href="/search?nobar=1" className="studio-nav-fresh">
-                  <span /> نوبرهای تازه
+                <span className="nx-nav-sep" aria-hidden />
+                <Link href="/search?nobar=1" className="nx-nav-link nx-nav-fresh">
+                  <span aria-hidden /> نوبرهای تازه
                 </Link>
-                <Link href="/shops">غرفه‌گردی</Link>
-                <Link href="/season">تقویم فصل‌ها</Link>
-                <Link href="/origin/miandoab" className="studio-nav-origin">
-                  کشف مبدأها
+                <Link href="/shops" className="nx-nav-link">غرفه‌ها</Link>
+                <Link href="/season" className="nx-nav-link">تقویم فصل</Link>
+                <Link href="/origin/miandoab" className="nx-nav-link">مبدأها</Link>
+                <Link href="/baghboon" className="nx-nav-link nx-nav-assistant">
+                  <Sprout size={16} aria-hidden /> باغبون
                 </Link>
-                <Link href="/baghboon" className="studio-nav-assistant">
-                  <Sprout size={16} /> از باغبون بپرس
-                </Link>
-                <Link href="/about/sell" className="studio-nav-sell">
-                  غرفه‌دار شو <ArrowLeft size={14} />
+                <Link href="/about/sell" className="nx-nav-link nx-nav-sell">
+                  در نوبر بفروشید <ArrowLeft size={14} aria-hidden />
                 </Link>
               </div>
             </nav>

@@ -57,7 +57,14 @@ seller copilot.
 - docs/architecture.md — services, data ownership, communication, patterns
 - docs/domain.md — bounded contexts, entities, state machines, glossary, open business questions
 - docs/adr/ — Architecture Decision Records (check before changing a core choice)
+- docs/ai-architecture.md — shopping assistant: provider interface, tools, guardrails, evals
 - docs/roadmap.md — phases, exit criteria, progress
+- docs/database/schema.sql — the whole database as CREATE statements (generated; kept in sync by a test)
+- docs/performance.md — search benchmark on 100k listings and what was optimised
+- docs/security-review.md — what was checked, fixed and is still open
+- infra/compose/README.md — one-server production install (Docker Compose)
+- CHANGELOG.md — releases
+- docs/deployment.md — images, Helm chart, database, Argo CD, secrets, release steps
 
 ## Local environment constraint
 - The primary dev machine is Windows 10 with ~8 GB RAM. Local dev must stay lean:

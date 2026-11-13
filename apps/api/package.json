@@ -1,6 +1,6 @@
 {
   "name": "@nobar/api",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Nobar backend: one NestJS app with a module per bounded context (ADR 0008)",
   "scripts": {
@@ -8,19 +8,20 @@
     "build": "tsup",
     "start": "node --enable-source-maps dist/main.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "bench": "BENCH=1 BENCH_OUT=../../docs/performance-search.md vitest run --dir bench"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.7",
-    "@nestjs/common": "^11.1.6",
-    "@nestjs/core": "^11.1.6",
-    "@nestjs/platform-fastify": "^11.1.6",
+    "@nestjs/common": "^11.2.10",
+    "@nestjs/core": "^11.2.10",
+    "@nestjs/platform-fastify": "^11.2.10",
     "@nobar/common": "workspace:*",
     "@nobar/contracts": "workspace:*",
     "@nobar/demo": "workspace:*",
     "@nobar/domain": "workspace:*",
     "@nobar/fa": "workspace:*",
-    "fastify": "^5.6.0",
+    "fastify": "^5.12.8",
     "jose": "^6.1.0",
     "reflect-metadata": "^0.2.2",
     "zod": "^4.1.5"
@@ -31,6 +32,7 @@
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
     "unplugin-swc": "^1.5.7",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "yaml": "^2.9.1"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@nobar/contracts",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Event envelope, event payloads, API request schemas and DTOs shared by services and apps",
   "main": "./src/index.ts",

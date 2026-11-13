@@ -50,6 +50,7 @@ export async function startService<C extends BaseConfig>(
   await migrate(db, [...commonMigrations, ...def.migrations], log);
   const bus = await createEventBus({ natsUrl: config.NATS_URL, name: def.name, log, shared: opts.bus });
   const metrics = new Metrics(def.name);
+  metrics.watchOutbox(db);
   const outbox = new OutboxRelay(db, bus, log);
   const rateLimiter = await createRateLimiter(config.REDIS_URL, log);
   const partial = { config, db, bus, log, metrics, outbox, rateLimiter };
@@ -69,9 +70,26 @@ export async function startService<C extends BaseConfig>(
   fastify.addHook("onRequest", (req, _reply, done) => {
     requestContext.run(contextFromHeaders(req.headers), done);
   });
+  // a general per-IP limit on the API; endpoints with their own stricter limits (sign-in codes, assistant) keep them
+  if (config.RATE_LIMIT_PER_MIN > 0) {
+    fastify.addHook("onRequest", async (req, reply) => {
+      if (!req.url.startsWith("/v1/") || req.method === "OPTIONS") return;
+      const r = await rateLimiter.hit(`ip:${req.ip}`, config.RATE_LIMIT_PER_MIN, 60);
+      if (!r.allowed) {
+        return reply
+          .status(429)
+          .header("retry-after", String(r.retryAfterSec))
+          .header("content-type", "application/problem+json")
+          .send({ status: 429, code: "RATE_LIMITED", detail: "درخواست‌ها بیش از حد مجاز است؛ کمی بعد دوباره تلاش کنید.", retryAfterSec: r.retryAfterSec });
+      }
+    });
+  }
   fastify.addHook("onSend", (_req, reply, payload, done) => {
     const ctx = currentContext();
     if (ctx) void reply.header("x-request-id", ctx.requestId);
+    // an API has nothing to frame, sniff or leak through the referrer
+    void reply.header("x-content-type-options", "nosniff").header("x-frame-options", "DENY").header("referrer-policy", "no-referrer");
+    if (config.NODE_ENV === "production") void reply.header("strict-transport-security", "max-age=31536000; includeSubDomains");
     done(null, payload);
   });
   fastify.addHook("onResponse", (req, reply, done) => {

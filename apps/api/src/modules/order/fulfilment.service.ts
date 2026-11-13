@@ -38,6 +38,9 @@ export function finalCommission(commissionRial: number, itemsRial: number, refun
  * window, disputes and settlement. Every change is status-guarded, writes a timeline row and an
  * outbox event, and moves money only through the payment module — all in one transaction.
  */
+/** risk signals: at least this many orders in the window before a share means anything */
+const RISK = { minOrders: 5, unfilledShare: 0.3, disputeShare: 0.2, refundShare: 0.15 };
+
 @Injectable()
 export class FulfilmentService {
   constructor(
@@ -72,6 +75,51 @@ export class FulfilmentService {
 
   async adminOrders(status?: OrderStatus): Promise<OrderDto[]> {
     return this.checkout.orders(this.db, status ? "o.status = $1" : "o.status <> 'PENDING_PAYMENT'", status ? [status] : []);
+  }
+
+  /**
+   * Staff view: shops whose recent orders show a pattern worth a look. Each signal is a plain rule with
+   * its reason in words; nothing is done automatically — suspending a shop stays a staff decision.
+   * The thresholds are starting values to tune with real data.
+   */
+  async shopRisk(days = 90) {
+    const rows = await this.db.query<{ shop_id: string; orders: number; rejected: number; expired: number; disputed: number; refunded_rial: number; paid_rial: number }>(
+      `select o.shop_id,
+              count(*)::int as orders,
+              count(*) filter (where o.status = 'REJECTED')::int as rejected,
+              count(*) filter (where o.status = 'EXPIRED')::int as expired,
+              count(d.id)::int as disputed,
+              coalesce(sum(o.refunded_rial) filter (where d.id is not null), 0)::bigint as refunded_rial,
+              coalesce(sum(o.total_rial), 0)::bigint as paid_rial
+       from ordering.orders o left join ordering.disputes d on d.order_id = o.id
+       where o.status <> 'PENDING_PAYMENT' and o.created_at > now() - make_interval(days => $1)
+       group by o.shop_id`,
+      [days],
+    );
+    const m = await this.catalog.market();
+    const fa = (n: number) => n.toLocaleString("fa-IR");
+    const pct = (part: number, whole: number) => Math.round((part / whole) * 100);
+    return rows
+      .map((r) => {
+        const reasons: string[] = [];
+        let score = 0;
+        const unfilled = r.rejected + r.expired;
+        if (r.orders >= RISK.minOrders && unfilled / r.orders >= RISK.unfilledShare) {
+          score += 40;
+          reasons.push(`${fa(pct(unfilled, r.orders))}٪ سفارش‌ها رد شده یا بی‌پاسخ مانده (${fa(unfilled)} از ${fa(r.orders)})`);
+        }
+        if (r.orders >= RISK.minOrders && r.disputed / r.orders >= RISK.disputeShare) {
+          score += 40;
+          reasons.push(`برای ${fa(pct(r.disputed, r.orders))}٪ سفارش‌ها شکایت ثبت شده (${fa(r.disputed)} از ${fa(r.orders)})`);
+        }
+        if (Number(r.paid_rial) > 0 && Number(r.refunded_rial) / Number(r.paid_rial) >= RISK.refundShare) {
+          score += 20;
+          reasons.push(`${fa(pct(Number(r.refunded_rial), Number(r.paid_rial)))}٪ مبلغ سفارش‌ها پس از شکایت برگشت خورده`);
+        }
+        return { shopId: r.shop_id, shopName: m.shopById(r.shop_id)?.name ?? r.shop_id, windowDays: days, orders: r.orders, rejected: r.rejected, expired: r.expired, disputed: r.disputed, refundedRial: Number(r.refunded_rial), score, reasons };
+      })
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score || a.shopId.localeCompare(b.shopId));
   }
 
   // ---------- helpers

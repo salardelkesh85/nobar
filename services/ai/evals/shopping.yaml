@@ -1,0 +1,77 @@
+- name: جست‌وجوی ساده با قیمت از ابزار
+  turns:
+    - user: "سیب ترش میخوام"
+      expect: { tools: [search_products], contains: ["تومان", "تهران"], minCards: 1, proposal: false }
+
+- name: جست‌وجو برای شهر دیگر
+  dest: tabriz
+  turns:
+    - user: "انار میخوام"
+      expect: { tools: [search_products], contains: ["تبریز"], minCards: 1 }
+
+- name: مرتب‌سازی ارزان‌ترین
+  turns:
+    - user: "ارزون‌ترین سیب‌زمینی رو پیدا کن"
+      expect: { tools: [search_products], contains: ["تومان"], minCards: 1 }
+
+- name: محصولی که در بازار نیست ساخته نمی‌شود
+  turns:
+    - user: "موز میخوام"
+      expect: { tools: [search_products], contains: ["پیدا نکردم"], maxCards: 0, proposal: false }
+
+- name: محصول ناموجود و سپس جایگزین
+  turns:
+    - user: "آناناس دارید؟"
+      expect: { contains: ["پیدا نکردم"], maxCards: 0 }
+    - user: "پس کیوی بده"
+      expect: { tools: [search_products], minCards: 1, contains: ["تومان"] }
+
+- name: مقایسه با فرمول ثابت
+  turns:
+    - user: "انار رو مقایسه کن"
+      expect: { tools: [compare_products], contains: ["بهترین در مجموع", "فرمول"], minCards: 2, compare: true }
+
+- name: مقایسه بدون نام محصول پرسش می‌پرسد
+  turns:
+    - user: "مقایسه کن"
+      expect: { tools: [], contains: ["کدام محصول"], maxCards: 0, compare: false }
+
+- name: مقایسه‌ی محصول ناشناخته
+  turns:
+    - user: "آووکادو رو مقایسه کن"
+      expect: { maxCards: 0, compare: false, notContains: ["تومان"] }
+
+- name: سبد با بودجه و تعداد نفر
+  turns:
+    - user: "سبد میوه برای ۶ نفر با ۸۰۰ هزار تومن"
+      expect: { tools: [build_basket], contains: ["۶ نفر", "تأیید"], proposal: true, maxProposalTotalRial: 8000000 }
+
+- name: سبد با بودجه‌ی میلیونی
+  turns:
+    - user: "برای مهمونی ۱۰ نفره با یک و نیم میلیون تومن میوه بچین"
+      expect: { tools: [build_basket], proposal: true, maxProposalTotalRial: 15000000, contains: ["۱۰ نفر"] }
+
+- name: سبد بدون بودجه فرض را اعلام می‌کند
+  turns:
+    - user: "یه سبد میوه برای شب یلدا میخوام"
+      expect: { tools: [build_basket], proposal: true, contains: ["فرض کردم"] }
+
+- name: بودجه‌ی خیلی کم سبد نمی‌سازد
+  turns:
+    - user: "سبد میوه با ۲۰ هزار تومن"
+      expect: { tools: [build_basket], proposal: false, contains: ["بودجه"] }
+
+- name: میوه‌های فصل
+  turns:
+    - user: "الان فصل چیه؟"
+      expect: { tools: [get_seasonal_suggestions], contains: ["فصل"], maxCards: 0 }
+
+- name: سبد خرید خالی
+  turns:
+    - user: "سبدم چی داره؟"
+      expect: { tools: [get_cart], contains: ["خالی"], proposal: false }
+
+- name: سلام و معرفی
+  turns:
+    - user: "سلام"
+      expect: { tools: [], contains: ["باغبون"], maxCards: 0 }

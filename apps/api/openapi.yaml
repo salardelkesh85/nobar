@@ -210,6 +210,8 @@ paths:
         - { name: freshOnly, in: query, schema: { type: boolean } }
         - { name: nobarOnly, in: query, schema: { type: boolean } }
         - { name: sort, in: query, schema: { enum: [relevance, landed, freshness, newest, rating] } }
+        - { name: limit, in: query, description: "Page size (1–100). Without it every hit is returned; `total` is always the full count.", schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
       responses: { "200": { description: Hits and the listings that cannot reach `dest` }, "400": { $ref: "#/components/responses/Problem" } }
   /v1/compare:
     get:
@@ -437,10 +439,175 @@ paths:
     post:
       summary: "Mark one (or `all`) read"
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/assistant/chat:
+    post:
+      summary: "Ask the shopping assistant (Baghboon)"
+      description: >
+        Runs one turn of the agent loop. Facts come only from tools; an answer stating an amount no tool returned is
+        replaced. The cart is never changed here: a basket comes back as `basketProposal` for the buyer to confirm.
+        `503` with code `ASSISTANT_UNAVAILABLE` means the model is down and the store should fall back to `/v1/search`.
+        `429` when the buyer's daily message limit is used up.
+      parameters: [{ name: dest, in: query, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, minLength: 1, maxLength: 500 }
+                conversationId: { type: string, format: uuid }
+      responses:
+        "201":
+          description: The assistant's answer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversationId: { type: string, format: uuid }
+                  message: { type: string }
+                  productCards:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        listingId: { type: string }
+                        slug: { type: string }
+                        title: { type: string }
+                        shopName: { type: string }
+                        landedPerKgRial: { type: integer }
+                        arrivesWithinDays: { type: integer }
+                        freshDaysOnArrival: { type: integer }
+                  basketProposal:
+                    nullable: true
+                    type: object
+                    properties:
+                      id: { type: string, format: uuid }
+                      summary: { type: string }
+                      items: { type: array, items: { type: object } }
+                      itemsRial: { type: integer }
+                      shippingRial: { type: integer }
+                      totalRial: { type: integer }
+                  compareProduceTypeId: { type: string, nullable: true }
+                  toolsUsed: { type: array, items: { type: string } }
+        "4XX": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /v1/assistant/chat/stream:
+    post:
+      summary: "The same turn as a server-sent event stream"
+      description: >
+        Events: `step` (`{tool}`) while a tool runs, then `done` with the reply of `/v1/assistant/chat`, or `error`
+        (`{status, code, detail}`). The text is not streamed word by word: it is checked against tool results first.
+      parameters: [{ name: dest, in: query, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, minLength: 1, maxLength: 500 }
+                conversationId: { type: string, format: uuid }
+      responses:
+        "200": { description: Event stream, content: { text/event-stream: { schema: { type: string } } } }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /v1/assistant/conversations/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: "Transcript of one of the buyer's conversations"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/assistant/proposals/{id}/confirm:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Add a proposed basket to the cart (the buyer's explicit confirmation)"
+      description: "Works once per proposal (`409 PROPOSAL_USED` afterwards). Returns the cart."
+      responses: { "201": { description: The cart }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/assistant/conversations/{id}/audit:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: "Every model call, tool call and guardrail decision of a conversation"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/recommendations:
+    get:
+      security: []
+      summary: "Recommended listings for the home page, or for a product page with `listingId`"
+      description: >
+        Signals: bought together (paid orders), sold this month, in season. Only listings that reach `dest` fresh,
+        one per produce type, each with a `reasonCode` and a Persian `reason`. `enabled: false` with an empty list
+        when the `RECOMMENDATIONS` flag is off.
+      parameters:
+        - { name: dest, in: query, schema: { type: string } }
+        - { name: listingId, in: query, schema: { type: string } }
+      responses: { "200": { description: OK }, "400": { $ref: "#/components/responses/Problem" } }
+  /v1/recommendations/cart:
+    get:
+      summary: "What goes with the signed-in buyer's cart"
+      parameters: [{ name: dest, in: query, schema: { type: string } }]
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/copilot/listings/{id}/price:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: "Where the seller's price sits among the market's quartiles (advice only)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/copilot/listing-draft:
+    post:
+      summary: "Draft a listing title and description from facts (advice only; nothing is saved)"
+      description: "`source` is `model` or `template` (the plain fallback when the model is down or invents a price or an organic claim)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [produceTypeId, grade, originCityId]
+              properties:
+                produceTypeId: { type: string }
+                variety: { type: string, maxLength: 40 }
+                grade: { type: string, enum: [PREMIUM, GRADE_1, GRADE_2, PROCESSING] }
+                originCityId: { type: string }
+                isOrganic: { type: boolean }
+                harvestedDaysAgo: { type: integer, minimum: 0 }
+                notes: { type: string, maxLength: 300 }
+      responses: { "201": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/copilot/reviews/{id}/reply-draft:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Draft a reply to one of the shop's reviews (advice only; not posted)"
+      responses: { "201": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/kyc:
     get:
       summary: "Shops waiting for approval (KYC masked)"
       description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/shops:
+    get:
+      summary: "Every shop with its status, review note and listing counts"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/produce-types/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    patch:
+      summary: "Edit the freshness, season and complaint-window numbers of a produce type"
+      description: "ADMIN role. Audited with the old and new values; `needsReview: false` confirms the numbers. Read them from `GET /v1/catalog/produce-types`."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                shelfLifeDays: { type: integer, minimum: 1, maximum: 365 }
+                minShelfDaysOnArrival: { type: integer, minimum: 0 }
+                complaintWindowHours: { type: integer, minimum: 1, maximum: 720 }
+                storage: { type: string, enum: [AMBIENT, COOL, COLD] }
+                months: { type: array, items: { type: integer, minimum: 1, maximum: 12 } }
+                peakMonths: { type: array, items: { type: integer, minimum: 1, maximum: 12 } }
+                needsReview: { type: boolean }
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/shops/{id}/approve:
     parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
@@ -501,12 +668,21 @@ paths:
       description: "ADMIN role. Requires Idempotency-Key."
       parameters: [{ name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 100 } }]
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/risk/shops:
+    get:
+      summary: "Shops whose last 90 days of orders show a risk pattern, with reasons"
+      description: "ADMIN role. Rules: share of rejected or expired orders, share of disputed orders, share of money refunded after disputes. Read only; acting on it is a staff decision."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/finance:
     get:
       summary: "Ledger totals: escrow, wallets, seller balances, commission, paid out, received"
       description: "ADMIN role."
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/payouts:
+    get:
+      summary: "Seller balances waiting for payout, and past payouts"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
     post:
       summary: "Pay out every positive seller balance"
       description: "ADMIN role. Requires Idempotency-Key."

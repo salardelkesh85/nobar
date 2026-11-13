@@ -58,6 +58,15 @@ describe("same answers as the storefront", () => {
     }
   });
 
+  it("search pages with limit and offset, keeping the full total", async () => {
+    const all = await get<Out<"search">>("/v1/search?dest=tehran");
+    const page = await get<Out<"search">>("/v1/search?dest=tehran&limit=5&offset=5");
+    expect(page.body.total).toBe(all.body.total);
+    expect(page.body).toMatchObject({ limit: 5, offset: 5 });
+    expect(page.body.hits.map((h) => h.listing.id)).toEqual(all.body.hits.slice(5, 10).map((h) => h.listing.id));
+    expect((await get<Problem>("/v1/search?dest=tehran&limit=500")).status).toBe(400);
+  });
+
   it("search filters and sorting", async () => {
     const r = await get<Out<"search">>("/v1/search?dest=tehran&category=fruit&organic=true&sort=landed");
     const local = demo.search({ dest: "tehran", category: "fruit", organic: true, sort: "landed" });

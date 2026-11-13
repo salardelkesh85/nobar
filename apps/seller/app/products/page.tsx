@@ -5,6 +5,7 @@ import { formatFaNumber, formatToman, formatWeight, toEnDigits } from "@nobar/fa
 import { Badge, Button, ButtonLink, Card, cn, FreshnessBadge, Input, Skeleton } from "@nobar/ui";
 import { Plus, Save } from "lucide-react";
 import { useState } from "react";
+import { PriceAdviceButton } from "@/components/copilot";
 import { Photo } from "@/components/photo";
 import { useSeller } from "@/lib/state";
 
@@ -33,7 +34,7 @@ export default function ProductsPage() {
 }
 
 function ProductRow({ id }: { id: string }) {
-  const { listings, updateListing, showToast } = useSeller();
+  const { listings, updateListing, showToast, apiMode } = useSeller();
   const l = listings.find((x) => x.id === id)!;
   const pt = produceTypeById(l.produceTypeId)!;
   const fresh = freshnessOf(l);
@@ -63,7 +64,8 @@ function ProductRow({ id }: { id: string }) {
           <p className="font-bold">{l.title}</p>
           <div className="mt-1 flex flex-wrap gap-1">
             <FreshnessBadge level={fresh.badge} detail={harvestPhrase(fresh)} />
-            <Badge tone={pos === "ABOVE" ? "saffron" : pos === "UNKNOWN" ? "neutral" : "brand"}>{PRICE_POSITION_FA[pos]}</Badge>
+            {/* API mode: the market position comes from the copilot below, never from demo data */}
+            {apiMode ? null : <Badge tone={pos === "ABOVE" ? "saffron" : pos === "UNKNOWN" ? "neutral" : "brand"}>{PRICE_POSITION_FA[pos]}</Badge>}
             {l.paused ? <Badge tone="danger">متوقف</Badge> : <Badge tone="neutral">فعال</Badge>}
           </div>
           <p className="mt-1 text-xs text-ink-soft">
@@ -95,6 +97,7 @@ function ProductRow({ id }: { id: string }) {
         <Button variant="secondary" onClick={async () => { if (await updateListing(l.id, { paused: !l.paused })) showToast(l.paused ? "دوباره فعال شد." : "فروش متوقف شد."); }}>
           {l.paused ? "فعال کردن" : "توقف فروش"}
         </Button>
+        {apiMode ? <PriceAdviceButton listingId={l.id} /> : null}
       </div>
     </Card>
   );

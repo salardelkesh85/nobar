@@ -1,69 +1,49 @@
 "use client";
 
-import { CATEGORIES, PROVINCES, SORT_FA, type SortKey } from "@nobar/demo";
+import { CATEGORIES, categoryById, PROVINCES, provinceById, SORT_FA, type SortKey } from "@nobar/demo";
 import { toFaDigits } from "@nobar/fa";
 import { cn, Select } from "@nobar/ui";
-import { ArrowDownWideNarrow, SlidersHorizontal, X } from "lucide-react";
+import { ArrowDownWideNarrow, Check, ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const ORIGIN_PROVINCES = ["azg", "mrk", "mzn", "gil", "krm", "khj", "isf"];
-const TOGGLES: Array<[string, string]> = [
-  ["fresh", "فقط تازه‌چین و تازه"],
-  ["organic", "فقط ارگانیک"],
-  ["nobar", "فقط نوبرها"],
+const FILTER_KEYS = ["cat", "origin", "fresh", "organic", "nobar"] as const;
+const TOGGLES: Array<{ key: string; label: string; chip: string }> = [
+  { key: "fresh", label: "فقط تازه‌چین و تازه", chip: "تازه‌چین" },
+  { key: "organic", label: "فقط ارگانیک", chip: "ارگانیک" },
+  { key: "nobar", label: "فقط نوبرها", chip: "نوبر" },
 ];
+const SORTS = Object.keys(SORT_FA) as SortKey[];
 
 function useParamSetter() {
   const router = useRouter();
   const path = usePathname();
   const params = useSearchParams();
+  const replace = (next: URLSearchParams) => {
+    const qs = next.toString();
+    router.replace(qs ? `${path}?${qs}` : path, { scroll: false });
+  };
   const set = (key: string, value: string | null) => {
     const next = new URLSearchParams(params.toString());
     if (value === null || value === "") next.delete(key);
     else next.set(key, value);
-    router.replace(`${path}?${next.toString()}`, { scroll: false });
+    replace(next);
   };
   const clear = () => {
     const next = new URLSearchParams(params.toString());
-    ["cat", "origin", "fresh", "organic", "nobar"].forEach((k) =>
-      next.delete(k),
-    );
-    router.replace(`${path}?${next.toString()}`, { scroll: false });
+    FILTER_KEYS.forEach((k) => next.delete(k));
+    replace(next);
   };
   return { params, set, clear };
 }
 
-function Switch({
-  on,
-  onClick,
-  label,
-}: {
-  on: boolean;
-  onClick: () => void;
-  label: string;
-}) {
+function Switch({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      onClick={onClick}
-      className="flex min-h-11 w-full items-center justify-between gap-3 text-sm"
-    >
-      <span className={on ? "font-bold" : ""}>{label}</span>
-      <span
-        className={cn(
-          "relative h-6 w-10 shrink-0 rounded-full transition-colors",
-          on ? "bg-brand" : "bg-line-strong",
-        )}
-      >
-        <span
-          className={cn(
-            "absolute top-0.5 size-5 rounded-full bg-white shadow transition-all",
-            on ? "start-[1.125rem]" : "start-0.5",
-          )}
-        />
+    <button type="button" role="switch" aria-checked={on} onClick={onClick} className="nx-switch">
+      <span>{label}</span>
+      <span className="nx-switch-track" aria-hidden>
+        <span className="nx-switch-thumb" />
       </span>
     </button>
   );
@@ -72,67 +52,43 @@ function Switch({
 /** Filter panel: sidebar on desktop, bottom sheet on mobile. */
 export function FilterPanel() {
   const { params, set, clear } = useParamSetter();
-  const active = ["cat", "origin", "fresh", "organic", "nobar"].some((k) =>
-    params.get(k),
-  );
+  const active = FILTER_KEYS.some((k) => params.get(k));
   return (
-    <div className="divide-y divide-line">
-      <div className="flex items-center justify-between pb-3">
-        <h2 className="text-base font-extrabold">فیلترها</h2>
+    <div className="nx-filter">
+      <div className="nx-filter-head">
+        <h2>فیلترها</h2>
         {active ? (
-          <button
-            type="button"
-            className="text-xs font-bold text-brand"
-            onClick={clear}
-          >
+          <button type="button" className="nx-filter-clear" onClick={clear}>
             حذف فیلترها
           </button>
         ) : null}
       </div>
-      <div className="py-2">
-        {TOGGLES.map(([k, label]) => (
-          <Switch
-            key={k}
-            on={params.get(k) === "1"}
-            label={label}
-            onClick={() => set(k, params.get(k) === "1" ? null : "1")}
-          />
+      <div className="nx-filter-group">
+        {TOGGLES.map((t) => (
+          <Switch key={t.key} on={params.get(t.key) === "1"} label={t.label} onClick={() => set(t.key, params.get(t.key) === "1" ? null : "1")} />
         ))}
       </div>
-      <fieldset className="py-3">
-        <legend className="mb-2 text-sm font-bold">دسته‌بندی</legend>
-        <ul className="space-y-0.5">
+      <fieldset className="nx-filter-group">
+        <legend>دسته‌بندی</legend>
+        <ul>
           {CATEGORIES.map((c) => {
             const on = params.get("cat") === c.id;
             return (
               <li key={c.id}>
-                <button
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => set("cat", on ? null : c.id)}
-                  className={cn(
-                    "flex min-h-10 w-full items-center rounded-control px-2 text-start text-sm",
-                    on
-                      ? "bg-brand-soft font-bold text-brand-strong"
-                      : "hover:bg-surface-2",
-                  )}
-                >
-                  {c.name}
+                <button type="button" aria-pressed={on} onClick={() => set("cat", on ? null : c.id)} className={cn("nx-filter-option", on && "is-on")}>
+                  <span>{c.name}</span>
+                  {on ? <Check className="size-4" aria-hidden /> : null}
                 </button>
               </li>
             );
           })}
         </ul>
       </fieldset>
-      <div className="pt-3">
-        <label htmlFor="origin" className="mb-2 block text-sm font-bold">
+      <div className="nx-filter-group">
+        <label htmlFor="origin" className="nx-filter-label">
           استان مبدأ
         </label>
-        <Select
-          id="origin"
-          value={params.get("origin") ?? ""}
-          onChange={(e) => set("origin", e.target.value)}
-        >
+        <Select id="origin" value={params.get("origin") ?? ""} onChange={(e) => set("origin", e.target.value)}>
           <option value="">همه‌ی استان‌ها</option>
           {PROVINCES.filter((p) => ORIGIN_PROVINCES.includes(p.id)).map((p) => (
             <option key={p.id} value={p.id}>
@@ -145,104 +101,127 @@ export function FilterPanel() {
   );
 }
 
-/** Sort tabs (desktop), sort select + filter sheet button (mobile). */
-export function SearchFilters({ total }: { total: number }) {
-  const { params, set } = useParamSetter();
-  const [open, setOpen] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+/** Bottom sheet (mobile); a native dialog so focus, Escape and the backdrop work. */
+function Sheet({ open, onClose, label, children }: { open: boolean; onClose: () => void; label: string; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (open) dialogRef.current?.showModal();
-    else dialogRef.current?.close();
+    if (open && !ref.current?.open) ref.current?.showModal();
+    if (!open) ref.current?.close();
   }, [open]);
-  const sort = (params.get("sort") as SortKey) ?? "relevance";
-  const activeCount = ["cat", "origin", "fresh", "organic", "nobar"].filter(
-    (k) => params.get(k),
-  ).length;
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="nx-sheet"
+      aria-label={label}
+    >
+      <div className="nx-sheet-head">
+        <span className="nx-sheet-grip" aria-hidden />
+        <strong>{label}</strong>
+        <button type="button" onClick={onClose} className="nx-sheet-close" aria-label="بستن">
+          <X className="size-5" />
+        </button>
+      </div>
+      <div className="nx-sheet-body">{children}</div>
+    </dialog>
+  );
+}
+
+/**
+ * Sort and filter bar above the results. Desktop: sort tabs. Mobile: a scrolling row of chips (filters, sort, quick
+ * toggles) with the full filter panel and the sort list in bottom sheets. Active category and origin show as removable chips.
+ */
+export function SearchToolbar({ total }: { total: number }) {
+  const { params, set, clear } = useParamSetter();
+  const [sheet, setSheet] = useState<"filter" | "sort" | null>(null);
+  const sort = (params.get("sort") as SortKey | null) ?? "relevance";
+  const activeCount = FILTER_KEYS.filter((k) => params.get(k)).length;
+  const cat = params.get("cat");
+  const origin = params.get("origin");
+  const setSort = (k: SortKey) => set("sort", k === "relevance" ? null : k);
 
   return (
-    <div className="mb-3">
-      <div className="hidden items-center gap-1 rounded-t-card border border-b-0 border-line bg-surface px-4 py-2 text-sm lg:flex">
-        <ArrowDownWideNarrow className="size-4 text-ink-soft" aria-hidden />
-        <span className="me-2 font-bold">مرتب‌سازی:</span>
-        {(Object.keys(SORT_FA) as SortKey[]).map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => set("sort", k === "relevance" ? null : k)}
-            aria-pressed={sort === k}
-            className={cn(
-              "min-h-9 rounded-control px-2.5",
-              sort === k
-                ? "font-bold text-brand"
-                : "text-ink-soft hover:text-ink",
-            )}
-          >
+    <div className="nx-toolbar">
+      <div className="nx-sortbar">
+        <ArrowDownWideNarrow className="size-4" aria-hidden />
+        <span className="nx-sortbar-label">مرتب‌سازی:</span>
+        {SORTS.map((k) => (
+          <button key={k} type="button" onClick={() => setSort(k)} aria-pressed={sort === k} className={cn("nx-sortbar-tab", sort === k && "is-on")}>
             {SORT_FA[k]}
           </button>
         ))}
-        <span className="ms-auto text-xs text-ink-soft">
-          {toFaDigits(total)} کالا
-        </span>
       </div>
 
-      <div className="flex items-center gap-2 lg:hidden">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-control border border-line-strong bg-surface px-3 text-sm font-bold"
-        >
+      <div className="nx-chips" role="toolbar" aria-label="فیلتر و مرتب‌سازی">
+        <button type="button" className={cn("nx-chip", activeCount > 0 && "is-on")} onClick={() => setSheet("filter")}>
           <SlidersHorizontal className="size-4" aria-hidden />
-          فیلتر{activeCount ? ` (${toFaDigits(activeCount)})` : ""}
+          فیلتر
+          {activeCount ? <span className="nx-chip-count">{toFaDigits(activeCount)}</span> : null}
         </button>
-        <div className="flex-1">
-          <label htmlFor="sort" className="sr-only">
-            مرتب‌سازی
-          </label>
-          <Select
-            id="sort"
-            value={sort}
-            onChange={(e) => set("sort", e.target.value)}
-            className="min-h-10"
-          >
-            {(Object.keys(SORT_FA) as SortKey[]).map((k) => (
-              <option key={k} value={k}>
-                {SORT_FA[k]}
-              </option>
-            ))}
-          </Select>
-        </div>
+        <button type="button" className="nx-chip" onClick={() => setSheet("sort")}>
+          <ArrowDownWideNarrow className="size-4" aria-hidden />
+          {SORT_FA[sort]}
+          <ChevronDown className="size-3.5" aria-hidden />
+        </button>
+        <span className="nx-chips-sep" aria-hidden />
+        {TOGGLES.map((t) => {
+          const on = params.get(t.key) === "1";
+          return (
+            <button key={t.key} type="button" aria-pressed={on} className={cn("nx-chip", on && "is-on")} onClick={() => set(t.key, on ? null : "1")}>
+              {on ? <Check className="size-3.5" aria-hidden /> : null}
+              {t.chip}
+            </button>
+          );
+        })}
       </div>
 
-      <dialog
-        ref={dialogRef}
-        onClose={() => setOpen(false)}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setOpen(false);
-        }}
-        className="studio-filter-dialog"
-        aria-label="فیلترها"
-      >
-        <div className="p-5 pb-7">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="grid size-11 place-items-center rounded-full hover:bg-surface-2"
-              aria-label="بستن"
-            >
-              <X className="size-5" />
+      {cat || origin ? (
+        <div className="nx-active">
+          {cat ? (
+            <button type="button" className="nx-active-chip" onClick={() => set("cat", null)} aria-label={`حذف فیلتر ${categoryById(cat)?.name ?? ""}`}>
+              {categoryById(cat)?.name ?? cat} <X className="size-3.5" aria-hidden />
             </button>
-          </div>
-          <FilterPanel />
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="mt-6 min-h-12 w-full rounded-control bg-brand font-bold text-on-brand"
-          >
-            دیدن نتیجه‌ها
+          ) : null}
+          {origin ? (
+            <button type="button" className="nx-active-chip" onClick={() => set("origin", null)} aria-label={`حذف فیلتر ${provinceById(origin)?.name ?? ""}`}>
+              از {provinceById(origin)?.name ?? origin} <X className="size-3.5" aria-hidden />
+            </button>
+          ) : null}
+          <button type="button" className="nx-active-clear" onClick={clear}>
+            حذف همه
           </button>
         </div>
-      </dialog>
+      ) : null}
+
+      <Sheet open={sheet === "filter"} onClose={() => setSheet(null)} label="فیلترها">
+        <FilterPanel />
+        <button type="button" onClick={() => setSheet(null)} className="nx-sheet-done">
+          دیدن {toFaDigits(total)} کالا
+        </button>
+      </Sheet>
+      <Sheet open={sheet === "sort"} onClose={() => setSheet(null)} label="مرتب‌سازی">
+        <ul className="nx-sort-list">
+          {SORTS.map((k) => (
+            <li key={k}>
+              <button
+                type="button"
+                aria-pressed={sort === k}
+                className={cn("nx-filter-option", sort === k && "is-on")}
+                onClick={() => {
+                  setSort(k);
+                  setSheet(null);
+                }}
+              >
+                <span>{SORT_FA[k]}</span>
+                {sort === k ? <Check className="size-4" aria-hidden /> : null}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Sheet>
     </div>
   );
 }

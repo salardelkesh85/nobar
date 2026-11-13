@@ -1,0 +1,41 @@
+# PostgreSQL for one environment, run by the CloudNativePG operator (brief §7).
+# Apply per namespace:  kubectl -n nobar-prod apply -f infra/k8s/postgres-cluster.yaml
+# The operator creates the Secret "nobar-db-app"; the API chart reads DATABASE_URL from its key "uri".
+#
+# Backups: fill in the object store (any S3-compatible bucket) and create the Secret "nobar-db-backup"
+# with ACCESS_KEY_ID and ACCESS_SECRET_KEY. WAL archiving gives point-in-time recovery.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: nobar-db
+spec:
+  instances: 2
+  storage:
+    size: 20Gi
+  bootstrap:
+    initdb:
+      database: nobar
+      owner: nobar
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits: { memory: 1Gi }
+  backup:
+    retentionPolicy: 14d
+    barmanObjectStore:
+      destinationPath: s3://CHANGE-ME-bucket/nobar-db
+      endpointURL: https://CHANGE-ME-s3-endpoint
+      s3Credentials:
+        accessKeyId: { name: nobar-db-backup, key: ACCESS_KEY_ID }
+        secretAccessKey: { name: nobar-db-backup, key: ACCESS_SECRET_KEY }
+      wal:
+        compression: gzip
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: nobar-db-nightly
+spec:
+  schedule: "0 30 22 * * *" # 02:00 Tehran, every night
+  backupOwnerReference: self
+  cluster:
+    name: nobar-db

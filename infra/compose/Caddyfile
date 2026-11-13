@@ -1,0 +1,50 @@
+# One domain for everything. SITE_ADDRESS is the domain (Caddy gets and renews the TLS certificate),
+# or ":80" for plain HTTP behind another TLS terminator or in CI.
+{
+	admin off
+}
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# API: public endpoints only (/healthz, /readyz and /metrics stay inside the network)
+	@api path /v1/* /.well-known/jwks.json
+	handle @api {
+		reverse_proxy api:4000
+	}
+
+	# seller and admin panels: static builds
+	redir /seller /seller/ 308
+	redir /admin /admin/ 308
+	handle /seller/* {
+		root * /srv
+		try_files {path} {path}/index.html {path}.html
+		file_server
+		header Cache-Control "no-cache"
+		header /seller/_next/static/* Cache-Control "public, max-age=31536000, immutable"
+	}
+	handle /admin/* {
+		root * /srv
+		try_files {path} {path}/index.html {path}.html
+		file_server
+		header Cache-Control "no-cache"
+		header /admin/_next/static/* Cache-Control "public, max-age=31536000, immutable"
+	}
+
+	# everything else: the store (Next.js server)
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

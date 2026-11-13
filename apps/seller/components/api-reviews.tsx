@@ -5,6 +5,7 @@ import { DISPUTE_REASON_FA, type Review } from "@nobar/demo";
 import { toEnDigits } from "@nobar/fa";
 import { Badge, Button, Card, Input, RatingStars, RelativeDay, Skeleton, Textarea, Toman } from "@nobar/ui";
 import { useCallback, useEffect, useState } from "react";
+import { DraftButton } from "@/components/copilot";
 import { errorText, useSeller } from "@/lib/state";
 
 type SellerReview = Review & { status: string; flags: string[] };
@@ -171,9 +172,12 @@ export function ApiReviews() {
                 }}
               >
                 <Textarea rows={2} aria-label={`پاسخ به ${r.buyerName}`} placeholder="پاسخ کوتاه و محترمانه…" value={text[r.id] ?? ""} onChange={(e) => setText((s) => ({ ...s, [r.id]: e.target.value }))} />
-                <Button type="submit" size="sm">
-                  ثبت پاسخ
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="submit" size="sm">
+                    ثبت پاسخ
+                  </Button>
+                  <DraftButton<{ reply: string }> path={`seller/copilot/reviews/${r.id}/reply-draft`} label="پیش‌نویس پاسخ" onDraft={(d) => setText((s) => ({ ...s, [r.id]: d.reply }))} />
+                </div>
               </form>
             ) : null}
           </Card>

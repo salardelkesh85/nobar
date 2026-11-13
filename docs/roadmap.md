@@ -105,3 +105,14 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 | P3 catalog and shops | Done | Shared rules; catalog API; seller onboarding with encrypted KYC, listings, moderation, audit log |
 | Reviews, questions, notifications | Done | Reviews after delivery with staff approval; Q&A; in-app + SMS notices from order events |
 | Cart, checkout and escrow | Done | One payment per cart (as built by the owner); reservations, test gateway, ledger, shop-order lifecycle, disputes, payouts |
+| Staff tools and beta gate test | Done | Staff shop list and produce-type numbers (audited); end-to-end buying test over HTTP; CI workflow for typecheck and tests |
+| Admin panel on the API | Done | Staff sign-in and every admin page on `/v1/admin/*`; payout overview endpoint; checked in the browser against a local API |
+| Real providers and deployment manifests | Done | ZarinPal gateway and Melipayamak SMS behind the provider interfaces; Helm chart, CloudNativePG, Argo CD apps, image build + Trivy in CI; `docs/deployment.md`. Not yet run on a cluster |
+| P12/P14 assistant | First version done | `assistant` module in `apps/api`: LLMProvider (rule-based + OpenAI-compatible), 7 typed tools, grounding guard, basket proposals with confirmation, `ai_audit_log`, step stream (SSE), store page on the API, 40 Persian evals in CI. Not yet: semantic cache, a hosted-provider adapter, a run against a real model |
+| P16 recommendations | First version done | Bought together, popular, in season; fed by order events; feature flag; rails on the store's home, product and cart pages. Not yet: offline precision@k and coverage, A/B assignment |
+| P17 seller copilot | First version done | Price guidance (rule), listing and review-reply drafts (model with fallback), advisory only, in the seller panel; daily cap. Not yet: demand forecast |
+| P18 trust & safety | Started | Staff list of shops with risk patterns (rejections, disputes, refunds) with reasons, read only. Not yet: duplicate images, fake-review detection, complaint triage |
+| P19 hardening | Started | `docs/security-review.md`: security headers, per-IP rate limit, patched fastify, SBOM and secret scan in CI, redaction and migration-lock fixes; open list kept there. Not yet: load and chaos tests, staff second factor |
+| Search at 100k listings | Partly done | Text and filtered searches p95 < 300 ms on 100k listings (`docs/performance.md`); unfiltered browse ~0.5 s; optional paging on `/v1/search` |
+| Monitoring | Done in code, not deployed | Business metrics, SLO burn-rate alerts (checkout 99.5%, search 300 ms), Grafana dashboard in the Helm chart, runbooks in `docs/runbooks/` |
+| v1.0.0 release | Ready | One-server production stack (Caddy, store server, panels, API, PostgreSQL 17, backups) tested in production mode in CI; dynamic product/shop pages; reference data seeded in production; search paging; release workflow (`docs/v1-readiness.md`, `CHANGELOG.md`) |
