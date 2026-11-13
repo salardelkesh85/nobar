@@ -10,6 +10,8 @@ RUN pnpm install --frozen-lockfile --filter @nobar/api... \
 
 FROM node:22-alpine
 ENV NODE_ENV=production PORT=4000
+# the runtime only needs node: drop the package managers the base image ships (and their advisories)
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 USER node
