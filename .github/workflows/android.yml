@@ -174,16 +174,22 @@ jobs:
           name: nobar-android
           path: dist
 
+      - uses: actions/download-artifact@v8
+        with:
+          name: android-screenshots
+          path: shots
+
       - name: GitHub release with the APK
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: android-v${{ needs.build.outputs.version }}
         run: |
           apk="dist/nobar-${{ needs.build.outputs.version }}.apk"
+          (cd shots && zip -q -r ../nobar-screenshots.zip .)
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$apk" --clobber --repo "$GITHUB_REPOSITORY"
+            gh release upload "$TAG" "$apk" nobar-screenshots.zip --clobber --repo "$GITHUB_REPOSITORY"
           else
-            gh release create "$TAG" "$apk" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            gh release create "$TAG" "$apk" nobar-screenshots.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
               --title "نوبر برای اندروید ${{ needs.build.outputs.version }}" \
-              --notes "اپ خریداران نوبر برای اندروید ۷ و بالاتر. فایل nobar-${{ needs.build.outputs.version }}.apk را روی گوشی باز کنید و نصب را تأیید کنید."
+              --notes "اپ خریداران نوبر برای اندروید ۷ و بالاتر. فایل nobar-${{ needs.build.outputs.version }}.apk را روی گوشی باز کنید و نصب را تأیید کنید. تصویرهای اجرای اپ روی شبیه‌ساز اندروید ۱۴ در nobar-screenshots.zip است."
           fi
