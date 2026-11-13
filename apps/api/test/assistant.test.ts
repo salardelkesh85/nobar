@@ -182,6 +182,32 @@ describe("agent loop", () => {
   });
 });
 
+describe("streaming", () => {
+  const stream = async (cookie: string, message: string) => {
+    const res = await fetch(`${api.url}/v1/assistant/chat/stream?dest=tehran`, { method: "POST", headers: { "content-type": "application/json", cookie, origin: "http://localhost:3000" }, body: JSON.stringify({ message }) });
+    const events = (await res.text()).trim().split("\n\n").map((block) => ({ event: block.match(/^event: (.*)$/m)![1]!, data: JSON.parse(block.match(/^data: (.*)$/m)![1]!) }));
+    return { res, events };
+  };
+
+  it("reports each tool as it runs and ends with the whole checked reply", async () => {
+    const buyer = await signIn();
+    script = [() => ({ calls: [{ name: "search_products", args: { query: "انار" } }] }), () => ({ content: "انار پیدا شد؛ کارت‌ها را ببینید." })];
+    const { res, events } = await stream(buyer, "انار میخوام");
+    expect(res.headers.get("content-type")).toContain("text/event-stream");
+    expect(res.headers.get("access-control-allow-origin")).toBe("http://localhost:3000");
+    expect(events.map((e) => e.event)).toEqual(["step", "done"]);
+    expect(events[0]!.data).toEqual({ tool: "search_products" });
+    expect(events[1]!.data).toMatchObject({ message: "انار پیدا شد؛ کارت‌ها را ببینید.", toolsUsed: ["search_products"] });
+  });
+
+  it("ends with an error event the store can fall back on", async () => {
+    const buyer = await signIn();
+    script = [() => ({ status: 500 })];
+    const { events } = await stream(buyer, "انار میخوام");
+    expect(events).toEqual([{ event: "error", data: { status: 503, code: "ASSISTANT_UNAVAILABLE", detail: "دستیار الان در دسترس نیست؛ از جست‌وجوی معمولی استفاده کنید." } }]);
+  });
+});
+
 describe("basket proposals", () => {
   it("changes the cart only when the buyer confirms, once, and only their own proposal", async () => {
     const buyer = await signIn();

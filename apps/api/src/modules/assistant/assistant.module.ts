@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Inject, Module, Param, Post, Query } from "@nestjs/common";
-import { type AuthUser, CurrentUser, Roles, TOKENS, ZodPipe } from "@nobar/common";
+import { Body, Controller, Get, Inject, Module, Param, Post, Query, Res } from "@nestjs/common";
+import { AppError, type AuthUser, CurrentUser, Roles, TOKENS, ZodPipe } from "@nobar/common";
 import { CITIES, DEFAULT_CITY_ID } from "@nobar/contracts/cities";
+import type { FastifyReply } from "fastify";
 import { z } from "zod";
 import type { ApiConfig } from "../../config";
 import { CartModule } from "../cart/cart.module";
@@ -23,6 +24,27 @@ class AssistantController {
   @Post("chat")
   chat(@CurrentUser() user: AuthUser, @Query(new ZodPipe(DestQuery)) q: z.infer<typeof DestQuery>, @Body(new ZodPipe(ChatBody)) body: z.infer<typeof ChatBody>) {
     return this.assistant.chat(user.id, { message: body.message, dest: q.dest, ...(body.conversationId ? { conversationId: body.conversationId } : {}) });
+  }
+
+  /**
+   * The same turn as a server-sent event stream: `step` while a tool runs, then `done` with the whole
+   * reply (or `error`). The text is not streamed word by word on purpose: it is checked against the
+   * tool results before the buyer sees any of it.
+   */
+  @Post("chat/stream")
+  async stream(@CurrentUser() user: AuthUser, @Query(new ZodPipe(DestQuery)) q: z.infer<typeof DestQuery>, @Body(new ZodPipe(ChatBody)) body: z.infer<typeof ChatBody>, @Res() reply: FastifyReply) {
+    // headers set so far (CORS, request id) go out with the stream
+    reply.raw.writeHead(200, { ...(reply.getHeaders() as Record<string, string>), "content-type": "text/event-stream; charset=utf-8", "cache-control": "no-cache, no-transform", "x-accel-buffering": "no" });
+    const send = (event: string, data: unknown) => reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    try {
+      const result = await this.assistant.chat(user.id, { message: body.message, dest: q.dest, ...(body.conversationId ? { conversationId: body.conversationId } : {}) }, (step) => send("step", step));
+      send("done", result);
+    } catch (e) {
+      const known = e instanceof AppError;
+      send("error", { status: known ? e.status : 500, code: known ? e.code : "INTERNAL", detail: known && e.status < 500 ? e.message : known && e.code === "ASSISTANT_UNAVAILABLE" ? e.message : "درخواست انجام نشد؛ دوباره تلاش کنید." });
+    } finally {
+      reply.raw.end();
+    }
   }
 
   @Get("conversations/:id")

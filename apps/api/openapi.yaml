@@ -492,6 +492,26 @@ paths:
                   toolsUsed: { type: array, items: { type: string } }
         "4XX": { $ref: "#/components/responses/Problem" }
         "503": { $ref: "#/components/responses/Problem" }
+  /v1/assistant/chat/stream:
+    post:
+      summary: "The same turn as a server-sent event stream"
+      description: >
+        Events: `step` (`{tool}`) while a tool runs, then `done` with the reply of `/v1/assistant/chat`, or `error`
+        (`{status, code, detail}`). The text is not streamed word by word: it is checked against tool results first.
+      parameters: [{ name: dest, in: query, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, minLength: 1, maxLength: 500 }
+                conversationId: { type: string, format: uuid }
+      responses:
+        "200": { description: Event stream, content: { text/event-stream: { schema: { type: string } } } }
+        "4XX": { $ref: "#/components/responses/Problem" }
   /v1/assistant/conversations/{id}:
     parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
     get:

@@ -75,6 +75,6 @@ model behind the real adapter (ungrounded price, unknown tool, runaway tool call
 
 ## Not built yet
 
-Streaming (SSE), semantic cache, summarised long-term memory and transcript retention, reorder from past orders,
-a run of the evals against a real model, the store UI on this API (it still uses the scripted demo),
+Word-by-word streaming (today `POST /v1/assistant/chat/stream` streams the steps and then the checked answer), semantic cache, summarised long-term memory and transcript retention, reorder from past orders,
+a run of the evals against a real model,
 smart search and embeddings (Prompt 13), smart compare explanations (Prompt 15).

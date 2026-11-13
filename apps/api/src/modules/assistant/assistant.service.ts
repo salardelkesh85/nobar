@@ -108,7 +108,8 @@ export class AssistantService {
     };
   }
 
-  async chat(userId: string, input: { message: string; conversationId?: string; dest: string }): Promise<AssistantReply> {
+  /** `onStep` is told which tool is about to run, so a streaming client can show progress. */
+  async chat(userId: string, input: { message: string; conversationId?: string; dest: string }, onStep?: (step: { tool: string }) => void): Promise<AssistantReply> {
     const [sent] = await this.db.query<{ n: number }>("select count(*)::int as n from ai.messages where user_id = $1 and role = 'user' and created_at > now() - interval '1 day'", [userId]);
     if ((sent?.n ?? 0) >= this.config.AI_DAILY_MESSAGES) throw tooMany("سقف پیام‌های امروز شما با دستیار پر شده است؛ فردا دوباره امتحان کنید.");
 
@@ -170,6 +171,7 @@ export class AssistantService {
         const toolStarted = Date.now();
         const tool = TOOLS.find((t) => t.name === call.name);
         const parsed = tool?.schema.safeParse(call.arguments ?? {});
+        if (tool && parsed?.success) onStep?.({ tool: tool.name });
         let output: unknown;
         let ok = false;
         if (!tool) output = { error: `ابزاری به نام ${call.name} وجود ندارد` };
