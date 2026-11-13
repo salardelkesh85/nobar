@@ -38,13 +38,37 @@ async function step(name, fn) {
   }
 }
 
-await device.shell(`am force-stop ${PKG}`);
-await device.shell(`am start -W -n ${PKG}/.MainActivity`);
-await sleep(1500);
-await shot("splash");
+// a freshly booted emulator can still have its screen off or locked; the WebView then lays out at zero size
+await device.shell("input keyevent KEYCODE_WAKEUP");
+await device.shell("wm dismiss-keyguard");
+await device.shell("settings put system screen_off_timeout 2147483647");
+await sleep(1000);
 
-const webview = await device.webView({ pkg: PKG }, { timeout: 60_000 });
-const page = await webview.page();
+/** Starts the app and returns its page once the WebView has a real viewport. */
+async function launch(attempt = 1) {
+  await device.shell(`am force-stop ${PKG}`);
+  await device.shell(`am start -W -n ${PKG}/.MainActivity`);
+  await sleep(1500);
+  if (attempt === 1) await shot("splash");
+  const webview = await device.webView({ pkg: PKG }, { timeout: 60_000 });
+  const p = await webview.page();
+  const deadline = Date.now() + 30_000;
+  let size = { w: 0, h: 0, state: "" };
+  while (Date.now() < deadline) {
+    size = await p.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight, state: document.visibilityState })).catch(() => size);
+    if (size.w > 100 && size.h > 100 && size.state === "visible") break;
+    await sleep(500);
+  }
+  const focus = (await device.shell("dumpsys window | grep -m1 mCurrentFocus")).toString().trim();
+  console.log(`viewport ${size.w}x${size.h} (${size.state}); ${focus}`);
+  if (size.w > 100 && size.h > 100 && size.state === "visible") return p;
+  if (attempt >= 2) throw new Error(`the app's WebView has no usable viewport: ${JSON.stringify(size)}`);
+  await device.shell("input keyevent KEYCODE_WAKEUP");
+  await device.shell("wm dismiss-keyguard");
+  return launch(attempt + 1);
+}
+
+const page = await launch();
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
 page.on("console", (m) => {
   if (m.type() === "error") errors.push(`console: ${m.text().slice(0, 300)}`);
