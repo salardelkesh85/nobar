@@ -56,6 +56,10 @@ export const apiConfigSchema = baseConfigSchema.extend({
   /** messages one buyer may send to the assistant per day */
   AI_DAILY_MESSAGES: z.coerce.number().int().positive().default(40),
 
+  // recommendation
+  /** feature flag: "false" turns recommendations off everywhere (the endpoints answer with an empty list) */
+  RECOMMENDATIONS: flag,
+
   // catalog
   /** 32-byte key (base64) that encrypts sellers' national ID and Sheba; a fixed dev key outside production */
   KYC_KEY: z.string().optional(),

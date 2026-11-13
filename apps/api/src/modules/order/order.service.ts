@@ -36,6 +36,7 @@ export function orderEvent(type: "order.placed" | "order.accepted" | "order.stat
       itemsTotalRial: o.itemsTotalRial,
       deliveryFeeRial: o.deliveryFeeRial,
       totalRial: o.totalRial,
+      items: o.items.map((i) => ({ listingId: i.listingId, packageId: i.packageId, qty: i.qty })),
       ...extra,
     },
   });
