@@ -437,6 +437,78 @@ paths:
     post:
       summary: "Mark one (or `all`) read"
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/assistant/chat:
+    post:
+      summary: "Ask the shopping assistant (Baghboon)"
+      description: >
+        Runs one turn of the agent loop. Facts come only from tools; an answer stating an amount no tool returned is
+        replaced. The cart is never changed here: a basket comes back as `basketProposal` for the buyer to confirm.
+        `503` with code `ASSISTANT_UNAVAILABLE` means the model is down and the store should fall back to `/v1/search`.
+        `429` when the buyer's daily message limit is used up.
+      parameters: [{ name: dest, in: query, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, minLength: 1, maxLength: 500 }
+                conversationId: { type: string, format: uuid }
+      responses:
+        "201":
+          description: The assistant's answer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversationId: { type: string, format: uuid }
+                  message: { type: string }
+                  productCards:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        listingId: { type: string }
+                        slug: { type: string }
+                        title: { type: string }
+                        shopName: { type: string }
+                        landedPerKgRial: { type: integer }
+                        arrivesWithinDays: { type: integer }
+                        freshDaysOnArrival: { type: integer }
+                  basketProposal:
+                    nullable: true
+                    type: object
+                    properties:
+                      id: { type: string, format: uuid }
+                      summary: { type: string }
+                      items: { type: array, items: { type: object } }
+                      itemsRial: { type: integer }
+                      shippingRial: { type: integer }
+                      totalRial: { type: integer }
+                  compareProduceTypeId: { type: string, nullable: true }
+                  toolsUsed: { type: array, items: { type: string } }
+        "4XX": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /v1/assistant/conversations/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: "Transcript of one of the buyer's conversations"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/assistant/proposals/{id}/confirm:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Add a proposed basket to the cart (the buyer's explicit confirmation)"
+      description: "Works once per proposal (`409 PROPOSAL_USED` afterwards). Returns the cart."
+      responses: { "201": { description: The cart }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/assistant/conversations/{id}/audit:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: "Every model call, tool call and guardrail decision of a conversation"
+      description: "ADMIN role."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/kyc:
     get:
       summary: "Shops waiting for approval (KYC masked)"

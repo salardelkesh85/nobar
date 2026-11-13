@@ -11,6 +11,7 @@ CREATE SCHEMA ordering;
 CREATE SCHEMA payment;
 CREATE SCHEMA review;
 CREATE SCHEMA notification;
+CREATE SCHEMA ai;
 
 -- ============================================================================
 -- public — زیرساخت مشترک: مایگریشن‌ها، صندوق خروجی و ورودی رویدادها، کلیدهای یکتایی درخواست
@@ -534,3 +535,67 @@ CREATE TABLE notification.notifications (
   CONSTRAINT notifications_pkey PRIMARY KEY (id)
 );
 CREATE INDEX notifications_user ON notification.notifications USING btree (user_id, created_at DESC);
+
+-- ============================================================================
+-- ai — دستیار خرید: گفت‌وگوها، پیام‌ها، سبدهای پیشنهادی، گزارش ممیزی فراخوانی مدل و ابزارها
+-- ============================================================================
+
+CREATE TABLE ai.conversations (
+  id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  dest_city_id text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT conversations_pkey PRIMARY KEY (id)
+);
+CREATE INDEX conversations_user ON ai.conversations USING btree (user_id, updated_at DESC);
+
+CREATE TABLE ai.messages (
+  id uuid NOT NULL,
+  conversation_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  role text NOT NULL,
+  content text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT messages_pkey PRIMARY KEY (id),
+  CONSTRAINT messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES ai.conversations(id) ON DELETE CASCADE,
+  CONSTRAINT messages_role_check CHECK ((role = ANY (ARRAY['user'::text, 'assistant'::text])))
+);
+CREATE INDEX messages_conversation ON ai.messages USING btree (conversation_id, created_at, id);
+CREATE INDEX messages_user_day ON ai.messages USING btree (user_id, created_at) WHERE (role = 'user'::text);
+
+CREATE TABLE ai.proposals (
+  id uuid NOT NULL,
+  conversation_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  dest_city_id text NOT NULL,
+  summary text NOT NULL,
+  items jsonb NOT NULL,
+  items_rial bigint NOT NULL,
+  shipping_rial bigint NOT NULL,
+  status text NOT NULL DEFAULT 'PROPOSED'::text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  confirmed_at timestamp with time zone,
+  CONSTRAINT proposals_pkey PRIMARY KEY (id),
+  CONSTRAINT proposals_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES ai.conversations(id) ON DELETE CASCADE,
+  CONSTRAINT proposals_items_rial_check CHECK ((items_rial >= 0)),
+  CONSTRAINT proposals_shipping_rial_check CHECK ((shipping_rial >= 0)),
+  CONSTRAINT proposals_status_check CHECK ((status = ANY (ARRAY['PROPOSED'::text, 'CONFIRMED'::text])))
+);
+
+CREATE TABLE ai.ai_audit_log (
+  id uuid NOT NULL,
+  conversation_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  kind text NOT NULL,
+  name text NOT NULL,
+  input jsonb NOT NULL,
+  output jsonb NOT NULL,
+  ok boolean NOT NULL,
+  duration_ms integer NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT ai_audit_log_pkey PRIMARY KEY (id),
+  CONSTRAINT ai_audit_log_kind_check CHECK ((kind = ANY (ARRAY['LLM'::text, 'TOOL'::text, 'GUARD'::text])))
+);
+CREATE INDEX ai_audit_conversation ON ai.ai_audit_log USING btree (conversation_id, created_at, id);
+CREATE INDEX ai_audit_user ON ai.ai_audit_log USING btree (user_id, created_at DESC);

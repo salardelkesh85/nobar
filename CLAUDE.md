@@ -57,6 +57,7 @@ seller copilot.
 - docs/architecture.md — services, data ownership, communication, patterns
 - docs/domain.md — bounded contexts, entities, state machines, glossary, open business questions
 - docs/adr/ — Architecture Decision Records (check before changing a core choice)
+- docs/ai-architecture.md — shopping assistant: provider interface, tools, guardrails, evals
 - docs/roadmap.md — phases, exit criteria, progress
 - docs/database/schema.sql — the whole database as CREATE statements (generated; kept in sync by a test)
 - docs/deployment.md — images, Helm chart, database, Argo CD, secrets, release steps
