@@ -45,6 +45,17 @@ export const apiConfigSchema = baseConfigSchema.extend({
   /** how often order deadlines are checked (0 turns the timer off, e.g. in tests) */
   ORDER_TIMER_SEC: z.coerce.number().int().min(0).default(30),
 
+  // assistant
+  /** "fake" is a rule-based stand-in (tests, and when no model is configured); see modules/assistant/llm.ts */
+  LLM_PROVIDER: z.enum(["fake", "openai-compatible"]).default("fake"),
+  /** e.g. http://vllm:8000/v1 for a self-hosted model */
+  LLM_BASE_URL: z.string().url().optional(),
+  LLM_MODEL: z.string().optional(),
+  LLM_API_KEY: z.string().optional(),
+  LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  /** messages one buyer may send to the assistant per day */
+  AI_DAILY_MESSAGES: z.coerce.number().int().positive().default(40),
+
   // catalog
   /** 32-byte key (base64) that encrypts sellers' national ID and Sheba; a fixed dev key outside production */
   KYC_KEY: z.string().optional(),

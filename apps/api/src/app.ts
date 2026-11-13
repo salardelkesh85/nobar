@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { allowOrigins, every, JwtVerifier, type ServiceDefinition } from "@nobar/common";
 import { type ApiConfig, apiConfigSchema, assertProductionConfig, seedDemoEnabled } from "./config";
+import { AssistantModule } from "./modules/assistant/assistant.module";
+import { assistantMigrations } from "./modules/assistant/migrations";
 import { AuditModule } from "./modules/audit/audit.module";
 import { auditMigrations } from "./modules/audit/migrations";
 import { CatalogModule } from "./modules/catalog/catalog.module";
@@ -35,7 +37,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
   return {
     name: "api",
     configSchema: apiConfigSchema,
-    migrations: [...identityMigrations, ...auditMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations, ...paymentMigrations, ...reviewMigrations, ...notificationMigrations],
+    migrations: [...identityMigrations, ...auditMigrations, ...catalogMigrations, ...cartMigrations, ...orderMigrations, ...paymentMigrations, ...reviewMigrations, ...notificationMigrations, ...assistantMigrations],
     // the API verifies its own tokens with the identity module's keys (no JWKS round trip)
     async verifier({ config }) {
       assertProductionConfig(config);
@@ -44,7 +46,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
     },
     module: (deps) => ({
       module: ApiModule,
-      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), AuditModule, CatalogModule, CartModule, OrderModule, ReviewModule, NotificationModule],
+      imports: [IdentityModule.forRoot({ keys: keys!, sms: createSmsProvider(deps.config, deps.log) }), AuditModule, CatalogModule, CartModule, OrderModule, ReviewModule, NotificationModule, AssistantModule],
     }),
     configure: ({ app, deps }) => allowOrigins(app, deps.config.CORS_ORIGINS.split(",")),
     async onStart({ app, deps }) {
