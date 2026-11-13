@@ -3,7 +3,7 @@ import { defineConfig } from "tsup";
 // Single-file production bundle (workspace packages inlined); tsup switches to SWC for decorator metadata.
 // PGlite stays external: it loads its WebAssembly files from its own package folder.
 export default defineConfig({
-  entry: ["src/main.ts"],
+  entry: ["src/main.ts", "src/keygen.ts"],
   format: ["cjs"],
   platform: "node",
   target: "node22",
