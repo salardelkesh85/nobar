@@ -65,3 +65,16 @@ networkPolicy:
 # Prometheus Operator ServiceMonitor for /metrics
 serviceMonitor:
   enabled: false
+
+# PrometheusRule with SLO burn-rate and operational alerts (needs the Prometheus Operator CRDs)
+prometheusRule:
+  enabled: false
+  # the release label your Prometheus selects rules by (kube-prometheus-stack: its release name)
+  labels: {}
+  runbookBaseUrl: https://github.com/salardelkesh85/nobar/blob/main/docs/runbooks
+
+# Grafana dashboard as a ConfigMap for the dashboard sidecar
+grafanaDashboard:
+  enabled: false
+  labels:
+    grafana_dashboard: "1"

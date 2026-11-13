@@ -70,7 +70,22 @@ cookies, or without `DATABASE_URL`, `OTP_SECRET` and `KYC_KEY` (`assertProductio
 - **Melipayamak.** Without `MELIPAYAMAK_OTP_BODY_ID`, sign-in codes are plain messages and may not reach numbers
   that block advertising SMS; registering a pattern in the panel avoids that.
 
+## Monitoring
+
+`values-prod.yaml` turns on a ServiceMonitor (`/metrics`), a PrometheusRule and a Grafana dashboard ConfigMap; they need
+the Prometheus Operator and Grafana's dashboard sidecar (for example kube-prometheus-stack). Set
+`prometheusRule.labels` to the label your Prometheus selects rules by. Alerts link to `docs/runbooks/`.
+
+| SLO | Objective | Alerts |
+|---|---|---|
+| Checkout availability (`/v1/checkouts`, `/pay`, gateway callback not 5xx) | 99.5% | page at 14.4x burn (1h and 5m), ticket at 6x (6h and 30m) |
+| Search latency (`/v1/search` within 300 ms) | 95% | same burn-rate pair |
+
+Also: API down, outbox backlog, payment failures, assistant unavailable. Business metrics: `nobar_orders_placed_total`,
+`nobar_orders_placed_rial_total`, `nobar_payments_total`, `nobar_payments_late_total`, `nobar_order_events_total`,
+`nobar_outbox_pending`, `nobar_assistant_*`.
+
 ## Not done yet
 
-Canary rollouts (Argo Rollouts), KEDA, dashboards and alerts, runbooks, and container images for the three
-frontends (today they are static builds).
+Canary rollouts (Argo Rollouts), KEDA, tracing export to Jaeger, and container images for the three frontends
+(today they are static builds). The rules and dashboard have not run against a real Prometheus yet.

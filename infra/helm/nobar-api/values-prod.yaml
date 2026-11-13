@@ -19,3 +19,7 @@ podDisruptionBudget:
   minAvailable: 2
 serviceMonitor:
   enabled: true
+prometheusRule:
+  enabled: true
+grafanaDashboard:
+  enabled: true
