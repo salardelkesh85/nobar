@@ -29,6 +29,7 @@ import { ListingRail } from "@/components/listing-card";
 import { Photo } from "@/components/photo";
 import { bannerSrc } from "@/lib/photos";
 import { useStore } from "@/lib/store";
+import { Recommendations } from "@/components/recommendations";
 import styles from "./market.module.css";
 
 function Heading({
@@ -249,6 +250,8 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      <Recommendations for={{ home: true }} title="پیشنهاد امروز نوبر" />
 
       <Products
         title="فصلش رسیده، وقتشه!"

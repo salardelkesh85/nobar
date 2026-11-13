@@ -27,6 +27,7 @@ import { Photo } from "@/components/photo";
 import { useStore } from "@/lib/store";
 import { CatalogFailure, CatalogLoading } from "@/components/catalog-state";
 import { useCatalogListing, useCatalogSearch } from "@/lib/api-catalog";
+import { Recommendations } from "@/components/recommendations";
 
 const coverFor = (art: string): BannerPhoto =>
   ["pomegranate", "quince", "barberry"].includes(art) ? "banner-pomegranate" : ["apple-red", "apple-yellow", "grape-white", "walnut"].includes(art) ? "banner-orchard" : "banner-market";
@@ -213,6 +214,8 @@ export function ListingView({ id }: { id: string }) {
           <ListingRail hits={similar} />
         </section>
       ) : null}
+
+      <Recommendations for={{ listingId: id }} title="کنارش خوب است" />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">

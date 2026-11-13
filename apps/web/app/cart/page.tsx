@@ -12,6 +12,8 @@ import { CheckoutSteps } from "@/components/checkout-steps";
 import { ListingRail } from "@/components/listing-card";
 import { search, type Shop, type ShippingMethodCode } from "@nobar/demo";
 import { formatToman } from "@nobar/fa";
+import { Recommendations } from "@/components/recommendations";
+import { API_URL } from "@/lib/api-config";
 
 /** «X تومان تا ارسال رایگان» when the shop offers free shipping above a threshold for this method. */
 function FreeShippingHint({ shop, method, itemsRial }: { shop: Shop; method: ShippingMethodCode; itemsRial: number }) {
@@ -31,6 +33,8 @@ function FreeShippingHint({ shop, method, itemsRial }: { shop: Shop; method: Shi
 }
 
 function Suggestions({ dest, exclude, title }: { dest: string; exclude: string[]; title: string }) {
+  // API mode: what the recommendation module suggests for this cart (never demo listings)
+  if (API_URL) return <Recommendations for={{ cart: true }} title={title} />;
   const hits = search({ dest, sort: "rating" }).hits.filter((h) => !exclude.includes(h.listing.id)).slice(0, 12);
   if (!hits.length) return null;
   return (
