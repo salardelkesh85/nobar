@@ -29,6 +29,7 @@
 | A buyer's phone number typed into the assistant reached `ai_audit_log` through a tool argument | Medium | All logged tool input and output is redacted (found by an eval case) |
 | Two API replicas starting together could both run a migration | Medium | Advisory lock around each migration |
 | `fastify` 5.11.3 had high-severity advisories (`pnpm audit`) | High | `@nestjs/platform-fastify` 11.2.10 brings `fastify` 5.12.8. Its stricter proxy handling makes a numeric `TRUST_PROXY` hop count trust nobody, so a hop count is now refused at start with a message |
+| The API image carried npm, corepack and yarn from the base image, with high-severity advisories in npm's bundled packages | High | Removed from the runtime stage; the CI image scan (high/critical, fixable) passes |
 | No SBOM and no secret scanning in CI | Medium | CI scans the tree for secrets, builds a CycloneDX SBOM of the API image and keeps it as a build artifact; the image scan fails on high/critical findings |
 | No general rate limit: search, cart and copilot endpoints could be hammered, and each copilot draft may reach the model | Medium | Per-IP limit on `/v1/*` (`RATE_LIMIT_PER_MIN`, default 600) and a daily cap on copilot drafts per seller (`AI_DAILY_MESSAGES`) |
 
