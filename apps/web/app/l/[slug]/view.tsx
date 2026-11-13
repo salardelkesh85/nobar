@@ -73,7 +73,7 @@ export function ListingView({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      <nav aria-label="مسیر" className="flex flex-wrap items-center gap-1 text-xs text-ink-soft">
+      <nav aria-label="مسیر" className="nx-crumbs flex flex-wrap items-center gap-1 text-xs text-ink-soft">
         <Link href="/" className="hover:text-brand">نوبر</Link>
         <ChevronLeft className="size-3.5" aria-hidden />
         <Link href={`/search?cat=${cat?.id}`} className="hover:text-brand">{cat?.name}</Link>

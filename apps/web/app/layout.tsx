@@ -14,8 +14,10 @@ import {
 import { CityPicker } from "@/components/city-picker";
 import { MegaMenu } from "@/components/mega-menu";
 import { SearchBox } from "@/components/search-box";
+import { AppBridge, AppHeaderSwitch } from "@/components/app-shell";
 import { PageFrame } from "@/components/page-frame";
 import { SiteFooter } from "@/components/site-footer";
+import { IS_APP } from "@/lib/app-mode";
 import { PREFS_BOOT_SCRIPT } from "@/lib/constants";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
@@ -37,11 +39,18 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // the app draws behind the status and navigation bars and pads its own bars (market.css, "app mode")
+  ...(IS_APP ? { viewportFit: "cover" as const } : {}),
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fa" dir="rtl" suppressHydrationWarning>
+    <html
+      lang="fa"
+      dir="rtl"
+      className={IS_APP ? "is-app" : undefined}
+      suppressHydrationWarning
+    >
       <body className="studio-app nx min-h-dvh">
         <Script id="nobar-prefs" strategy="beforeInteractive">
           {PREFS_BOOT_SCRIPT}
@@ -54,43 +63,61 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           >
             رفتن به محتوای اصلی
           </a>
-          <header className="nx-header">
-            <div className="nx-header-row">
-              <Link href="/" aria-label="نوبر — صفحهٔ اصلی" className="nx-brand">
-                <LogoMark className="nx-brand-mark" />
-                <span className="nx-brand-name">نوبر</span>
-              </Link>
-              <Suspense fallback={<div className="nx-search-placeholder" />}>
-                <SearchBox className="nx-header-search" />
-              </Suspense>
-              <div className="nx-header-city">
-                <CityPicker compact />
+          <AppHeaderSwitch>
+            <header className="nx-header">
+              <div className="nx-header-row">
+                <Link
+                  href="/"
+                  aria-label="نوبر — صفحهٔ اصلی"
+                  className="nx-brand"
+                >
+                  <LogoMark className="nx-brand-mark" />
+                  <span className="nx-brand-name">نوبر</span>
+                </Link>
+                <Suspense fallback={<div className="nx-search-placeholder" />}>
+                  <SearchBox className="nx-header-search" />
+                </Suspense>
+                <div className="nx-header-city">
+                  <CityPicker compact />
+                </div>
+                <HeaderActions />
               </div>
-              <HeaderActions />
-            </div>
-            <nav aria-label="دسته‌بندی اصلی" className="nx-nav">
-              <div className="nx-nav-inner">
-                <MegaMenu />
-                <span className="nx-nav-sep" aria-hidden />
-                <Link href="/search?nobar=1" className="nx-nav-link nx-nav-fresh">
-                  <span aria-hidden /> نوبرهای تازه
-                </Link>
-                <Link href="/shops" className="nx-nav-link">غرفه‌ها</Link>
-                <Link href="/season" className="nx-nav-link">تقویم فصل</Link>
-                <Link href="/origin/miandoab" className="nx-nav-link">مبدأها</Link>
-                <Link href="/baghboon" className="nx-nav-link nx-nav-assistant">
-                  <Sprout size={16} aria-hidden /> باغبون
-                </Link>
-                <Link href="/about/sell" className="nx-nav-link nx-nav-sell">
-                  در نوبر بفروشید <ArrowLeft size={14} aria-hidden />
-                </Link>
-              </div>
-            </nav>
-          </header>
+              <nav aria-label="دسته‌بندی اصلی" className="nx-nav">
+                <div className="nx-nav-inner">
+                  <MegaMenu />
+                  <span className="nx-nav-sep" aria-hidden />
+                  <Link
+                    href="/search?nobar=1"
+                    className="nx-nav-link nx-nav-fresh"
+                  >
+                    <span aria-hidden /> نوبرهای تازه
+                  </Link>
+                  <Link href="/shops" className="nx-nav-link">
+                    غرفه‌ها
+                  </Link>
+                  <Link href="/season" className="nx-nav-link">
+                    تقویم فصل
+                  </Link>
+                  <Link href="/origin/miandoab" className="nx-nav-link">
+                    مبدأها
+                  </Link>
+                  <Link
+                    href="/baghboon"
+                    className="nx-nav-link nx-nav-assistant"
+                  >
+                    <Sprout size={16} aria-hidden /> باغبون
+                  </Link>
+                  <Link href="/about/sell" className="nx-nav-link nx-nav-sell">
+                    در نوبر بفروشید <ArrowLeft size={14} aria-hidden />
+                  </Link>
+                </div>
+              </nav>
+            </header>
+          </AppHeaderSwitch>
           <main id="main" className="studio-main">
             <PageFrame>{children}</PageFrame>
           </main>
-          <SiteFooter />
+          {IS_APP ? <AppBridge /> : <SiteFooter />}
           <CompareTray />
           <SimpleVoiceFab />
           <Toast />

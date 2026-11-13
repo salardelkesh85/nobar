@@ -1594,3 +1594,108 @@ body.nx {
     flex-basis: 180px;
   }
 }
+
+/* ---------------------------------------------------------------- app mode (Android app, NEXT_PUBLIC_APP=1) */
+
+/* The app draws edge to edge; Capacitor provides the insets as env() and as --safe-area-inset-* variables. */
+.is-app {
+  --nx-safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --nx-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+.is-app body {
+  overscroll-behavior-y: none;
+}
+.is-app body.nx {
+  --studio-sticky: calc(var(--nx-header-h) + var(--nx-safe-top));
+}
+.is-app .nx-header {
+  padding-top: var(--nx-safe-top);
+}
+.is-app .nx-chips,
+.is-app .nx-toolbar {
+  top: calc(var(--nx-header-h) + var(--nx-safe-top));
+}
+.is-app .nx .nobar-bottom-nav,
+.is-app .nobar-bottom-nav {
+  padding-bottom: var(--nx-safe-bottom);
+}
+.is-app .studio-main {
+  padding-bottom: calc(96px + var(--nx-safe-bottom));
+}
+.is-app .studio-page-context {
+  display: none;
+}
+
+/* app bar on inner pages */
+.is-app body:has(.nx-appbar) {
+  --nx-header-h: 56px;
+}
+.nx-appbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: calc(56px + var(--nx-safe-top, 0px));
+  padding: var(--nx-safe-top, 0px) 6px 0;
+  background: var(--surface);
+  box-shadow: 0 1px 0 var(--line);
+}
+.nx-appbar-button {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: var(--ink);
+}
+.nx-appbar-button:active {
+  background: var(--surface-2);
+}
+.nx-appbar-title {
+  flex: 1;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nx-appbar-count {
+  position: absolute;
+  top: 4px;
+  inset-inline-start: 2px;
+}
+
+.nx-offline {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: calc(72px + var(--nx-safe-bottom, 0px));
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #1b2520;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* product page in the app: the buy bar takes the bottom tabs' place */
+.is-app body:has(.nx-buybar) .nobar-bottom-nav {
+  display: none;
+}
+.is-app .nx-buybar {
+  bottom: 0;
+  padding-bottom: calc(8px + var(--nx-safe-bottom));
+}
+.is-app .nx-crumbs {
+  display: none;
+}

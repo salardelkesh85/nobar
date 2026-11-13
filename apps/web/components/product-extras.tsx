@@ -552,7 +552,7 @@ export function StickyBuyBar({
   const { addToCart, showToast } = useStore();
   const p = listing.packages[0]!;
   return (
-    <div className="fixed inset-x-0 bottom-15 z-30 border-t border-line bg-surface px-3 py-2 shadow-lift md:hidden">
+    <div className="nx-buybar fixed inset-x-0 bottom-15 z-30 border-t border-line bg-surface px-3 py-2 shadow-lift md:hidden">
       <div className="flex items-center gap-3">
         <button
           type="button"
