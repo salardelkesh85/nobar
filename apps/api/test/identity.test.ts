@@ -60,7 +60,11 @@ afterAll(async () => {
 
 describe("health", () => {
   it("answers liveness and readiness", async () => {
-    expect((await call("GET", "/healthz")).body).toMatchObject({ status: "ok", service: "api" });
+    const health = await call("GET", "/healthz");
+    expect(health.body).toMatchObject({ status: "ok", service: "api" });
+    expect(health.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(health.headers.get("x-frame-options")).toBe("DENY");
+    expect(health.headers.get("referrer-policy")).toBe("no-referrer");
     expect((await call("GET", "/readyz")).body).toMatchObject({ status: "ready", checks: { db: true } });
   });
 });

@@ -72,6 +72,9 @@ export async function startService<C extends BaseConfig>(
   fastify.addHook("onSend", (_req, reply, payload, done) => {
     const ctx = currentContext();
     if (ctx) void reply.header("x-request-id", ctx.requestId);
+    // an API has nothing to frame, sniff or leak through the referrer
+    void reply.header("x-content-type-options", "nosniff").header("x-frame-options", "DENY").header("referrer-policy", "no-referrer");
+    if (config.NODE_ENV === "production") void reply.header("strict-transport-security", "max-age=31536000; includeSubDomains");
     done(null, payload);
   });
   fastify.addHook("onResponse", (req, reply, done) => {

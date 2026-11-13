@@ -40,6 +40,12 @@ export class AdminOrdersController {
     return (await idempotent(this.db, `dispute:resolve:${user.id}`, key, { id, ...body }, () => this.orders.resolveDispute(id, body.refundRial, body.note))).body;
   }
 
+  /** Shops whose recent orders need a look, each with its reasons. Read only. */
+  @Get("risk/shops")
+  risk() {
+    return this.orders.shopRisk();
+  }
+
   @Get("finance")
   finance() {
     return this.payments.totals();

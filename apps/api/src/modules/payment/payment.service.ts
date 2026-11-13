@@ -53,10 +53,10 @@ export class PaymentService {
     return { paymentId: id, redirectUrl };
   }
 
-  /** Looks up an attempt by its gateway authority (for the test gateway page). */
+  /** Looks up a test-gateway attempt by its authority (for the test gateway page; real gateways have their own page). */
   async byAuthority(authority: string): Promise<{ checkoutId: string; amountRial: number; status: string } | null> {
     const [row] = await this.db.query<{ checkout_id: string; amount_rial: number; status: string }>(
-      "select checkout_id, amount_rial, status from payment.payments where authority = $1",
+      "select checkout_id, amount_rial, status from payment.payments where authority = $1 and provider = 'fake'",
       [authority],
     );
     return row ? { checkoutId: row.checkout_id, amountRial: Number(row.amount_rial), status: row.status } : null;

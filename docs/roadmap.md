@@ -111,3 +111,5 @@ Deferred in this track: delivery/review/notification (stubs only), seller panel 
 | P12/P14 assistant | First version done | `assistant` module in `apps/api`: LLMProvider (rule-based + OpenAI-compatible), 7 typed tools, grounding guard, basket proposals with confirmation, `ai_audit_log`, step stream (SSE), store page on the API, 40 Persian evals in CI. Not yet: semantic cache, a hosted-provider adapter, a run against a real model |
 | P16 recommendations | First version done | Bought together, popular, in season; fed by order events; feature flag. Not yet: store UI, offline metrics |
 | P17 seller copilot | First version done | Price guidance (rule), listing and review-reply drafts (model with fallback), advisory only. Not yet: demand forecast, seller panel UI |
+| P18 trust & safety | Started | Staff list of shops with risk patterns (rejections, disputes, refunds) with reasons, read only. Not yet: duplicate images, fake-review detection, complaint triage |
+| P19 hardening | Started | First security pass in `docs/security-review.md` with four fixes and an open list. Not yet: load and chaos tests, SBOM, dependency audit |

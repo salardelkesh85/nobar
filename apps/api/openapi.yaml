@@ -666,6 +666,11 @@ paths:
       description: "ADMIN role. Requires Idempotency-Key."
       parameters: [{ name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 100 } }]
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/admin/risk/shops:
+    get:
+      summary: "Shops whose last 90 days of orders show a risk pattern, with reasons"
+      description: "ADMIN role. Rules: share of rejected or expired orders, share of disputed orders, share of money refunded after disputes. Read only; acting on it is a staff decision."
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/finance:
     get:
       summary: "Ledger totals: escrow, wallets, seller balances, commission, paid out, received"

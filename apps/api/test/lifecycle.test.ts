@@ -227,6 +227,24 @@ describe("money stays consistent", () => {
     expect(unbalanced).toEqual([]);
   });
 
+  it("flags a shop with many rejected and disputed orders, with reasons, and changes nothing", async () => {
+    expect((await call("GET", "/v1/admin/risk/shops", undefined, seller.cookie)).status).toBe(403);
+    // on top of the orders above, the shop turns down four more in a row
+    for (let i = 0; i < 4; i++) {
+      const { order } = await paidOrder();
+      expect((await call("POST", `/v1/seller/orders/${order.id}/reject`, { reason: "موجودی تمام شد" }, seller.cookie)).body.status).toBe("REJECTED");
+    }
+    const risk = (await call("GET", "/v1/admin/risk/shops", undefined, admin.cookie)).body;
+    const mine = risk.find((r: { shopId: string }) => r.shopId === listing.shopId);
+    expect(mine.orders).toBeGreaterThanOrEqual(5);
+    expect(mine.score).toBeGreaterThan(0);
+    expect(mine.reasons.length).toBeGreaterThan(0);
+    expect(mine.rejected).toBeGreaterThanOrEqual(5);
+    expect(mine.reasons.join(" ")).toContain("رد شده یا بی‌پاسخ مانده");
+    // still on the store: the list informs staff, it does not act
+    expect((await call("GET", `/v1/shops/${listing.shopId}`)).status).toBe(200);
+  });
+
   it("lets staff change commission rules", async () => {
     const rules = await call("PUT", "/v1/admin/commission-rules", { scope: "CATEGORY", scopeId: "veg", rateBps: 800, label: "دسته: صیفی" }, admin.cookie);
     expect(rules.body.find((r: { scopeId: string }) => r.scopeId === "veg").rateBps).toBe(800);
