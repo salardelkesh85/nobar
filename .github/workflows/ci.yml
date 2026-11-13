@@ -84,3 +84,50 @@ jobs:
           docker tag "$IMAGE:${{ github.sha }}" "$IMAGE:latest"
           docker push "$IMAGE:${{ github.sha }}"
           docker push "$IMAGE:latest"
+
+  # Release gate: the whole Docker Compose stack in production mode (real Caddy, PostgreSQL 17, API, store,
+  # panels) with ZarinPal and Melipayamak stand-ins, driven end to end like real users (infra/compose/ci/smoke.mjs).
+  stack:
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: infra/compose
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Configure
+        run: |
+          cp ci/env.ci .env
+          docker compose -f docker-compose.yml -f ci/docker-compose.ci.yml build
+          docker compose -f docker-compose.yml -f ci/docker-compose.ci.yml run --rm --no-deps api node dist/keygen.js >> .env
+
+      - name: Start
+        run: docker compose -f docker-compose.yml -f ci/docker-compose.ci.yml up -d
+
+      - name: Smoke test through the edge
+        run: node ci/smoke.mjs
+        env:
+          BASE: http://localhost
+          STUBS: http://localhost:8080
+          STUBS_INTERNAL: http://stubs:8080
+          ADMIN_PHONE: "09120000001"
+
+      - name: Backup was written
+        run: |
+          for i in $(seq 1 30); do ls backups/nobar-*.sql.gz >/dev/null 2>&1 && break; sleep 2; done
+          ls -l backups/
+          gunzip -c backups/nobar-*.sql.gz | grep -q "CREATE TABLE catalog.listings"
+
+      - name: Logs
+        if: always()
+        run: docker compose -f docker-compose.yml -f ci/docker-compose.ci.yml logs --no-color --tail=200
+
+      - name: Stop
+        if: always()
+        run: docker compose -f docker-compose.yml -f ci/docker-compose.ci.yml down -v

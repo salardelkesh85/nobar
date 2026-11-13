@@ -21,7 +21,7 @@ config:
   SEED_DEMO: "false"
 
 # Secret settings come from one existing Secret (create it with Sealed Secrets or External Secrets, never in git).
-# Required keys: OTP_SECRET, JWT_PRIVATE_JWK, KYC_KEY, ADMIN_PHONES, ZARINPAL_MERCHANT_ID,
+# Required keys: OTP_SECRET, JWT_PRIVATE_JWK, KYC_KEY, INTERNAL_TOKEN, ADMIN_PHONES, ZARINPAL_MERCHANT_ID,
 #                MELIPAYAMAK_USERNAME, MELIPAYAMAK_PASSWORD, MELIPAYAMAK_FROM
 # Optional:      MELIPAYAMAK_OTP_BODY_ID, and DATABASE_URL when database.existingSecret is not used
 existingSecret: nobar-api

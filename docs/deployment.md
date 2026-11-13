@@ -35,11 +35,14 @@ Because the servers are in Iran, check from inside the cluster that `ghcr.io` (i
    `kubectl -n nobar-prod apply -f infra/k8s/postgres-cluster.yaml`. The operator creates the Secret `nobar-db-app`.
 3. **Secrets.** Create the Secret `nobar-api` in the namespace (with Sealed Secrets or External Secrets; never commit values):
 
+   `node dist/keygen.js` (in the API image) prints `OTP_SECRET`, `KYC_KEY`, `JWT_PRIVATE_JWK` and `INTERNAL_TOKEN`.
+
    | Key | Value |
    |---|---|
    | `OTP_SECRET` | random, 32+ characters |
    | `JWT_PRIVATE_JWK` | ES256 private key as JSON (keep it stable: changing it signs everyone out) |
    | `KYC_KEY` | 32 random bytes, base64 (losing it makes stored national IDs and Sheba numbers unreadable) |
+   | `INTERNAL_TOKEN` | random, 16+ characters (required in production) |
    | `ADMIN_PHONES` | staff phones, comma separated |
    | `ZARINPAL_MERCHANT_ID` | from the ZarinPal panel |
    | `MELIPAYAMAK_USERNAME`, `MELIPAYAMAK_PASSWORD`, `MELIPAYAMAK_FROM` | panel user, webservice password, sender line |

@@ -1,7 +1,6 @@
 # One domain for everything. SITE_ADDRESS is the domain (Caddy gets and renews the TLS certificate),
 # or ":80" for plain HTTP behind another TLS terminator or in CI.
 {
-	email {$ACME_EMAIL:}
 	admin off
 }
 
