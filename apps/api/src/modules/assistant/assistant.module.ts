@@ -6,7 +6,9 @@ import { z } from "zod";
 import type { ApiConfig } from "../../config";
 import { CartModule } from "../cart/cart.module";
 import { CatalogModule } from "../catalog/catalog.module";
+import { ReviewModule } from "../review/review.module";
 import { AssistantService } from "./assistant.service";
+import { CopilotService } from "./copilot.service";
 import { createLlmProvider, LLM_PROVIDER } from "./llm";
 
 const DESTINATIONS = CITIES.filter((city) => city.destination).map((city) => city.id) as [string, ...string[]];
@@ -59,6 +61,46 @@ class AssistantController {
   }
 }
 
+const DraftBody = z.object({
+  produceTypeId: z.string().trim().min(1).max(60),
+  variety: z.string().trim().max(40).optional(),
+  grade: z.enum(["PREMIUM", "GRADE_1", "GRADE_2", "PROCESSING"]),
+  originCityId: z.string().trim().min(1).max(60),
+  isOrganic: z.boolean().default(false),
+  harvestedDaysAgo: z.number().int().min(0).max(365).optional(),
+  notes: z.string().trim().max(300).optional(),
+});
+type Draft = z.infer<typeof DraftBody>;
+
+/** Seller copilot: advice only; the seller applies it through the normal seller endpoints. */
+@Controller("v1/seller/copilot")
+class CopilotController {
+  constructor(@Inject(CopilotService) private readonly copilot: CopilotService) {}
+
+  @Get("listings/:id/price")
+  price(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.copilot.priceAdvice(user.id, id);
+  }
+
+  @Post("listing-draft")
+  draft(@CurrentUser() user: AuthUser, @Body(new ZodPipe(DraftBody)) body: Draft) {
+    return this.copilot.listingDraft(user.id, {
+      produceTypeId: body.produceTypeId,
+      grade: body.grade,
+      originCityId: body.originCityId,
+      isOrganic: body.isOrganic,
+      ...(body.variety ? { variety: body.variety } : {}),
+      ...(body.harvestedDaysAgo === undefined ? {} : { harvestedDaysAgo: body.harvestedDaysAgo }),
+      ...(body.notes ? { notes: body.notes } : {}),
+    });
+  }
+
+  @Post("reviews/:id/reply-draft")
+  reply(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.copilot.reviewReplyDraft(user.id, id);
+  }
+}
+
 @Roles("ADMIN")
 @Controller("v1/admin/assistant")
 class AdminAssistantController {
@@ -72,9 +114,9 @@ class AdminAssistantController {
 
 /** Shopping assistant: LLM provider, tools, guardrails, audit. Owns the `ai` schema. */
 @Module({
-  imports: [CatalogModule, CartModule],
-  controllers: [AssistantController, AdminAssistantController],
-  providers: [AssistantService, { provide: LLM_PROVIDER, inject: [TOKENS.CONFIG], useFactory: (config: ApiConfig) => createLlmProvider(config) }],
+  imports: [CatalogModule, CartModule, ReviewModule],
+  controllers: [AssistantController, CopilotController, AdminAssistantController],
+  providers: [AssistantService, CopilotService, { provide: LLM_PROVIDER, inject: [TOKENS.CONFIG], useFactory: (config: ApiConfig) => createLlmProvider(config) }],
   exports: [AssistantService],
 })
 export class AssistantModule {}

@@ -39,9 +39,8 @@ function collectNumbers(value: unknown, into: Set<number>): void {
 export function ungroundedNumbers(message: string, toolResults: unknown[], userText: string): number[] {
   const known = new Set<number>();
   for (const r of toolResults) collectNumbers(r, known);
-  for (const n of [...known]) {
-    if (n % 10 === 0) known.add(n / 10);
-  }
+  // spoken in Toman: a tenth of the Rial value, whichever way an odd Rial was rounded
+  for (const n of [...known]) for (const toman of [Math.floor(n / 10), Math.round(n / 10), Math.ceil(n / 10)]) known.add(toman);
   // the buyer's own figures, also when they said "۸۰۰ هزار" or "۲ میلیون"
   for (const n of numbersIn(userText)) for (const scale of [1, 1000, 1_000_000]) known.add(n * scale);
   return [...new Set(numbersIn(message))].filter((n) => n >= 1000 && !known.has(n));

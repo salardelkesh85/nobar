@@ -1,5 +1,6 @@
 import { CITIES } from "@nobar/contracts/cities";
 import { formatToman, normalizeFa, parseBudgetRial, parsePeopleCount, toEnDigits } from "@nobar/fa";
+import { listingTemplate, reviewReplyTemplate } from "./copilot-templates";
 import type { ChatMessage, ChatRequest, ChatResult, LlmProvider, ToolCall } from "./llm";
 
 // A deterministic stand-in for a language model: fixed rules pick one tool, and the answer is written
@@ -98,6 +99,12 @@ export class FakeLlmProvider implements LlmProvider {
 
   async chat(request: ChatRequest): Promise<ChatResult> {
     const usage = { inputTokens: 0, outputTokens: 0 };
+    // seller copilot tasks: the facts arrive as JSON and the answer is the plain template
+    const system = request.messages[0]?.role === "system" ? request.messages[0].content : "";
+    if (system.startsWith("COPILOT:")) {
+      const facts = JSON.parse(request.messages.at(-1)?.content ?? "{}");
+      return { content: system.startsWith("COPILOT:listing_draft") ? JSON.stringify(listingTemplate(facts)) : reviewReplyTemplate(facts), toolCalls: [], usage };
+    }
     const lastUser = request.messages.findLastIndex((m) => m.role === "user");
     const turn = request.messages.slice(lastUser + 1).filter((m): m is Extract<ChatMessage, { role: "tool" }> => m.role === "tool");
     if (turn.length) {

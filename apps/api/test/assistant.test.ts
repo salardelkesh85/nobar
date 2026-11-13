@@ -266,6 +266,87 @@ describe("limits and privacy", () => {
   });
 });
 
+describe("seller copilot", () => {
+  let seller: string;
+  let listingId: string;
+  const draftInput = { produceTypeId: "apple-red", variety: "رد دلیشز", grade: "GRADE_1", originCityId: "miandoab", harvestedDaysAgo: 1, notes: "آبیاری قطره‌ای، بدون واکس" };
+
+  beforeAll(async () => {
+    const phone = "09190009999";
+    const sent = await call("POST", "/v1/auth/otp", { phone });
+    const verified = await call("POST", "/v1/auth/verify", { phone, code: sent.body.devCode });
+    seller = verified.cookie;
+    const hit = (await call("GET", "/v1/search?dest=tehran&q=" + encodeURIComponent("سیب"))).body.hits[0].listing;
+    listingId = hit.id;
+    await api.deps.db.query("update catalog.shops set owner_user_id = $1 where id = $2", [verified.body.user.id, hit.shopId]);
+    api.app.get(CatalogService).invalidate();
+  });
+
+  it("is for sellers, and only about their own listings", async () => {
+    const buyer = await signIn();
+    expect((await call("GET", `/v1/seller/copilot/listings/${listingId}/price`, undefined, buyer)).status).toBe(403);
+    const foreign = (await call("GET", "/v1/search?dest=tehran&q=" + encodeURIComponent("انار"))).body.hits[0].listing.id;
+    expect((await call("GET", `/v1/seller/copilot/listings/${foreign}/price`, undefined, seller)).status).toBe(404);
+  });
+
+  it("places a price against the market's quartiles and says it is advice", async () => {
+    const r = (await call("GET", `/v1/seller/copilot/listings/${listingId}/price`, undefined, seller)).body;
+    expect(r.advisory).toBe(true);
+    expect(r.yourPerKgRial).toBeGreaterThan(0);
+    if (r.market) {
+      expect(r.market.p25PerKgRial).toBeLessThanOrEqual(r.market.medianPerKgRial);
+      expect(r.market.medianPerKgRial).toBeLessThanOrEqual(r.market.p75PerKgRial);
+      expect(r.suggestedPerKgRial).toEqual({ min: r.market.p25PerKgRial, max: r.market.p75PerKgRial });
+      expect(r.position).toBe(r.yourPerKgRial < r.market.p25PerKgRial ? "BELOW" : r.yourPerKgRial > r.market.p75PerKgRial ? "ABOVE" : "FAIR");
+    } else expect(r.position).toBe("UNKNOWN");
+    expect(r.reasons.length).toBeGreaterThan(0);
+    // advice changed nothing
+    expect((await call("GET", "/v1/admin/audit", undefined, await signIn(ADMIN))).body.filter((a: { action: string }) => a.action.includes("قیمت"))).toEqual([]);
+  });
+
+  it("uses the model's listing draft when it sticks to the facts", async () => {
+    script = [(req) => {
+      expect(req.messages[0]!.content).toContain("COPILOT:listing_draft");
+      expect(JSON.parse(req.messages[1]!.content!)).toMatchObject({ produceType: "سیب قرمز", originCity: "میاندوآب", isOrganic: false, notes: "آبیاری قطره‌ای، بدون واکس" });
+      return { content: '```json\n{"title":"سیب قرمز رد دلیشز میاندوآب","description":"سیب قرمز درجه یک از باغ‌های میاندوآب که دیروز چیده شده؛ آبیاری قطره‌ای و بدون واکس."}\n```' };
+    }];
+    const r = (await call("POST", "/v1/seller/copilot/listing-draft", draftInput, seller)).body;
+    expect(r).toEqual({ advisory: true, source: "model", title: "سیب قرمز رد دلیشز میاندوآب", description: "سیب قرمز درجه یک از باغ‌های میاندوآب که دیروز چیده شده؛ آبیاری قطره‌ای و بدون واکس." });
+  });
+
+  it("falls back to the plain template when the model invents a price, an organic claim, or is down", async () => {
+    const template = { advisory: true, source: "template", title: "سیب قرمز رد دلیشز میاندوآب" };
+    script = [() => ({ content: '{"title":"سیب قرمز میاندوآب","description":"فقط کیلویی ۴۵٬۰۰۰ تومان، ارسال رایگان."}' })];
+    expect((await call("POST", "/v1/seller/copilot/listing-draft", draftInput, seller)).body).toMatchObject(template);
+    script = [() => ({ content: '{"title":"سیب قرمز ارگانیک میاندوآب","description":"سیب کاملاً ارگانیک و بدون سم از میاندوآب."}' })];
+    expect((await call("POST", "/v1/seller/copilot/listing-draft", draftInput, seller)).body).toMatchObject(template);
+    script = [() => ({ status: 500 })];
+    const down = await call("POST", "/v1/seller/copilot/listing-draft", draftInput, seller);
+    expect(down.status).toBe(201);
+    expect(down.body).toMatchObject(template);
+    expect(down.body.description).toContain("دیروز برداشت شده است");
+    expect(down.body.description).not.toContain("ارگانیک");
+  });
+
+  it("drafts a review reply without promising money", async () => {
+    const reviews = (await call("GET", "/v1/seller/reviews", undefined, seller)).body;
+    expect(reviews.length).toBeGreaterThan(0);
+    const review = reviews[0];
+    script = [(req) => {
+      expect(JSON.parse(req.messages[1]!.content!).text).toBe(review.text.replace(/[<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 400));
+      return { content: "ممنون از نظرتان؛ خوشحالیم که میوه تازه رسید." };
+    }];
+    expect((await call("POST", `/v1/seller/copilot/reviews/${review.id}/reply-draft`, undefined, seller)).body).toEqual({ advisory: true, source: "model", reply: "ممنون از نظرتان؛ خوشحالیم که میوه تازه رسید." });
+    script = [() => ({ content: "متأسفیم؛ ۵۰٬۰۰۰ تومان بازپرداخت می‌کنم." })];
+    const guarded = (await call("POST", `/v1/seller/copilot/reviews/${review.id}/reply-draft`, undefined, seller)).body;
+    expect(guarded.source).toBe("template");
+    expect(guarded.reply).not.toContain("۵۰٬۰۰۰");
+    // drafting does not post the reply
+    expect((await call("GET", "/v1/seller/reviews", undefined, seller)).body.find((x: { id: string }) => x.id === review.id).sellerReply).toBe(review.sellerReply);
+    expect((await call("POST", "/v1/seller/copilot/reviews/nope/reply-draft", undefined, seller)).status).toBe(404);
+  });
+});
+
 describe("guardrail helpers", () => {
   it("accepts amounts from tool results in Rial or Toman and the buyer's own figures", () => {
     const tools = [{ landedPerKgRial: 950_000, total: 6_260_000 }];
@@ -273,6 +354,8 @@ describe("guardrail helpers", () => {
     expect(ungroundedNumbers("هر کیلو 950,000 ریال", tools, "")).toEqual([]);
     expect(ungroundedNumbers("با بودجه‌ی ۸۰۰٬۰۰۰ تومان شما", tools, "۸۰۰ هزار تومن دارم")).toEqual([]);
     expect(ungroundedNumbers("هر کیلو ۹۴٬۰۰۰ تومان", tools, "")).toEqual([94_000]);
+    // a Rial amount that is not a whole Toman is spoken rounded
+    expect(ungroundedNumbers("هر کیلو ۱۲۳٬۴۵۷ تومان", [{ landedPerKgRial: 1_234_567 }], "")).toEqual([]);
     expect(ungroundedNumbers("۳ کیلو تا ۵ روز دیگر", tools, "")).toEqual([]);
   });
 
