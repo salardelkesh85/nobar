@@ -5,3 +5,4 @@ export * from "./cities";
 export * from "./domain";
 export * from "./api";
 export * from "./identity-client";
+export * from "./api-url";

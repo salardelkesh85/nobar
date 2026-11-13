@@ -1,3 +1,4 @@
+// Static build (GitHub Pages demo, NEXT_EXPORT=1): one page per demo item. The server build uses page.server.tsx.
 import { SHOPS, shopBySlug } from "@nobar/demo";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";

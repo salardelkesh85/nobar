@@ -6,6 +6,11 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const config: NextConfig = {
   reactStrictMode: true,
+  // the product and shop pages have two versions: `page.export.tsx` (one page per demo item, static build)
+  // and `page.server.tsx` (any item the API knows, server build). Only the build's own version is a page.
+  pageExtensions: exportMode ? ["export.tsx", "tsx", "ts"] : ["server.tsx", "tsx", "ts"],
+  // production server image (apps/web/Dockerfile)
+  ...(exportMode ? {} : { output: "standalone" as const, outputFileTracingRoot: new URL("../..", import.meta.url).pathname }),
   transpilePackages: ["@nobar/ui", "@nobar/fa", "@nobar/demo", "@nobar/domain", "@nobar/contracts"],
   poweredByHeader: false,
   ...(basePath ? { basePath } : {}),
