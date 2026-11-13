@@ -1,369 +1,190 @@
 "use client";
 
-import {
-  CATEGORIES,
-  cityName,
-  currentMonth,
-  inSeason,
-  isNobar,
-  LISTINGS,
-  PRODUCE_TYPES,
-  ratingBayes,
-  search,
-  SHOPS,
-  type SearchHit,
-} from "@nobar/demo";
-import {
-  ArrowLeft,
-  Leaf,
-  MapPin,
-  Scale,
-  Sparkles,
-  Sprout,
-  Star,
-  Truck,
-} from "lucide-react";
-import Image from "next/image";
+import { cityName, currentMonth, inSeason, isPeak, PRODUCE_TYPES, SHOPS, type SearchParams, type Shop } from "@nobar/demo";
+import { Skeleton } from "@nobar/ui";
+import { ArrowLeft, BadgeCheck, MapPin, Scale, ShieldCheck, Sprout, Star, Truck, Wallet } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ListingRail } from "@/components/listing-card";
 import { Photo } from "@/components/photo";
+import { type Promo, PromoCarousel } from "@/components/promo-carousel";
+import { Recommendations } from "@/components/recommendations";
+import { useCatalogSearch } from "@/lib/api-catalog";
+import { API_URL } from "@/lib/api-config";
 import { bannerSrc } from "@/lib/photos";
 import { useStore } from "@/lib/store";
-import { Recommendations } from "@/components/recommendations";
-import styles from "./market.module.css";
 
-function Heading({
-  title,
-  note,
-  href,
-  light = false,
-}: {
-  title: string;
-  note: string;
-  href: string;
-  light?: boolean;
-}) {
+const RAIL = 12;
+const fa = (n: number) => n.toLocaleString("fa-IR");
+
+function Section({ title, sub, href, tone, children }: { title: string; sub?: string; href?: string; tone?: "nobar" | "brand"; children: ReactNode }) {
   return (
-    <div className={styles.heading} data-light={light || undefined}>
-      <div>
-        <span>{note}</span>
-        <h2>{title}</h2>
+    <section className={tone ? `nx-section nx-section-${tone}` : "nx-section"}>
+      <div className="nx-section-head">
+        <div>
+          <h2 className="nx-section-title">{title}</h2>
+          {sub ? <p className="nx-section-sub">{sub}</p> : null}
+        </div>
+        {href ? (
+          <Link href={href} className="nx-section-more">
+            مشاهده همه <ArrowLeft className="size-4" aria-hidden />
+          </Link>
+        ) : null}
       </div>
-      <Link href={href}>
-        مشاهده همه <ArrowLeft size={16} />
-      </Link>
-    </div>
-  );
-}
-
-function Products({
-  title,
-  note,
-  href,
-  hits,
-}: {
-  title: string;
-  note: string;
-  href: string;
-  hits: SearchHit[];
-}) {
-  if (!hits.length) return null;
-  return (
-    <section className={styles.products}>
-      <Heading title={title} note={note} href={href} />
-      <ListingRail hits={hits.slice(0, 10)} />
+      {children}
     </section>
   );
 }
 
+/** One row of products from the catalog (the API in API mode, the demo data otherwise). */
+function ProductRow(props: { params: SearchParams; title: string; sub?: string; href: string; tone?: "nobar" | "brand" }) {
+  const { result, loading } = useCatalogSearch(props.params, { pageSize: RAIL });
+  const hits = result.hits.slice(0, RAIL);
+  if (!loading && !hits.length) return null;
+  return (
+    <Section title={props.title} sub={props.sub} href={props.href} tone={props.tone}>
+      {loading ? (
+        <div className="nx-rail">
+          {Array.from({ length: 5 }, (_, i) => (
+            <Skeleton key={i} className="nx-rail-item aspect-[3/5] rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <ListingRail hits={hits} />
+      )}
+    </Section>
+  );
+}
+
+type ShopTile = Pick<Shop, "id" | "name" | "cityId" | "ratingAvg" | "ratingCount" | "emoji" | "hue" | "type">;
+
+function useShops(): ShopTile[] {
+  const [shops, setShops] = useState<ShopTile[]>(API_URL ? [] : [...SHOPS]);
+  useEffect(() => {
+    if (!API_URL) return;
+    fetch(`${API_URL}/v1/shops`)
+      .then((r) => (r.ok ? (r.json() as Promise<ShopTile[]>) : []))
+      .then(setShops)
+      .catch(() => setShops([]));
+  }, []);
+  return useMemo(() => [...shops].sort((a, b) => b.ratingAvg * Math.log1p(b.ratingCount) - a.ratingAvg * Math.log1p(a.ratingCount)).slice(0, 10), [shops]);
+}
+
+const SHOP_TYPE: Record<string, string> = { GROWER: "باغدار", SHOP: "میوه‌فروشی", COOPERATIVE: "تعاونی" };
+
 export default function HomePage() {
   const { dest } = useStore();
-  const all = search({ dest, sort: "newest" }).hits;
-  const seasonal = all.filter((hit) => inSeason(hit.type, currentMonth()));
-  const fresh = all.filter((hit) => isNobar(hit.listing));
-  const featured = [
-    ...fresh,
-    ...seasonal.filter((hit) => !isNobar(hit.listing)),
-  ].slice(0, 8);
-  const quick = PRODUCE_TYPES.filter((type) =>
-    LISTINGS.some(
-      (l) => l.produceTypeId === type.id && l.status === "PUBLISHED",
-    ),
-  ).slice(0, 8);
-  const shops = [...SHOPS]
-    .filter((s) => s.status === "ACTIVE")
-    .sort((a, b) => ratingBayes(b) - ratingBayes(a))
-    .slice(0, 4);
+  const month = currentMonth();
+  const seasonal = PRODUCE_TYPES.filter((t) => inSeason(t, month)).sort((a, b) => Number(isPeak(b, month)) - Number(isPeak(a, month)));
+  const shops = useShops();
+  const city = cityName(dest);
+
+  const promos: Promo[] = [
+    { href: "/search/?nobar=1", src: bannerSrc("banner-pomegranate"), title: "نوبرهای این هفته رسید", body: "اولین برداشت‌های فصل، مستقیم از باغ", cta: "دیدن نوبرها" },
+    { href: "/search/?sort=landed", src: bannerSrc("banner-market"), title: `قیمت تمام‌شده تا ${city}`, body: "قیمت کالا و هزینه‌ی ارسال، پیش از خرید و یک‌جا", cta: "ارزان‌ترین‌ها" },
+    { href: "/shops/", src: bannerSrc("banner-orchard"), title: "از باغدار بخرید، نه واسطه", body: "غرفه‌های تأییدشده از شهرهای ایران", cta: "غرفه‌گردی" },
+    { href: "/baghboon/", src: bannerSrc("banner-harvest"), title: "باغبون، دستیار خرید شما", body: "بگویید برای چند نفر و با چه بودجه‌ای؛ سبد را می‌چیند", cta: "گفت‌وگو با باغبون" },
+  ];
 
   return (
-    <div className={styles.market}>
-      <section className={styles.hero} aria-labelledby="market-title">
-        <div className={styles.heroCopy}>
-          <span className={styles.eyebrow}>
-            <span /> بازار آنلاینِ طعم‌های واقعی
-          </span>
-          <h1 id="market-title">
-            تازه از باغ،
-            <br />
-            با عشق <em>سرِ سفره.</em>
-          </h1>
-          <p>
-            از باغدارهای شهرهای مختلف خرید کن.
-            <br />
-            با شناخت مبدأ، تازگی و قیمت تا درِ خانه.
-          </p>
-          <div className={styles.heroActions}>
-            <Link className={styles.primary} href="/search">
-              بریم بازار <ArrowLeft size={19} />
-            </Link>
-            <Link className={styles.textLink} href="/shops">
-              آشنایی با غرفه‌دارها
-            </Link>
-          </div>
-          <div className={styles.destination}>
-            <MapPin size={16} />
-            <span>
-              بازار تازه‌ها برای <strong>{cityName(dest)}</strong>
-            </span>
-            <span className={styles.destinationLine} />
-            <span>از مبدأ تا مقصد، شفاف</span>
-          </div>
-        </div>
-        <div className={styles.heroVisual}>
-          <Image
-            src={bannerSrc("banner-pomegranate")}
-            alt="انارهای رسیده؛ رنگ و طعم تازهٔ فصل"
-            fill
-            priority
-            sizes="(max-width: 700px) 100vw, 55vw"
-          />
-          <span className={styles.imageShade} />
-          <span className={styles.harvestTag}>
-            <Leaf size={15} /> فصلِ طعم‌های تازه
-          </span>
-          <Link href="/p/pomegranate" className={styles.photoCaption}>
-            <span>
-              <small>از دل باغ‌های ایران</small>
-              <strong>دانه‌دانه، طعم زندگی.</strong>
-            </span>
-            <span className={styles.roundArrow}>
-              <ArrowLeft size={21} />
-            </span>
-          </Link>
-          <div className={styles.floatingNote}>
-            <Sprout size={23} />
-            <span>
-              <strong>تازگی را ببین، بعد انتخاب کن.</strong>
-              <small>تاریخ برداشت و مبدأ، کنار هر محصول</small>
-            </span>
-          </div>
-        </div>
-      </section>
+    <div className="nx-home">
+      <PromoCarousel slides={promos} />
 
-      <div className={styles.benefits}>
-        {[
-          {
-            icon: Sprout,
-            title: "تازگی، قابل بررسی",
-            text: "تاریخ برداشت هر محصول",
-          },
-          {
-            icon: MapPin,
-            title: "مستقیم از مبدأ",
-            text: "با شناخت شهر و غرفه‌دار",
-          },
-          {
-            icon: Truck,
-            title: "قیمت روشن تا مقصد",
-            text: "هزینهٔ ارسال، پیش از خرید",
-          },
-          {
-            icon: Scale,
-            title: "انتخاب با مقایسه",
-            text: "قیمت، تازگی و زمان رسیدن",
-          },
-        ].map(({ icon: Icon, title, text }) => (
-          <div key={title}>
-            <Icon size={23} strokeWidth={1.5} />
-            <span>
-              <strong>{title}</strong>
-              <small>{text}</small>
-            </span>
-          </div>
+      <nav className="nx-cats" aria-label="محصولات فصل">
+        {seasonal.slice(0, 9).map((t) => (
+          <Link key={t.id} href={`/p/${t.id}/`} className="nx-cat">
+            <Photo kind={t.id} alt="" fallback={{ emoji: t.emoji, hue: t.hue }} sizes="72px" className="nx-cat-photo" />
+            <span className="nx-cat-name">{t.name}</span>
+          </Link>
         ))}
+        <Link href="/categories/" className="nx-cat nx-cat-all">
+          <span className="nx-cat-photo nx-cat-all-icon" aria-hidden>
+            <ArrowLeft className="size-6" />
+          </span>
+          <span className="nx-cat-name">همه‌ی دسته‌ها</span>
+        </Link>
+      </nav>
+
+      <ProductRow params={{ dest, nobarOnly: true, sort: "newest" }} title="نوبرهای تازه" sub="اولین برداشت‌های فصل، به محض رسیدن" href="/search/?nobar=1" tone="nobar" />
+
+      <ul className="nx-values" aria-label="چرا نوبر">
+        <li>
+          <Truck aria-hidden /> <span><strong>تازه می‌رسد</strong> فقط محصولی که تازه به {city} برسد</span>
+        </li>
+        <li>
+          <Wallet aria-hidden /> <span><strong>قیمت تمام‌شده</strong> کالا و ارسال، پیش از خرید</span>
+        </li>
+        <li>
+          <ShieldCheck aria-hidden /> <span><strong>پول در امانت</strong> تا تحویل و پایان مهلت شکایت</span>
+        </li>
+        <li>
+          <BadgeCheck aria-hidden /> <span><strong>فروشنده‌ی تأییدشده</strong> با مدارک هویتی، پیش از فروش</span>
+        </li>
+      </ul>
+
+      <Recommendations for={{ home: true }} title="پیشنهاد امروز برای شما" />
+
+      <ProductRow params={{ dest, sort: "freshness" }} title={`تازه‌ترین‌ها برای ${city}`} sub="بیشترین روزهای تازگی هنگام رسیدن" href="/search/?sort=freshness&fresh=1" />
+
+      <div className="nx-duo">
+        <Link href="/baghboon/" className="nx-duo-card nx-duo-brand">
+          <Sprout className="nx-duo-icon" aria-hidden />
+          <span>
+            <strong>از باغبون بپرسید</strong>
+            <span>«سبد میوه برای ۶ نفر با ۸۰۰ هزار تومان»</span>
+          </span>
+          <ArrowLeft className="size-5" aria-hidden />
+        </Link>
+        <Link href="/compare/" className="nx-duo-card nx-duo-saffron">
+          <Scale className="nx-duo-icon" aria-hidden />
+          <span>
+            <strong>مقایسه‌ی غرفه‌ها</strong>
+            <span>قیمت تمام‌شده، تازگی و زمان رسیدن کنار هم</span>
+          </span>
+          <ArrowLeft className="size-5" aria-hidden />
+        </Link>
       </div>
 
-      <section className={styles.categories} aria-labelledby="categories-title">
-        <div className={styles.categoryIntro}>
-          <span className={styles.kicker}>بازار به سلیقهٔ تو</span>
-          <h2 id="categories-title">امروز چی میل داری؟</h2>
-          <Link href="/categories">
-            همهٔ دسته‌ها <ArrowLeft size={15} />
-          </Link>
-        </div>
-        <ul>
-          {quick.map((type) => (
-            <li key={type.id}>
-              <Link href={"/p/" + type.id}>
-                <span className={styles.categoryPhoto}>
-                  <Photo
-                    kind={type.id}
-                    alt=""
-                    sizes="110px"
-                    fallback={{ emoji: type.emoji, hue: type.hue }}
-                    className={styles.categoryImage}
-                  />
-                </span>
-                <strong>{type.name}</strong>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <ProductRow params={{ dest, sort: "landed" }} title="به‌صرفه‌ترین تا درِ خانه" sub="ارزان‌ترین قیمت هر کیلو، با هزینه‌ی ارسال" href="/search/?sort=landed" tone="brand" />
 
-      {featured.length > 0 && (
-        <section className={styles.fresh}>
-          <Heading
-            title="نوبرش رسیده!"
-            note="نوبرهای تازه و انتخاب‌های این فصل"
-            href="/search?nobar=1"
-            light
-          />
-          <div className={styles.freshRail}>
-            <div className={styles.freshIntro}>
-              <Sparkles size={30} strokeWidth={1.4} />
-              <h3>
-                یک فصل تازه،
-                <br />
-                یک طعم تازه.
-              </h3>
-              <p>
-                تازه‌رسیده‌های بازار
-                <br />
-                برای مقصد تو
-              </p>
-              <Link href="/search?nobar=1" aria-label="دیدن همهٔ نوبرهای تازه">
-                <ArrowLeft size={23} />
-              </Link>
-            </div>
-            <ListingRail hits={featured} />
-          </div>
-        </section>
-      )}
+      {shops.length ? (
+        <Section title="غرفه‌های برتر" sub="باغدارها و فروشنده‌های محبوب" href="/shops/">
+          <ul className="nx-rail">
+            {shops.map((s) => (
+              <li key={s.id} className="nx-rail-item nx-shop-item">
+                <Link href={`/shop/${s.id}/`} className="nx-shop">
+                  <span className="nx-shop-avatar" style={{ background: `hsl(${s.hue} 60% 92%)` }} aria-hidden>
+                    {s.emoji}
+                  </span>
+                  <span className="nx-shop-name">{s.name}</span>
+                  <span className="nx-shop-meta">
+                    <MapPin className="size-3" aria-hidden /> {cityName(s.cityId)} · {SHOP_TYPE[s.type] ?? ""}
+                  </span>
+                  {s.ratingCount ? (
+                    <span className="nx-shop-rating">
+                      <Star className="size-3.5 fill-current" aria-hidden /> {s.ratingAvg.toLocaleString("fa-IR")} <span>({fa(s.ratingCount)} نظر)</span>
+                    </span>
+                  ) : (
+                    <span className="nx-shop-rating nx-shop-new">غرفه‌ی تازه</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
 
-      <Recommendations for={{ home: true }} title="پیشنهاد امروز نوبر" />
+      <ProductRow params={{ dest, sort: "rating" }} title="محبوب خریدارها" sub="از غرفه‌هایی با بهترین امتیاز" href="/search/?sort=rating" />
 
-      <Products
-        title="فصلش رسیده، وقتشه!"
-        note={"انتخاب‌های فصل برای " + cityName(dest)}
-        href="/search"
-        hits={seasonal}
-      />
-
-      <section className={styles.discover} aria-label="کشف بازار نوبر">
-        <Link href="/origin/miandoab" className={styles.orchard}>
-          <Image
-            src={bannerSrc("banner-orchard")}
-            alt="باغ‌های سرسبز؛ مبدأ محصولات نوبر"
-            fill
-            sizes="(max-width: 700px) 100vw, 60vw"
-          />
-          <span className={styles.orchardShade} />
-          <span className={styles.storyCopy}>
-            <small>هر محصول، یک قصه دارد</small>
-            <h2>
-              از باغ‌های میاندوآب،
-              <br />
-              برای سفرهٔ تو.
-            </h2>
-            <span>
-              محصولات این مبدأ <ArrowLeft size={17} />
-            </span>
-          </span>
-        </Link>
-        <Link href="/baghboon" className={styles.assistant}>
-          <span className={styles.assistantIcon}>
-            <Sprout size={36} strokeWidth={1.4} />
-          </span>
-          <span className={styles.kicker}>همراهت در انتخاب</span>
-          <h2>چی بخریم، باغبون؟</h2>
-          <p>
-            برای مقایسهٔ محصول‌ها و پیدا کردن طعم دلخواهت، از باغبون کمک بگیر.
-          </p>
-          <span className={styles.assistantLink}>
-            بریم گپ بزنیم <ArrowLeft size={17} />
-          </span>
-          <small>نسخهٔ نمایشی با پاسخ‌های از پیش تعریف‌شده</small>
-        </Link>
-      </section>
-
-      <Products
-        title="تازه برای هر روز"
-        note="از سالاد امروز تا غذای فردا"
-        href="/search?cat=veg"
-        hits={all.filter((hit) =>
-          ["veg", "greens"].includes(hit.type.categoryId),
-        )}
-      />
-
-      <section className={styles.shops}>
-        <Heading
-          title="آدم‌های پشت طعم خوب"
-          note="غرفه‌دارهای نوبر را بشناس"
-          href="/shops"
-        />
-        <div className={styles.shopGrid}>
-          {shops.map((shop) => (
-            <Link
-              key={shop.id}
-              href={"/shop/" + shop.id}
-              className={styles.shop}
-            >
-              <Photo
-                kind={shop.art}
-                alt=""
-                sizes="72px"
-                className={styles.shopPhoto}
-              />
-              <div>
-                <h3>{shop.name}</h3>
-                <span>
-                  <MapPin size={12} />
-                  {cityName(shop.cityId)}
-                </span>
-                <small>
-                  <Star size={12} fill="currentColor" />
-                  {shop.ratingAvg.toLocaleString("fa-IR")}{" "}
-                  <i>از {shop.ratingCount.toLocaleString("fa-IR")} نظر</i>
-                </small>
-              </div>
-              <ArrowLeft className={styles.shopArrow} size={17} />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className={styles.season}>
-        <span className={styles.seasonMark}>
-          <Leaf size={32} strokeWidth={1.3} />
+      <Link href="/about/sell/" className="nx-sell-banner">
+        <span>
+          <strong>باغ یا مغازه‌ی میوه دارید؟</strong>
+          <span>در نوبر مستقیم به خریدارهای سراسر ایران بفروشید.</span>
         </span>
-        <div>
-          <span className={styles.kicker}>هر چیزی در فصل خودش خوشمزه‌تره</span>
-          <h2>با ریتم طبیعت خرید کن.</h2>
-          <p>تقویم فصل‌ها، راهنمای تو برای کشف طعم بعدی.</p>
-        </div>
-        <Link className={styles.primary} href="/season">
-          کشف تقویم فصل‌ها <ArrowLeft size={17} />
-        </Link>
-      </section>
-      <nav className={styles.bottomCategories} aria-label="دسته‌های بازار">
-        {CATEGORIES.map((cat) => (
-          <Link href={"/search?cat=" + cat.id} key={cat.id}>
-            {cat.name}
-            <ArrowLeft size={14} />
-          </Link>
-        ))}
-      </nav>
+        <span className="nx-sell-cta">
+          ثبت غرفه <ArrowLeft className="size-4" aria-hidden />
+        </span>
+      </Link>
     </div>
   );
 }

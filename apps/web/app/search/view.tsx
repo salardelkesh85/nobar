@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo } from "react";
 import { ListingGrid } from "@/components/listing-card";
-import { FilterPanel, SearchFilters } from "@/components/search-filters";
+import { FilterPanel, SearchToolbar } from "@/components/search-filters";
 import { useStore } from "@/lib/store";
 import { useCatalogSearch } from "@/lib/api-catalog";
 
@@ -37,26 +37,26 @@ export function SearchView() {
   const heading = q ? `نتیجه‌های «${q}»` : cat ? categoryById(cat)?.name ?? "محصولات" : origin ? `محصولات ${provinceById(origin)?.name ?? ""}` : "همه‌ی محصولات";
 
   return (
-    <div className="studio-search-layout grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
-      <aside className="hidden lg:block">
-        <div className="sticky top-36 rounded-card border border-line bg-surface p-4">
+    <div className="nx-search">
+      <aside className="nx-search-side">
+        <div className="nx-filter-card">
           <Suspense>
             <FilterPanel />
           </Suspense>
         </div>
       </aside>
-      <div>
-        <div className="mb-3">
-          <h1 className="text-xl font-extrabold">{heading}</h1>
-          <p className="text-xs text-ink-soft">
-            {result.total.toLocaleString("fa-IR")} محصول که تازه به {cityName(dest)} می‌رسد
+      <div className="nx-search-main">
+        <div className="nx-search-head">
+          <h1>{heading}</h1>
+          <p>
+            {loading && apiMode ? "در حال جستجو…" : `${result.total.toLocaleString("fa-IR")} کالا که تازه به ${cityName(dest)} می‌رسد`}
           </p>
         </div>
         <Suspense>
-          <SearchFilters total={result.total} />
+          <SearchToolbar total={result.total} />
         </Suspense>
         {error ? (
-          <div role="alert" className="my-4 rounded-card border border-danger/30 bg-danger-soft p-5 text-sm text-danger">
+          <div role="alert" className="nx-search-error">
             <p>{error}</p>
             <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={retry}>
               تلاش دوباره
@@ -64,14 +64,14 @@ export function SearchView() {
           </div>
         ) : null}
         {loading && apiMode ? (
-          <div aria-label="در حال دریافت محصولات" className="grid grid-cols-2 gap-3 py-4 sm:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }, (_, index) => <Skeleton key={index} className="aspect-[3/4] rounded-card" />)}
+          <div aria-label="در حال دریافت محصولات" className="nx-grid">
+            {Array.from({ length: 8 }, (_, index) => <Skeleton key={index} className="aspect-[3/5] rounded-xl" />)}
           </div>
         ) : result.hits.length ? (
           <>
-            <ListingGrid hits={result.hits} className="lg:rounded-t-none lg:-mt-3" />
+            <ListingGrid hits={result.hits} />
             {hasMore ? (
-              <div className="mt-4 flex flex-col items-center gap-1">
+              <div className="nx-more">
                 <Button type="button" variant="secondary" onClick={loadMore} disabled={loadingMore}>
                   {loadingMore ? "در حال دریافت…" : "نمایش محصولات بیشتر"}
                 </Button>
@@ -94,7 +94,7 @@ export function SearchView() {
           />
         ) : null}
         {!loading && result.notDeliverable.length ? (
-          <details className="mt-4 rounded-card border border-dashed border-line-strong bg-surface p-4">
+          <details className="nx-undeliverable">
             <summary className="cursor-pointer text-sm font-bold text-ink-soft">
               {result.notDeliverable.length.toLocaleString("fa-IR")} محصول دیگر هم پیدا شد که تا {cityName(dest)} تازه نمی‌رسد
             </summary>
