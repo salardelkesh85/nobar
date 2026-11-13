@@ -14,7 +14,9 @@ const config: NextConfig = {
   transpilePackages: ["@nobar/ui", "@nobar/fa", "@nobar/demo", "@nobar/domain", "@nobar/contracts"],
   poweredByHeader: false,
   ...(basePath ? { basePath } : {}),
-  ...(exportMode ? { output: "export" as const, trailingSlash: true, images: { unoptimized: true } } : {}),
+  // trailing slashes in both builds: the API links to /order/?…, /orders/?… (payment return, notices)
+  trailingSlash: true,
+  ...(exportMode ? { output: "export" as const, images: { unoptimized: true } } : {}),
 };
 
 export default config;
