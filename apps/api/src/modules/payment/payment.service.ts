@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { conflict, type Database, iso, type Sql, TOKENS } from "@nobar/common";
+import { conflict, type Database, iso, type Metrics, type Sql, TOKENS } from "@nobar/common";
 import { uuidv7 } from "@nobar/contracts";
 import type { ApiConfig } from "../../config";
 import { ACCOUNTS, balanceOf, type LedgerLine, postTransaction } from "./ledger";
@@ -35,7 +35,14 @@ export class PaymentService {
     @Inject(TOKENS.DB) private readonly db: Database,
     @Inject(TOKENS.CONFIG) private readonly config: ApiConfig,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
+    @Inject(TOKENS.METRICS) private readonly metrics: Metrics,
   ) {}
+
+  /** Called by the order module after the payment's transaction commits (so a rollback is never counted). */
+  recordOutcome(outcome: "SUCCEEDED" | "FAILED", amountRial: number): void {
+    this.metrics.counter("nobar_payments_total", "Gateway payments by outcome", ["provider", "outcome"]).inc({ provider: this.provider.name, outcome });
+    if (outcome === "SUCCEEDED") this.metrics.counter("nobar_payments_rial_total", "Rial received through the gateway", ["provider"]).inc({ provider: this.provider.name }, amountRial);
+  }
 
   // ---------- gateway
 

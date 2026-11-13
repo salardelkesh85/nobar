@@ -1,4 +1,5 @@
 import { collectDefaultMetrics, Counter, Gauge, Histogram, Registry } from "prom-client";
+import type { Database } from "./db";
 
 /** One Prometheus registry per service (the dev host runs several services in one process). */
 export class Metrics {
@@ -27,6 +28,19 @@ export class Metrics {
       this.counters.set(name, c);
     }
     return c;
+  }
+
+  /** Events written to the outbox but not yet published (read at scrape time). A growing backlog means consumers lag. */
+  watchOutbox(db: Database): void {
+    new Gauge({
+      name: "nobar_outbox_pending",
+      help: "Outbox events not yet published",
+      registers: [this.registry],
+      async collect() {
+        const [row] = await db.query<{ n: number; age: number | null }>("select count(*)::int as n from outbox where published_at is null").catch(() => [{ n: -1, age: null }]);
+        this.set(row?.n ?? 0);
+      },
+    });
   }
 
   gauge(name: string, help: string, labelNames: string[] = []): Gauge<string> {

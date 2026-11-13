@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { conflict, type Database, iso, type Logger, notFound, TOKENS, tooMany } from "@nobar/common";
+import { conflict, type Database, iso, type Logger, type Metrics, notFound, TOKENS, tooMany } from "@nobar/common";
 import { isUuid, uuidv7 } from "@nobar/contracts";
 import { cityName } from "@nobar/contracts/cities";
 import type { Market } from "@nobar/domain";
@@ -64,7 +64,12 @@ export class AssistantService {
     @Inject(CatalogService) private readonly catalog: CatalogService,
     @Inject(CartService) private readonly cart: CartService,
     @Inject(LLM_PROVIDER) private readonly llm: LlmProvider,
+    @Inject(TOKENS.METRICS) private readonly metrics: Metrics,
   ) {}
+
+  private count(name: string, help: string, labels: Record<string, string>): void {
+    this.metrics.counter(name, help, Object.keys(labels)).inc(labels);
+  }
 
   private async audit(conversationId: string, userId: string, kind: "LLM" | "TOOL" | "GUARD", name: string, input: unknown, output: unknown, ok: boolean, startedAt: number): Promise<void> {
     await this.db.query("insert into ai.ai_audit_log (id, conversation_id, user_id, kind, name, input, output, ok, duration_ms) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)", [
@@ -158,6 +163,7 @@ export class AssistantService {
         result = await this.llm.chat({ messages, tools: specs, maxTokens: 1024 });
       } catch (e) {
         await this.audit(conversationId, userId, "LLM", `${this.llm.name}:${this.llm.model}`, { step }, { error: e instanceof Error ? e.message : String(e) }, false, started);
+        this.count("nobar_assistant_turns_total", "Assistant turns by outcome", { outcome: "model_unavailable" });
         throw e;
       }
       await this.audit(conversationId, userId, "LLM", `${this.llm.name}:${this.llm.model}`, { step, user: input.message }, { toolCalls: result.toolCalls.map((c) => c.name), usage: result.usage }, true, started);
@@ -186,6 +192,7 @@ export class AssistantService {
           }
         }
         if (ok) toolResults.push({ name: call.name, result: output });
+        this.count("nobar_assistant_tool_calls_total", "Assistant tool calls", { tool: tool ? call.name : "unknown", ok: String(ok) });
         await this.audit(conversationId, userId, "TOOL", call.name, call.arguments ?? {}, output, ok, toolStarted);
         messages.push({ role: "tool", toolCallId: call.id, name: call.name, content: wrapToolResult(call.name, output) });
       }
@@ -196,6 +203,7 @@ export class AssistantService {
     if (loose.length) {
       await this.audit(conversationId, userId, "GUARD", "ungrounded_number", { numbers: loose }, { replaced: true }, false, Date.now());
       message = UNGROUNDED;
+      this.count("nobar_assistant_guard_total", "Assistant answers replaced by a guardrail", { guard: "ungrounded_number" });
     }
 
     // cards are built here from the catalog, not from model text
@@ -211,6 +219,8 @@ export class AssistantService {
     await this.db.query("insert into ai.messages (id, conversation_id, user_id, role, content) values ($1, $2, $3, 'user', $4)", [uuidv7(), conversationId, userId, input.message]);
     await this.db.query("insert into ai.messages (id, conversation_id, user_id, role, content) values ($1, $2, $3, 'assistant', $4)", [uuidv7(), conversationId, userId, message]);
 
+    this.count("nobar_assistant_turns_total", "Assistant turns by outcome", { outcome: answer === null ? "step_limit" : "answered" });
+    if (proposals.length) this.count("nobar_assistant_proposals_total", "Basket proposals made by the assistant", { status: "proposed" });
     return {
       conversationId,
       message,
@@ -232,6 +242,7 @@ export class AssistantService {
       const known = await this.db.query("select 1 from ai.proposals where id = $1 and user_id = $2", [id, userId]);
       throw known.length ? conflict("PROPOSAL_USED", "این پیشنهاد قبلاً به سبد اضافه شده است") : notFound("پیشنهاد");
     }
+    this.count("nobar_assistant_proposals_total", "Basket proposals made by the assistant", { status: "confirmed" });
     let cart = await this.cart.get(userId, p.dest_city_id);
     for (const item of p.items) cart = await this.cart.add(userId, item.listingId, item.packageId, item.qty, p.dest_city_id);
     return cart;

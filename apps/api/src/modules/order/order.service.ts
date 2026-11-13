@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { conflict, currentTraceparent, type Database, enqueueEvent, iso, type Logger, notFound, type Sql, TOKENS, unprocessable } from "@nobar/common";
+import { conflict, currentTraceparent, type Database, enqueueEvent, iso, type Logger, type Metrics, notFound, type Sql, TOKENS, unprocessable } from "@nobar/common";
 import { type AddressDto, type CheckoutDto, isUuid, makeEvent, type OrderDto, uuidv7 } from "@nobar/contracts";
 import { CITIES } from "@nobar/contracts/cities";
 import type { ShippingMethodCode } from "@nobar/domain";
@@ -55,6 +55,7 @@ export class OrderService {
     @Inject(UsersService) private readonly users: UsersService,
     @Inject(PaymentService) private readonly payments: PaymentService,
     @Inject(TOKENS.LOG) private readonly log: Logger,
+    @Inject(TOKENS.METRICS) private readonly metrics: Metrics,
   ) {}
 
   /** Order views for any condition on `o` (shared with the fulfilment service). */
@@ -185,9 +186,12 @@ export class OrderService {
    */
   async confirmPayment(authority: string, callbackStatus: string): Promise<{ checkoutId: string; paid: boolean } | null> {
     await this.catalog.market();
+    let counted: { outcome: "SUCCEEDED" | "FAILED"; amountRial: number; late: boolean } | null = null;
     const outcome = await this.db.tx(async (sql) => {
+      counted = null;
       const settled = await this.payments.settle(sql, authority, callbackStatus);
       if (!settled) return null;
+      if (settled.outcome === "SUCCEEDED" || settled.outcome === "FAILED") counted = { outcome: settled.outcome, amountRial: settled.amountRial, late: false };
       if (settled.outcome !== "SUCCEEDED") return { checkoutId: settled.checkoutId, paid: settled.outcome === "ALREADY_SUCCEEDED" };
       const [c] = await sql.query<CheckoutRow>("select id, user_id, status, payment_method, total_rial, expires_at, created_at from ordering.checkouts where id = $1 for update", [settled.checkoutId]);
       const reservations = await sql.query<{ listing_id: string; quantity_base: number }>(
@@ -205,6 +209,7 @@ export class OrderService {
       if (!usable) {
         await this.payments.creditWalletFromEscrow(sql, settled.userId, settled.amountRial, "بازگشت پرداخت سفارشی که دیگر قابل انجام نبود", `checkout:${settled.checkoutId}`);
         this.log.warn({ checkoutId: settled.checkoutId }, "payment arrived for a closed checkout; credited to the wallet");
+        if (counted) counted.late = true;
         return { checkoutId: settled.checkoutId, paid: false };
       }
       for (const r of reservations) await this.catalog.takeStock(sql, r.listing_id, Number(r.quantity_base));
@@ -222,6 +227,11 @@ export class OrderService {
       return { checkoutId: settled.checkoutId, paid: true };
     });
     this.catalog.invalidate();
+    const c = counted as { outcome: "SUCCEEDED" | "FAILED"; amountRial: number; late: boolean } | null;
+    if (c) {
+      this.payments.recordOutcome(c.outcome, c.amountRial);
+      if (c.late) this.metrics.counter("nobar_payments_late_total", "Payments that arrived after the checkout closed (credited to the wallet)").inc();
+    }
     return outcome;
   }
 

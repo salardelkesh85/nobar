@@ -18,6 +18,7 @@ import { cartMigrations } from "./modules/cart/migrations";
 import { OrderModule } from "./modules/order/order.module";
 import { orderMigrations } from "./modules/order/migrations";
 import { FulfilmentService } from "./modules/order/fulfilment.service";
+import { OrderMetrics } from "./modules/order/order-metrics";
 import { paymentMigrations } from "./modules/payment/migrations";
 import { notificationMigrations } from "./modules/notification/migrations";
 import { NotificationModule } from "./modules/notification/notification.module";
@@ -53,6 +54,7 @@ export function apiService(): ServiceDefinition<ApiConfig> {
     async onStart({ app, deps }) {
       await app.get(NotificationService).subscribe(deps);
       await app.get(RecommendationService).subscribe(deps);
+      await app.get(OrderMetrics).subscribe(deps);
       if (seedDemoEnabled(deps.config)) {
         // the same sample catalog as the static demo site, so both show the same shops and listings
         await app.get(CatalogService).seedIfEmpty(async () => {

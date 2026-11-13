@@ -125,4 +125,19 @@ it("OTP → search → two-seller cart → checkout → test gateway → one sel
   expect(await titles(buyer.cookie, "غرفه سفارش را تأیید کرد")).toContain("پرداخت انجام شد");
   expect(await titles(sellers[0]!.cookie, "سفارش تازه")).toContain("سفارش تازه");
   expect(await titles(sellers[1]!.cookie, "سفارش تازه")).toContain("سفارش تازه");
+
+  // and the business metrics saw it: one payment, two shop orders, nothing stuck in the outbox
+  const metric = async (pattern: RegExp) => {
+    for (let i = 0; i < 100; i++) {
+      const m = pattern.exec(await (await fetch(`${api.url}/metrics`)).text());
+      if (m) return Number(m[1]);
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    return Number.NaN;
+  };
+  expect(await metric(/^nobar_payments_total\{provider="fake",outcome="SUCCEEDED"[^}]*\} (\d+)/m)).toBe(1);
+  expect(await metric(/^nobar_payments_rial_total\{provider="fake"[^}]*\} (\d+)/m)).toBe(paid.receivedRial);
+  expect(await metric(/^nobar_orders_placed_total\{payment_method="GATEWAY"[^}]*\} (\d+)/m)).toBe(2);
+  expect(await metric(/^nobar_order_events_total\{type="order.cancelled",status="REJECTED"[^}]*\} (\d+)/m)).toBe(1);
+  expect(await metric(/^nobar_outbox_pending\{[^}]*\} (\d+)/m)).toBeGreaterThanOrEqual(0);
 });

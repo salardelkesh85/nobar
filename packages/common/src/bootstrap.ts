@@ -50,6 +50,7 @@ export async function startService<C extends BaseConfig>(
   await migrate(db, [...commonMigrations, ...def.migrations], log);
   const bus = await createEventBus({ natsUrl: config.NATS_URL, name: def.name, log, shared: opts.bus });
   const metrics = new Metrics(def.name);
+  metrics.watchOutbox(db);
   const outbox = new OutboxRelay(db, bus, log);
   const rateLimiter = await createRateLimiter(config.REDIS_URL, log);
   const partial = { config, db, bus, log, metrics, outbox, rateLimiter };
