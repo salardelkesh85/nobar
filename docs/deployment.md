@@ -1,7 +1,21 @@
 # Deployment
 
-How the Nobar API goes to staging and production. It follows the brief (§7): one image, Kubernetes,
-Helm, Argo CD (GitOps), PostgreSQL run by an operator with backups.
+Two ways to run Nobar in production:
+
+| | One server | Kubernetes |
+|---|---|---|
+| Where | `infra/compose` ([guide](../infra/compose/README.md)) | `infra/helm`, `infra/k8s`, `infra/argocd` (this page) |
+| What runs | edge (Caddy, HTTPS, seller/admin panels), store, API, PostgreSQL 17, nightly backups | API (HPA, PDB, NetworkPolicy), CloudNativePG with WAL archiving, Argo CD |
+| Tested | every CI run: the stack starts in production mode and `infra/compose/ci/smoke.mjs` buys through it | chart rendered and linted in CI; not yet run on a real cluster |
+| Good for | the first months of the market | more traffic, several servers, zero-downtime releases |
+
+Releases: pushing a tag `vX.Y.Z` runs `.github/workflows/release.yml`, which publishes `ghcr.io/<owner>/nobar-api`,
+`-web` and `-edge` at that version (scanned, with SBOMs) and creates the GitHub release from `CHANGELOG.md`.
+A compose server can then pull instead of building:
+`IMAGE_PREFIX=ghcr.io/<owner>/nobar NOBAR_VERSION=X.Y.Z docker compose pull && docker compose up -d`.
+
+The rest of this page is the Kubernetes path, which follows the brief (§7). It deploys the API; the store and panels
+run from the same images as the compose stack (`apps/web/Dockerfile`, `infra/compose/Dockerfile.edge`).
 
 > Status: the manifests are written and the chart is linted in CI, but nothing here has run on a real
 > cluster yet. Expect small corrections on the first install.
@@ -90,5 +104,5 @@ Also: API down, outbox backlog, payment failures, assistant unavailable. Busines
 
 ## Not done yet
 
-Canary rollouts (Argo Rollouts), KEDA, tracing export to Jaeger, and container images for the three frontends
-(today they are static builds). The rules and dashboard have not run against a real Prometheus yet.
+Canary rollouts (Argo Rollouts), KEDA, tracing export to Jaeger, and Helm charts for the store and edge images
+(they run in the compose stack today). The rules and dashboard have not run against a real Prometheus yet.

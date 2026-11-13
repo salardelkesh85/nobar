@@ -62,6 +62,8 @@ seller copilot.
 - docs/database/schema.sql — the whole database as CREATE statements (generated; kept in sync by a test)
 - docs/performance.md — search benchmark on 100k listings and what was optimised
 - docs/security-review.md — what was checked, fixed and is still open
+- infra/compose/README.md — one-server production install (Docker Compose)
+- CHANGELOG.md — releases
 - docs/deployment.md — images, Helm chart, database, Argo CD, secrets, release steps
 
 ## Local environment constraint
