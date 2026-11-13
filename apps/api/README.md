@@ -14,7 +14,8 @@ outbox, idempotency, auth guard). API reference: [`openapi.yaml`](openapi.yaml).
 | cart: authenticated cart, seller grouping, live stock/delivery validation | `ordering` | done |
 | order: checkout, expiring reservations, per-shop orders, lifecycle, disputes | `ordering` | done |
 | payment: test gateway and ZarinPal, double-entry ledger (escrow, wallets, seller balances), commission, payouts | `payment` | done |
-| assistant: shopping assistant (LLM provider interface, typed tools, guardrails, basket proposals, audit log) | `ai` | first version (no streaming yet) |
+| assistant: shopping assistant (LLM provider interface, typed tools, guardrails, basket proposals, audit log, step stream) and seller copilot (price guidance, listing and review-reply drafts) | `ai` | first version |
+| recommendation: bought together, popular, in season; fed by order events | `recommendation` | first version |
 
 A module touches only its own schema; other modules use its exported service or its events.
 
@@ -48,6 +49,7 @@ To start from an empty database, stop the server and delete `apps/api/.data`.
 | `PAYMENT_PROVIDER` | `fake` | `fake` is the test gateway (refused in production); `zarinpal` needs `ZARINPAL_MERCHANT_ID` (`ZARINPAL_SANDBOX=true` for the sandbox). Another gateway is one more class in `modules/payment/provider.ts` |
 | `LLM_PROVIDER` | `fake` | `fake` is a rule-based stand-in; `openai-compatible` needs `LLM_BASE_URL` and `LLM_MODEL` (`LLM_API_KEY`, `LLM_TIMEOUT_MS` optional) |
 | `AI_DAILY_MESSAGES` | `40` | assistant messages per buyer per day |
+| `RECOMMENDATIONS` | on | `false` turns recommendations off |
 | `ORDER_TIMER_SEC` | `30` | `0` turns the order timers off |
 | `KYC_KEY` | dev key | 32 bytes, base64; required in production |
 | `SEED_DEMO` | on outside production | import the demo catalog into an empty database |

@@ -12,6 +12,7 @@ CREATE SCHEMA payment;
 CREATE SCHEMA review;
 CREATE SCHEMA notification;
 CREATE SCHEMA ai;
+CREATE SCHEMA recommendation;
 
 -- ============================================================================
 -- public — زیرساخت مشترک: مایگریشن‌ها، صندوق خروجی و ورودی رویدادها، کلیدهای یکتایی درخواست
@@ -599,3 +600,21 @@ CREATE TABLE ai.ai_audit_log (
 );
 CREATE INDEX ai_audit_conversation ON ai.ai_audit_log USING btree (conversation_id, created_at, id);
 CREATE INDEX ai_audit_user ON ai.ai_audit_log USING btree (user_id, created_at DESC);
+
+-- ============================================================================
+-- recommendation — پیشنهاد محصول: خریدهای ثبت‌شده از رویداد سفارش‌ها
+-- ============================================================================
+
+CREATE TABLE recommendation.purchases (
+  order_id uuid NOT NULL,
+  listing_id text NOT NULL,
+  checkout_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  qty integer NOT NULL,
+  purchased_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT purchases_pkey PRIMARY KEY (order_id, listing_id),
+  CONSTRAINT purchases_qty_check CHECK ((qty > 0))
+);
+CREATE INDEX purchases_listing ON recommendation.purchases USING btree (listing_id, purchased_at DESC);
+CREATE INDEX purchases_checkout ON recommendation.purchases USING btree (checkout_id);
+CREATE INDEX purchases_user ON recommendation.purchases USING btree (user_id, purchased_at DESC);

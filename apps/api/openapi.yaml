@@ -529,6 +529,53 @@ paths:
       summary: "Every model call, tool call and guardrail decision of a conversation"
       description: "ADMIN role."
       responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/recommendations:
+    get:
+      security: []
+      summary: "Recommended listings for the home page, or for a product page with `listingId`"
+      description: >
+        Signals: bought together (paid orders), sold this month, in season. Only listings that reach `dest` fresh,
+        one per produce type, each with a `reasonCode` and a Persian `reason`. `enabled: false` with an empty list
+        when the `RECOMMENDATIONS` flag is off.
+      parameters:
+        - { name: dest, in: query, schema: { type: string } }
+        - { name: listingId, in: query, schema: { type: string } }
+      responses: { "200": { description: OK }, "400": { $ref: "#/components/responses/Problem" } }
+  /v1/recommendations/cart:
+    get:
+      summary: "What goes with the signed-in buyer's cart"
+      parameters: [{ name: dest, in: query, schema: { type: string } }]
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/copilot/listings/{id}/price:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: "Where the seller's price sits among the market's quartiles (advice only)"
+      responses: { "200": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/copilot/listing-draft:
+    post:
+      summary: "Draft a listing title and description from facts (advice only; nothing is saved)"
+      description: "`source` is `model` or `template` (the plain fallback when the model is down or invents a price or an organic claim)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [produceTypeId, grade, originCityId]
+              properties:
+                produceTypeId: { type: string }
+                variety: { type: string, maxLength: 40 }
+                grade: { type: string, enum: [PREMIUM, GRADE_1, GRADE_2, PROCESSING] }
+                originCityId: { type: string }
+                isOrganic: { type: boolean }
+                harvestedDaysAgo: { type: integer, minimum: 0 }
+                notes: { type: string, maxLength: 300 }
+      responses: { "201": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
+  /v1/seller/copilot/reviews/{id}/reply-draft:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: "Draft a reply to one of the shop's reviews (advice only; not posted)"
+      responses: { "201": { description: OK }, "4XX": { $ref: "#/components/responses/Problem" } }
   /v1/admin/kyc:
     get:
       summary: "Shops waiting for approval (KYC masked)"

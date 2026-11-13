@@ -66,9 +66,30 @@ provider to use is an open decision (servers in Iran limit the choice, brief §3
 | `build_basket` | A seasonal basket for a budget and head count, stored as a proposal |
 | `propose_basket` | The model's own choice of items, priced by the server and stored as a proposal |
 
+## Seller copilot
+
+`/v1/seller/copilot/*` gives advice and saves nothing; the seller applies it through the normal seller endpoints,
+where listings still go through moderation.
+
+| Endpoint | How it is produced |
+|---|---|
+| `GET listings/{id}/price` | A rule, no model: the seller's price per kilo against the quartiles of published listings of the same produce type (needs at least five) |
+| `POST listing-draft` | One model call over the facts the seller gave. The draft is dropped for the plain template if it contains an amount, or an organic claim the seller did not make, or if the model is down |
+| `POST reviews/{id}/reply-draft` | One model call over the review. Dropped for the template if it promises a refund, a discount or any amount |
+
+Not built: demand forecast (there is no sales history to learn from yet).
+
+## Recommendations
+
+`recommendation` module (`GET /v1/recommendations`, `/v1/recommendations/cart`), no model involved. It copies the
+items of paid orders from `order.placed` events into its own table and ranks listings that reach the destination
+fresh by: bought together (same checkout or same buyers, 90 days), sold this month, in season. One listing per
+produce type; every item carries its reason. With no history the season decides (cold start). `RECOMMENDATIONS=false`
+turns it off. Not built: offline precision@k and coverage reports, per-user A/B assignment, the store UI.
+
 ## Evals
 
-`services/ai/evals/*.yaml` hold Persian cases (shopping and safety); `apps/api/test/assistant-evals.test.ts` runs
+`services/ai/evals/*.yaml` hold 40 Persian cases (shopping and safety); `apps/api/test/assistant-evals.test.ts` runs
 them in CI with the rule-based model and adds checks that hold for any model: amounts are grounded, the cart is
 untouched by chat, every tool call is audited. `apps/api/test/assistant.test.ts` drives the loop with a scripted
 model behind the real adapter (ungrounded price, unknown tool, runaway tool calls, hostile seller text, outage).
