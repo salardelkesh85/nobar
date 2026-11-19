@@ -69,6 +69,21 @@ async function launch(attempt = 1) {
 }
 
 const page = await launch();
+
+/** Hardware keys go to the focused window; bring the app to the front if the launcher still has focus. */
+async function ensureFocus() {
+  for (let i = 0; i < 10; i++) {
+    const focus = (await device.shell("dumpsys window | grep -m1 mCurrentFocus")).toString();
+    if (focus.includes(PKG)) return;
+    await device.shell(`am start -n ${PKG}/.MainActivity`);
+    await sleep(1000);
+  }
+  throw new Error("the app never got window focus");
+}
+async function pressBack() {
+  await ensureFocus();
+  await device.shell("input keyevent KEYCODE_BACK");
+}
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
 page.on("console", (m) => {
   if (m.type() === "error") errors.push(`console: ${m.text().slice(0, 300)}`);
@@ -79,7 +94,7 @@ const path = () => new URL(page.url()).pathname;
 
 await step("home opens inside the app with the native bridge", async () => {
   await expectVisible(".nx-amazing");
-  await expectVisible(".nx-brand");
+  await expectVisible(".nx-header-search input");
   const native = await page.evaluate(() => Boolean(window.Capacitor?.isNativePlatform?.()));
   if (!native) throw new Error("Capacitor bridge missing");
   const app = await page.evaluate(() => document.documentElement.classList.contains("is-app"));
@@ -128,7 +143,7 @@ await step("reloading a product page keeps that page", async () => {
 });
 
 await step("the Android back button returns to the home page", async () => {
-  await device.shell("input keyevent KEYCODE_BACK");
+  await pressBack();
   await page.waitForURL((u) => new URL(u).pathname === "/", { timeout: 15_000 });
   await expectVisible(".nx-amazing");
 });
@@ -150,7 +165,7 @@ await step("filter sheet opens and the back button closes it", async () => {
   await expectVisible("dialog.nx-sheet[open]");
   await sleep(400);
   await shot("filter-sheet");
-  await device.shell("input keyevent KEYCODE_BACK");
+  await pressBack();
   await page.locator("dialog.nx-sheet[open]").waitFor({ state: "detached", timeout: 10_000 });
   if (!path().startsWith("/search")) throw new Error(`back left the search page: ${path()}`);
 });
