@@ -1,5 +1,5 @@
-import { LogoMark, ProduceDefs } from "@nobar/ui";
-import { ArrowLeft, Sprout } from "lucide-react";
+import { BrandLogo, ProduceDefs } from "@nobar/ui";
+import { CalendarDays, Sparkles, Sprout, Store, Wallet } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import Script from "next/script";
@@ -66,50 +66,48 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <AppHeaderSwitch>
             <header className="nx-header">
               <div className="nx-header-row">
-                <Link
-                  href="/"
-                  aria-label="نوبر — صفحهٔ اصلی"
-                  className="nx-brand"
-                >
-                  <LogoMark className="nx-brand-mark" />
-                  <span className="nx-brand-name">نوبر</span>
+                <Link href="/" aria-label="نوبر — صفحهٔ اصلی" className="nx-brand">
+                  <BrandLogo className="nx-brand-logo" height={40} />
                 </Link>
-                <Suspense fallback={<div className="nx-search-placeholder" />}>
-                  <SearchBox className="nx-header-search" />
-                </Suspense>
-                <div className="nx-header-city">
-                  <CityPicker compact />
+                <div className="nx-header-searchwrap">
+                  <Suspense fallback={<div className="nx-search-placeholder" />}>
+                    <SearchBox className="nx-header-search" />
+                  </Suspense>
+                  {/* mobile: "search in [logo]" inside the empty search field, as marketplace apps do */}
+                  <span className="nx-search-brand" aria-hidden>
+                    جستجو در <BrandLogo height={22} />
+                  </span>
                 </div>
                 <HeaderActions />
+              </div>
+              <div className="nx-header-cityline">
+                <CityPicker compact />
               </div>
               <nav aria-label="دسته‌بندی اصلی" className="nx-nav">
                 <div className="nx-nav-inner">
                   <MegaMenu />
                   <span className="nx-nav-sep" aria-hidden />
-                  <Link
-                    href="/search?nobar=1"
-                    className="nx-nav-link nx-nav-fresh"
-                  >
-                    <span aria-hidden /> نوبرهای تازه
+                  <Link href="/search?nobar=1" className="nx-nav-link nx-nav-fresh">
+                    <Sparkles size={16} aria-hidden /> نوبرهای تازه
+                  </Link>
+                  <Link href="/search?sort=landed" className="nx-nav-link">
+                    <Wallet size={16} aria-hidden /> به‌صرفه‌ترین‌ها
                   </Link>
                   <Link href="/shops" className="nx-nav-link">
-                    غرفه‌ها
+                    <Store size={16} aria-hidden /> غرفه‌ها
                   </Link>
                   <Link href="/season" className="nx-nav-link">
-                    تقویم فصل
+                    <CalendarDays size={16} aria-hidden /> تقویم فصل
                   </Link>
-                  <Link href="/origin/miandoab" className="nx-nav-link">
-                    مبدأها
-                  </Link>
-                  <Link
-                    href="/baghboon"
-                    className="nx-nav-link nx-nav-assistant"
-                  >
+                  <Link href="/baghboon" className="nx-nav-link nx-nav-assistant">
                     <Sprout size={16} aria-hidden /> باغبون
                   </Link>
-                  <Link href="/about/sell" className="nx-nav-link nx-nav-sell">
-                    در نوبر بفروشید <ArrowLeft size={14} aria-hidden />
+                  <Link href="/about/sell" className="nx-nav-link">
+                    در نوبر بفروشید
                   </Link>
+                  <div className="nx-nav-city">
+                    <CityPicker compact />
+                  </div>
                 </div>
               </nav>
             </header>

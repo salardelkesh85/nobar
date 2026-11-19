@@ -51,6 +51,8 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ env.REPO_BASE }}
           NEXT_PUBLIC_SELLER_URL: ${{ env.REPO_BASE }}/seller/
+          # the footer's "Android app" link
+          NEXT_PUBLIC_ANDROID_URL: https://github.com/${{ github.repository }}/releases/tag/android-v1.0.1
 
       - name: Build seller panel
         run: pnpm --filter @nobar/seller build

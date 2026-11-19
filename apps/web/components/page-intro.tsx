@@ -1,39 +1,35 @@
-import { ArrowUpLeft, Sprout } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+/** Page heading panel: a title, one line of description, an optional link and an optional detail on the far side. */
 export function PageIntro({
-  eyebrow,
   title,
   description,
   children,
   href,
   action,
 }: {
-  eyebrow: string;
+  /** kept for callers that still pass it; no longer shown */
+  eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
   children?: ReactNode;
   href?: string;
   action?: string;
 }) {
   return (
-    <header className="studio-intro">
-      <div>
-        <span className="studio-eyebrow">
-          <Sprout size={16} />
-          {eyebrow}
-        </span>
+    <header className="nx-pagehead">
+      <div className="nx-pagehead-text">
         <h1>{title}</h1>
-        <p>{description}</p>
-        {href && action ? (
-          <Link href={href}>
-            {action}
-            <ArrowUpLeft size={18} />
-          </Link>
-        ) : null}
+        {description ? <p>{description}</p> : null}
       </div>
-      {children ? <div className="studio-intro-detail">{children}</div> : null}
+      {children ? <div className="nx-pagehead-detail">{children}</div> : null}
+      {href && action ? (
+        <Link href={href} className="nx-pagehead-link">
+          {action} <ArrowLeft className="size-4" aria-hidden />
+        </Link>
+      ) : null}
     </header>
   );
 }
