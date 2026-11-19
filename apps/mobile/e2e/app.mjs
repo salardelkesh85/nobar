@@ -2,6 +2,7 @@
 // (adb must see exactly one device). Each step saves a screenshot of the real screen to $SHOTS.
 // Usage: SHOTS=/tmp/shots node apps/mobile/e2e/app.mjs
 import { _android as android } from "playwright";
+import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -78,7 +79,27 @@ async function ensureFocus() {
     await device.shell(`am start -n ${PKG}/.MainActivity`);
     await sleep(1000);
   }
+  console.log(await diagnostics());
   throw new Error("the app never got window focus");
+}
+
+/** Window and activity state, and a small JPEG of the screen in the log (CI artifacts are not always reachable). */
+async function diagnostics() {
+  const lines = [];
+  for (const cmd of [
+    "dumpsys window | grep -E 'mCurrentFocus|mFocusedApp|mTopFocusedDisplayId'",
+    "dumpsys activity activities | grep -E 'ResumedActivity|topResumed'",
+    "dumpsys window displays | grep -E 'Display: mDisplayId|mCurrentFocus'",
+  ]) lines.push(`$ ${cmd}\n${(await device.shell(cmd)).toString().trim()}`);
+  try {
+    const png = join(SHOTS, "diagnostics.png");
+    writeFileSync(png, await device.screenshot());
+    const jpg = execFileSync("convert", [png, "-resize", "240x", "-quality", "60", "jpg:-"]);
+    lines.push(`screen (base64 jpeg): ${jpg.toString("base64")}`);
+  } catch (e) {
+    lines.push(`no screen thumbnail: ${e?.message ?? e}`);
+  }
+  return lines.join("\n");
 }
 async function pressBack() {
   await ensureFocus();
