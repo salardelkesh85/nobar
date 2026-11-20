@@ -153,9 +153,8 @@ jobs:
             adb shell am start -W -n ir.nobar.app/.MainActivity
             sleep 12
             adb exec-out screencap -p > "$SHOTS/99-release-build.png"
-            convert "$SHOTS/99-release-build.png" -resize 240x -quality 60 jpg:- | base64 -w0; echo
-            adb logcat -d -b crash -b main | grep -E "AndroidRuntime|FATAL|ir\.nobar|Capacitor|chromium" | tail -120 || true
-            adb shell pidof ir.nobar.app
+            adb logcat -d -b crash > "$SHOTS/crash.log"; if grep -q "ir.nobar.app" "$SHOTS/crash.log"; then cat "$SHOTS/crash.log"; echo "::error::the release build crashed"; exit 1; fi
+            adb logcat -d | grep -E "Displayed ir.nobar.app/.MainActivity"
 
       - uses: actions/upload-artifact@v7
         if: always()
