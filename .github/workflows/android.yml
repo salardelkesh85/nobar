@@ -150,6 +150,7 @@ jobs:
             node "$E2E/app.mjs"
             adb uninstall ir.nobar.app
             adb install "dist/nobar-$VERSION.apk"
+            adb logcat -c -b all
             adb shell am start -W -n ir.nobar.app/.MainActivity
             sleep 12
             adb exec-out screencap -p > "$SHOTS/99-release-build.png"
