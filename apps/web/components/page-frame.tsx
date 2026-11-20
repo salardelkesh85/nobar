@@ -8,17 +8,17 @@ import type { ReactNode } from "react";
 const SECTIONS: Record<string, { label: string; note: string; tone: string }> =
   {
     search: {
-      label: "بازار تازه‌ها",
+      label: "محصولات",
       note: "طعم خوب، با انتخاب تو شروع می‌شود.",
       tone: "catalog",
     },
     categories: {
-      label: "کشف طعم‌ها",
+      label: "دسته‌بندی‌ها",
       note: "هر دسته، یک دنیای تازه.",
       tone: "categories",
     },
     p: {
-      label: "انتخاب محصول",
+      label: "محصول",
       note: "یک محصول، چند مبدأ؛ انتخاب با تو.",
       tone: "produce",
     },
@@ -28,58 +28,58 @@ const SECTIONS: Record<string, { label: string; note: string; tone: string }> =
       tone: "product",
     },
     shops: {
-      label: "آدم‌های نوبر",
+      label: "غرفه‌ها",
       note: "پشت هر طعم خوب، یک آدم واقعی است.",
       tone: "shops",
     },
     shop: {
-      label: "غرفه‌گردی",
+      label: "غرفه",
       note: "قصهٔ آدم‌ها، طعمِ محصول‌ها.",
       tone: "shop",
     },
     origin: {
-      label: "سرزمین طعم‌ها",
+      label: "مبدأ",
       note: "ایران را به طعم‌هایش بشناس.",
       tone: "origin",
     },
     season: {
-      label: "هم‌فصل طبیعت",
+      label: "تقویم فصل",
       note: "هر طعم، در وقت خودش.",
       tone: "season",
     },
     compare: {
-      label: "انتخاب آگاهانه",
+      label: "مقایسه",
       note: "همهٔ جزئیات، کنار هم.",
       tone: "compare",
     },
     cart: {
-      label: "سبد تازهٔ تو",
+      label: "سبد خرید",
       note: "یک قدم نزدیک‌تر به سفره.",
       tone: "cart",
     },
     checkout: {
-      label: "آخرین قدم خرید",
+      label: "تکمیل خرید",
       note: "جزئیات تحویل را با هم مرور کنیم.",
       tone: "checkout",
     },
-    me: { label: "نوبرِ من", note: "گوشهٔ شخصی تو در بازار.", tone: "account" },
+    me: { label: "حساب من", note: "گوشهٔ شخصی تو در بازار.", tone: "account" },
     orders: {
-      label: "خریدهای تو",
+      label: "سفارش‌ها",
       note: "از لحظهٔ انتخاب تا رسیدن.",
       tone: "account",
     },
     order: {
-      label: "مسیر سفارش",
+      label: "پیگیری سفارش",
       note: "تازه‌ها در چه مرحله‌ای هستند؟",
       tone: "order",
     },
     login: {
-      label: "خوش آمدی",
+      label: "ورود",
       note: "به جمع دوست‌داران طعم‌های واقعی بپیوند.",
       tone: "login",
     },
     baghboon: {
-      label: "هم‌صحبت خرید",
+      label: "باغبون",
       note: "از چی خوشَت می‌آید؟",
       tone: "assistant",
     },
@@ -95,7 +95,7 @@ export function PageFrame({ children }: { children: ReactNode }) {
       </div>
     );
   const section = SECTIONS[segment] ?? {
-    label: "دربارهٔ نوبر",
+    label: "درباره‌ی نوبر",
     note: "خرید خوب، با شناخت شروع می‌شود.",
     tone: "info",
   };

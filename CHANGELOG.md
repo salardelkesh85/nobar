@@ -3,6 +3,15 @@
 All notable changes to Nobar. The project follows [Semantic Versioning](https://semver.org/): the public HTTP API
 (`apps/api/openapi.yaml`) is the contract the version number describes.
 
+## Unreleased
+
+### Apps
+- Android app for buyers (`apps/mobile`): the store in app mode packaged with Capacitor — app bar with back arrow on
+  inner pages, buy bar on product pages, hardware back button, edge-to-edge, splash, launcher icon from the brand's
+  leaf mark; built and tested on an Android emulator in CI.
+- Store: new look (header, home, product card, search with filter and sort sheets), the deck's two-leaf logo, and a
+  full "fresh nobars" strip on the home page.
+
 ## 1.0.0 — 2026-11-13
 
 The first release that can run a real market: buyers, sellers and staff on one API with real payment and SMS

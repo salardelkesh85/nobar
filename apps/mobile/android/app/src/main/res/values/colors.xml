@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nobar_green">#08803F</color>
+    <color name="nobar_green_dark">#066A34</color>
+    <color name="nobar_window">#FFFFFF</color>
+</resources>

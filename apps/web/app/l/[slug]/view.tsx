@@ -73,7 +73,7 @@ export function ListingView({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      <nav aria-label="مسیر" className="flex flex-wrap items-center gap-1 text-xs text-ink-soft">
+      <nav aria-label="مسیر" className="nx-crumbs flex flex-wrap items-center gap-1 text-xs text-ink-soft">
         <Link href="/" className="hover:text-brand">نوبر</Link>
         <ChevronLeft className="size-3.5" aria-hidden />
         <Link href={`/search?cat=${cat?.id}`} className="hover:text-brand">{cat?.name}</Link>
@@ -81,9 +81,9 @@ export function ListingView({ id }: { id: string }) {
         <Link href={`/p/${pt.id}`} className="hover:text-brand">{pt.name}</Link>
       </nav>
 
-      <div className="studio-product-layout grid gap-4 rounded-card border border-line bg-surface p-4 lg:grid-cols-12 lg:gap-6 lg:p-6">
+      <div className="nx-pdp">
         {/* Gallery */}
-        <div className="lg:col-span-4">
+        <div className="nx-pdp-gallery">
           <div className="relative">
             <Gallery kind={pt.id} title={l.title} cover={coverFor(shop.art)} />
             {detail.data.isNobar ? <span className="pointer-events-none absolute start-3 top-3 rounded-md bg-nobar-solid px-2 py-1 text-xs font-extrabold text-white">نوبر شد!</span> : null}
@@ -91,7 +91,7 @@ export function ListingView({ id }: { id: string }) {
         </div>
 
         {/* Details */}
-        <div className="space-y-4 lg:col-span-4 xl:col-span-5">
+        <div className="nx-pdp-info space-y-4">
           <div>
             <div className="mb-2 flex items-center justify-between gap-2 text-xs">
               <Link href={`/shop/${shop.id}`} className="font-bold text-brand hover:underline">{shop.name}</Link>
@@ -157,8 +157,8 @@ export function ListingView({ id }: { id: string }) {
         </div>
 
         {/* Buy box */}
-        <aside className="lg:col-span-4 xl:col-span-3">
-          <div className="space-y-4 rounded-card border border-line bg-surface-2/60 p-4 lg:sticky lg:top-36">
+        <aside className="nx-pdp-buy">
+          <div className="nx-pdp-buybox space-y-4">
             <Link href={`/shop/${shop.id}`} className="flex items-center gap-3 border-b border-line pb-3">
               <Store className="size-6 shrink-0 text-brand" aria-hidden />
               <span className="min-w-0 flex-1">

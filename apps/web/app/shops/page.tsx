@@ -27,15 +27,8 @@ export default function ShopsPage() {
     .sort((a, b) => ratingBayes(b) - ratingBayes(a));
   return (
     <div>
-      <PageIntro
-        eyebrow="آدم‌های پشت طعم خوب"
-        title="از آشنایی تا اعتماد."
-        description="باغدارها و غرفه‌دارهای نوبر را بشناس؛ محصول خوب، از یک قصهٔ واقعی شروع می‌شود."
-      >
-        <div className="studio-intro-count">
-          <strong>{shops.length.toLocaleString("fa-IR")}</strong>
-          <span>غرفهٔ فعال، به ترتیب امتیاز</span>
-        </div>
+      <PageIntro title="غرفه‌ها و باغدارها" description="فروشنده‌های تأییدشده‌ی نوبر، به ترتیب امتیاز خریدارها.">
+        <span className="nx-pagehead-count">{shops.length.toLocaleString("fa-IR")} غرفه‌ی فعال</span>
       </PageIntro>
       <ul className="studio-shops-directory">
         {shops.map((s) => (

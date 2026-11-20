@@ -17,81 +17,35 @@ export default function CategoriesPage() {
   const origins = [
     ...new Set(SHOPS.filter((s) => s.status === "ACTIVE").map((s) => s.cityId)),
   ];
+  const published = (typeId: string) => LISTINGS.filter((l) => l.produceTypeId === typeId && l.status === "PUBLISHED").length;
   return (
-    <div>
-      <PageIntro
-        eyebrow="بازار به سلیقهٔ تو"
-        title="یک دنیا طعم، همین‌جا."
-        description="از میوهٔ فصل تا سبزی هر روز؛ چیزی که دوست داری را پیدا کن."
-        href="/season"
-        action="این روزها فصل چیه؟"
-      >
-        <div className="studio-category-preview">
-          {["pomegranate", "tangerine", "apple-red"].map((kind) => (
-            <Photo
-              key={kind}
-              kind={kind}
-              alt=""
-              sizes="110px"
-              className="studio-preview-fruit"
-            />
-          ))}
-        </div>
-      </PageIntro>
-      <nav className="studio-category-jumps" aria-label="رفتن به دسته">
+    <div className="nx-catpage">
+      <PageIntro title="دسته‌بندی محصولات" description="میوه، سبزی و خشکبار؛ هر محصول از چند غرفه." href="/season" action="تقویم فصل" />
+      <nav className="nx-catpage-jumps" aria-label="رفتن به دسته">
         {CATEGORIES.map((c) => (
-          <a key={c.id} href={`#category-${c.id}`}>
+          <a key={c.id} href={`#category-${c.id}`} className="nx-chip">
             {c.name}
-            <ArrowLeft size={14} />
           </a>
         ))}
       </nav>
-      {CATEGORIES.map((c, index) => {
-        const types = PRODUCE_TYPES.filter(
-          (p) =>
-            p.categoryId === c.id &&
-            LISTINGS.some(
-              (l) => l.produceTypeId === p.id && l.status === "PUBLISHED",
-            ),
-        );
+      {CATEGORIES.map((c) => {
+        const types = PRODUCE_TYPES.filter((p) => p.categoryId === c.id && published(p.id) > 0);
         if (!types.length) return null;
         return (
-          <section
-            key={c.id}
-            id={`category-${c.id}`}
-            className="studio-category-section"
-          >
-            <div className="studio-category-title">
-              <span>
-                {(index + 1).toLocaleString("fa-IR", {
-                  minimumIntegerDigits: 2,
-                })}
-              </span>
-              <h2>{c.name}</h2>
-              <Link href={`/search?cat=${c.id}`}>
-                دیدن محصولات
-                <ArrowLeft size={15} />
+          <section key={c.id} id={`category-${c.id}`} className="nx-section nx-catpage-section">
+            <div className="nx-section-head">
+              <h2 className="nx-section-title">{c.name}</h2>
+              <Link href={`/search?cat=${c.id}`} className="nx-section-more">
+                همه‌ی محصولات <ArrowLeft className="size-4" aria-hidden />
               </Link>
             </div>
-            <ul>
+            <ul className="nx-catpage-grid">
               {types.map((pt) => (
                 <li key={pt.id}>
-                  <Link href={`/p/${pt.id}`}>
-                    <Photo
-                      kind={pt.id}
-                      alt=""
-                      sizes="(max-width: 700px) 27vw, 150px"
-                      fallback={{ emoji: pt.emoji, hue: pt.hue }}
-                      className="studio-category-produce"
-                    />
-                    <span>{pt.name}</span>
-                    <small>
-                      {LISTINGS.filter(
-                        (l) =>
-                          l.produceTypeId === pt.id && l.status === "PUBLISHED",
-                      ).length.toLocaleString("fa-IR")}{" "}
-                      محصول
-                    </small>
+                  <Link href={`/p/${pt.id}`} className="nx-cat">
+                    <Photo kind={pt.id} alt="" sizes="(max-width: 700px) 22vw, 96px" fallback={{ emoji: pt.emoji, hue: pt.hue }} className="nx-cat-photo" />
+                    <span className="nx-cat-name">{pt.name}</span>
+                    <small className="nx-cat-count">{published(pt.id).toLocaleString("fa-IR")} محصول</small>
                   </Link>
                 </li>
               ))}
@@ -99,18 +53,19 @@ export default function CategoriesPage() {
           </section>
         );
       })}
-      <section className="studio-origin-links">
-        <div>
-          <span className="studio-eyebrow">سرزمین طعم‌ها</span>
-          <h2>دوست داری از کجا خرید کنی؟</h2>
+      <section className="nx-section">
+        <div className="nx-section-head">
+          <div>
+            <h2 className="nx-section-title">خرید از مبدأ</h2>
+            <p className="nx-section-sub">محصول هر شهر، از باغدارهای همان‌جا</p>
+          </div>
         </div>
-        <ul>
+        <ul className="nx-origins">
           {origins.map((id) => (
             <li key={id}>
-              <Link href={`/origin/${id}`}>
-                <MapPin size={14} />
-                {cityName(id)}
-                <ArrowLeft size={14} />
+              <Link href={`/origin/${id}`} className="nx-origin">
+                <MapPin className="size-4" aria-hidden />
+                <span>{cityName(id)}</span>
               </Link>
             </li>
           ))}

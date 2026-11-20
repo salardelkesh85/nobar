@@ -80,21 +80,25 @@ export function BuyBox({ listing, disabled, disabledReason }: { listing: Listing
           })}
         </div>
       </fieldset>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
         <Stepper value={qty} onChange={setQty} min={1} max={Math.max(1, Math.floor(listing.stockBase / packageGrams(pkg)))} label="تعداد بسته" />
-        <Button
-          size="lg"
-          className="flex-1"
-          disabled={disabled}
-          onClick={() => {
-            addToCart({ listingId: listing.id, packageId: pkg.id, qty });
-            showToast(`${toFaDigits(qty)} × ${pkg.label} به سبد اضافه شد.`);
-          }}
-        >
-          <ShoppingBasket className="size-5" aria-hidden />
-          افزودن به سبد
-        </Button>
+        <p className="text-end leading-6">
+          <span className="block text-xs text-ink-soft">جمع</span>
+          <span className="block text-lg font-black">{formatToman(pkg.priceRial * qty)}</span>
+        </p>
       </div>
+      <Button
+        size="lg"
+        className="w-full whitespace-nowrap"
+        disabled={disabled}
+        onClick={() => {
+          addToCart({ listingId: listing.id, packageId: pkg.id, qty });
+          showToast(`${toFaDigits(qty)} × ${pkg.label} به سبد اضافه شد.`);
+        }}
+      >
+        <ShoppingBasket className="size-5" aria-hidden />
+        افزودن به سبد
+      </Button>
       {disabled && disabledReason ? <p className="text-sm text-danger">{disabledReason}</p> : null}
     </div>
   );

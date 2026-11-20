@@ -52,6 +52,7 @@ flowchart LR
 flowchart TB
     subgraph clients[Clients]
         web[apps/web<br/>Next.js PWA]
+        mob[apps/mobile<br/>Android app, Capacitor]
         sp[apps/seller-panel]
         ap[apps/admin-panel]
     end
@@ -289,6 +290,7 @@ Kubernetes demos run on **k3d** (lightweight k3s) with a subset of services; ful
 
 ```
 /apps        web, seller-panel, admin-panel                (Next.js)
+             mobile (the store as an Android app, Capacitor)
 /services    identity, seller, catalog, search, cart, order, payment, delivery,
              review, notification, analytics, admin, ai-gateway, bff   (NestJS)
              ai-workers                                                (Python)

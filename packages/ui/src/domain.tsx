@@ -30,14 +30,31 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
+const BRAND_BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+/**
+ * The original Nobar logo (wordmark and two leaves) from the brand deck, as images: dark green on light
+ * backgrounds, white on dark ones. Each app serves the files from public/brand (copies of packages/ui/brand).
+ */
+export function BrandLogo({ className, height = 36, tone = "auto" }: { className?: string; height?: number; tone?: "auto" | "light" | "dark" }) {
+  const width = Math.round((height * 1299) / 523);
+  const img = (file: string, cls: string) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={`${BRAND_BASE}/brand/${file}`} alt="" width={width} height={height} className={cls} decoding="async" draggable={false} />
+  );
+  return (
+    <span className={cn("n-brand-logo", `n-brand-logo-${tone}`, className)} style={{ height }} role="img" aria-label="نوبر">
+      {tone !== "dark" ? img("nobar-logo-96.webp", "n-brand-logo-green") : null}
+      {tone !== "light" ? img("nobar-logo-white-96.webp", "n-brand-logo-white") : null}
+    </span>
+  );
+}
+
 export function Logo({ className, subtitle }: { className?: string; subtitle?: string }) {
   return (
     <span className={cn("n-ui-logo inline-flex items-center gap-2", className)}>
-      <LogoMark className="size-9" />
-      <span className="flex flex-col leading-none">
-        <span className="text-2xl font-black text-brand-strong">نوبر</span>
-        {subtitle ? <span className="mt-1 text-[0.7rem] font-bold text-ink-soft">{subtitle}</span> : null}
-      </span>
+      <BrandLogo height={34} />
+      {subtitle ? <span className="text-[0.7rem] font-bold text-ink-soft">{subtitle}</span> : null}
     </span>
   );
 }

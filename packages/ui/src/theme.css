@@ -586,3 +586,14 @@ summary::marker {
  .studio-workspace main .n-ui-stat { min-height:110px; padding:16px; }
  .studio-workspace main .n-ui-stat > p:nth-child(2) { font-size:21px; }
 }
+
+/* original logo: green on light, white on dark (system or chosen theme) */
+.n-brand-logo { display: inline-flex; align-items: center; line-height: 0; }
+.n-brand-logo img { height: 100%; width: auto; max-height: inherit; }
+.n-brand-logo-auto .n-brand-logo-white { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .n-brand-logo-auto .n-brand-logo-green { display: none; }
+  :root:not([data-theme="light"]) .n-brand-logo-auto .n-brand-logo-white { display: inline; }
+}
+:root[data-theme="dark"] .n-brand-logo-auto .n-brand-logo-green { display: none; }
+:root[data-theme="dark"] .n-brand-logo-auto .n-brand-logo-white { display: inline; }
